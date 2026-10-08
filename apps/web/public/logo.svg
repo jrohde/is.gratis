@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" width="300" height="64">
+  <g>
   <defs>
     <linearGradient id="isg-planet" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
       <stop offset="0" stop-color="#69db7c"/>
@@ -12,4 +13,6 @@
   <path d="M57.7 21.7 A27 9 -18 0 1 6.3 38.3" fill="none" stroke="#fcc419" stroke-width="3.2" stroke-linecap="round"/>
   <path d="M53.6 41.2 A5.6 5.6 0 1 0 59.6 49.6 A4.4 4.4 0 1 1 53.6 41.2 Z" fill="#dee2e6"/>
   <path d="M12 4.5 L13.9 9.6 L19 11.5 L13.9 13.4 L12 18.5 L10.1 13.4 L5 11.5 L10.1 9.6 Z" fill="#fcc419"/>
+</g>
+  <text x="76" y="45" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="38" font-weight="800" fill="currentColor">is.<tspan fill="#2f9e44">gratis</tspan></text>
 </svg>

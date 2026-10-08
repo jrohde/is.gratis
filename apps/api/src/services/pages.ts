@@ -18,6 +18,7 @@ import type {
 import type { Database } from '../db/client.js';
 import { pages, revisions, sponsoredOffers, topics, users, type RevisionRow } from '../db/schema.js';
 import { conflict, notFound } from '../lib/errors.js';
+import { clearLinkCache, pageLinks } from './links.js';
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
 
@@ -78,6 +79,7 @@ export async function getPage(db: Database, lang: Language, slug: string): Promi
     activeOffers(db, lang, slug),
   ]);
 
+  const content = normalizeContent(row.revision.content);
   return {
     id: row.page.id,
     topicKey: row.topicKey,
@@ -85,7 +87,8 @@ export async function getPage(db: Database, lang: Language, slug: string): Promi
     slug: row.page.slug,
     title: row.page.title,
     status: row.page.status,
-    content: normalizeContent(row.revision.content),
+    content,
+    links: await pageLinks(db, lang, slug, content),
     currentRevision: toRevisionSummary(row.revision, row.authorName),
     sponsoredOffers: offers,
     translations,
@@ -96,7 +99,7 @@ export async function getPage(db: Database, lang: Language, slug: string): Promi
 
 export async function listPages(
   db: Database,
-  options: { lang?: Language; status?: PageStatus; limit: number; offset: number },
+  options: { lang?: Language; status?: PageStatus; limit: number; offset: number; sort?: 'updated' | 'title' },
 ): Promise<PageListItem[]> {
   const conditions = [
     options.lang ? eq(pages.lang, options.lang) : undefined,
@@ -107,7 +110,7 @@ export async function listPages(
     .from(pages)
     .innerJoin(revisions, eq(revisions.id, pages.currentRevisionId))
     .where(conditions.length ? and(...conditions) : undefined)
-    .orderBy(desc(pages.updatedAt))
+    .orderBy(options.sort === 'title' ? asc(pages.title) : desc(pages.updatedAt))
     .limit(options.limit)
     .offset(options.offset);
   return rows.map(({ page, content }) => ({
@@ -207,6 +210,7 @@ export async function saveRevision(db: Database, input: SaveRevisionInput): Prom
         })
         .returning();
       await tx.update(pages).set({ currentRevisionId: revision!.id }).where(eq(pages.id, createdPage.id));
+      clearLinkCache();
       return { created: true };
     }
 
@@ -311,4 +315,46 @@ export async function revertPage(
 export async function languagesForSlug(db: Database, slug: string): Promise<Language[]> {
   const rows = await db.select({ lang: pages.lang }).from(pages).where(eq(pages.slug, slug));
   return rows.map((row) => row.lang);
+}
+
+/**
+ * Simple search on title and slug, then summary: enough for autocomplete and agents. Exact and
+ * prefix matches come first. Swap for Postgres full-text search or pg_trgm when the site grows.
+ */
+export async function searchPages(db: Database, lang: Language, query: string, limit: number): Promise<PageListItem[]> {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const rows = await db
+    .select({ page: pages, content: revisions.content })
+    .from(pages)
+    .innerJoin(revisions, eq(revisions.id, pages.currentRevisionId))
+    .where(
+      and(
+        eq(pages.lang, lang),
+        or(
+          sql`lower(${pages.title}) like ${like}`,
+          sql`${pages.slug} like ${like.replace(/ /g, '-')}`,
+          sql`lower(${revisions.content}->>'summary') like ${like}`,
+        ),
+      ),
+    )
+    .orderBy(
+      sql`case when lower(${pages.title}) = ${q} or ${pages.slug} = ${q.replace(/ /g, '-')} then 0
+               when lower(${pages.title}) like ${`${q}%`} then 1
+               when lower(${pages.title}) like ${like} then 2 else 3 end`,
+      sql`case when ${pages.status} = 'published' then 0 else 1 end`,
+      asc(pages.title),
+    )
+    .limit(limit);
+  return rows.map(({ page, content }) => ({
+    lang: page.lang,
+    slug: page.slug,
+    title: page.title,
+    ...(content.emoji ? { emoji: content.emoji } : {}),
+    verdict: content.verdict,
+    status: page.status,
+    summary: content.summary,
+    updatedAt: page.updatedAt.toISOString(),
+  }));
 }

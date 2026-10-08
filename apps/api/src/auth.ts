@@ -71,6 +71,8 @@ export function registerOriginCheck(app: FastifyInstance, trustedOrigins: string
   });
   app.addHook('onRequest', async (request) => {
     if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return;
+    // The MCP endpoint is public and read-only, and is meant to be called from anywhere.
+    if (request.url.startsWith('/api/mcp')) return;
     const origin = request.headers.origin;
     if (origin && !matchers.some((match) => match(origin))) throw forbidden();
   });

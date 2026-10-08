@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+/**
+ * The is.gratis brand: a planet with a golden orbit, a star and a moon. The best things in life
+ * are free, starting with the earth, the sun, the moon and the stars.
+ */
+import type { Language } from './index.js';
+
+/** The mark on its own, for favicons, app icons and social cards. Works on light and dark. */
+export const LOGO_MARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="isg-planet" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
       <stop offset="0" stop-color="#69db7c"/>
@@ -12,4 +19,15 @@
   <path d="M57.7 21.7 A27 9 -18 0 1 6.3 38.3" fill="none" stroke="#fcc419" stroke-width="3.2" stroke-linecap="round"/>
   <path d="M53.6 41.2 A5.6 5.6 0 1 0 59.6 49.6 A4.4 4.4 0 1 1 53.6 41.2 Z" fill="#dee2e6"/>
   <path d="M12 4.5 L13.9 9.6 L19 11.5 L13.9 13.4 L12 18.5 L10.1 13.4 L5 11.5 L10.1 9.6 Z" fill="#fcc419"/>
-</svg>
+</svg>`;
+
+/** Wordmark colours: "is." in the text colour, "gratis" in green. */
+export const BRAND_GREEN = '#2f9e44';
+
+/** The slogan: free things come first, then the fact checking. */
+export const SLOGAN: Record<Language, string> = {
+  nl: 'Zon, maan en sterren zijn gratis. De rest zoeken wij uit.',
+  en: 'The sun, the moon and the stars are free. We check the rest.',
+  de: 'Sonne, Mond und Sterne sind gratis. Den Rest prüfen wir.',
+  es: 'El sol, la luna y las estrellas son gratis. Lo demás lo comprobamos nosotros.',
+};

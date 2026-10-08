@@ -269,7 +269,7 @@ export const seedPages: SeedPage[] = [
         '- **Luxemburg**: het hele land, zie hieronder.',
       ].join('\n'),
       whenNotFree: [
-        '- **Gewoon reizen in Nederland**: je betaalt per rit of met een abonnement, met de OV-chipkaart of je bankpas.',
+        '- **Gewoon reizen in Nederland**: je betaalt per rit of met een abonnement, met de [[OV-chipkaart]] of je bankpas.',
         '- **Duitsland**: het Deutschlandticket is een betaald maandabonnement voor regionaal vervoer in het hele land.',
       ].join('\n'),
       regions: [
@@ -425,7 +425,7 @@ export const seedPages: SeedPage[] = [
       summary:
         'Meestal. Op veel openbare plekken is wifi gratis, zoals in bibliotheken, treinen en horeca. In vliegtuigen en sommige hotels betaal je ervoor.',
       whenFree: [
-        '- **Bibliotheken, gemeentehuizen en veel stations.**',
+        '- **[[bibliotheek|Bibliotheken]], gemeentehuizen en veel stations.**',
         '- **In de trein** bij de NS.',
         '- **Horeca en winkels**, vaak met een wachtwoord op de bon of aan de muur.',
         '- **Gemeentelijke hotspots**, in de EU soms met subsidie van het programma WiFi4EU.',
@@ -467,7 +467,7 @@ export const seedPages: SeedPage[] = [
       summary:
         'Hangt ervan af. In Nederland kosten toiletten op stations en in winkelcentra vaak een klein bedrag. In musea, bibliotheken en gemeentelijke gebouwen kun je meestal gratis terecht.',
       whenFree: [
-        '- **Openbare gebouwen** zoals bibliotheken, gemeentehuizen en musea, vaak ook voor wie geen kaartje heeft voor de collectie.',
+        '- **Openbare gebouwen** zoals [[bibliotheek|bibliotheken]], gemeentehuizen en [[museum|musea]], vaak ook voor wie geen kaartje heeft voor de collectie.',
         '- **Als klant** in de horeca of een winkel met een klantentoilet.',
         '- **Gemeentelijke openbare toiletten** zijn in sommige steden gratis.',
       ].join('\n'),

@@ -41,6 +41,8 @@ function parseTrustProxy(value: string): boolean | number {
 }
 
 export interface Config {
+  /** Public address of the site, for absolute links in feeds and MCP answers. */
+  publicOrigin: string;
   databaseUrl: string;
   databasePoolMax: number;
   port: number;
@@ -98,6 +100,7 @@ export function loadConfig(): Config {
   const cookieDomain = str('COOKIE_DOMAIN', '');
   const cacheBanTarget = str('CACHE_BAN_TARGET', '');
   return {
+    publicOrigin: str('PUBLIC_ORIGIN', 'http://localhost:5173').replace(/\/+$/, ''),
     databaseUrl: str('DATABASE_URL', 'postgres://postgres:postgres@localhost:5432/isgratis'),
     databasePoolMax: int('DATABASE_POOL_MAX', 10),
     port: int('PORT', 4000),

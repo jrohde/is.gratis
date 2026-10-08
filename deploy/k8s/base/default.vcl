@@ -3,6 +3,7 @@ vcl 4.1;
 # HTTP cache in front of the web app and the API.
 #
 #   ingress -> varnish -> /api/media/* -> api  (images, cached for a year)
+#                      -> /api/og/*    -> api  (social cards, versioned URLs)
 #                      -> /api/*       -> api  (never cached)
 #                      -> everything   -> web  (cached per s-maxage)
 #
@@ -53,8 +54,8 @@ sub vcl_recv {
     return (synth(405, "Not allowed"));
   }
 
-  # Images have immutable URLs: cache them like static files.
-  if (req.url ~ "^/api/media/" && (req.method == "GET" || req.method == "HEAD")) {
+  # Images and social cards have versioned URLs: cache them like static files.
+  if (req.url ~ "^/api/(media|og)/" && (req.method == "GET" || req.method == "HEAD")) {
     set req.backend_hint = api;
     unset req.http.Cookie;
     return (hash);

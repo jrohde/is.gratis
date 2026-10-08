@@ -53,6 +53,11 @@ export const pageSchema = z.object({
   content: pageContentSchema,
   currentRevision: revisionSummarySchema,
   sponsoredOffers: z.array(sponsoredOfferSchema),
+  links: z.object({
+    missing: z.array(z.string()),
+    resolved: z.record(z.string(), z.string()),
+    auto: z.array(z.object({ term: z.string(), slug: z.string() })),
+  }),
   translations: z.array(z.object({ lang: languageEnum, slug: z.string(), title: z.string() })),
   createdAt: z.string(),
   updatedAt: z.string(),

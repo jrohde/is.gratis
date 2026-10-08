@@ -23,7 +23,12 @@ import { usePreferences } from './stores/preferences';
 import { useSession } from './stores/session';
 import { theme } from './theme';
 
-export const links: Route.LinksFunction = () => [{ rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }];
+export const links: Route.LinksFunction = () => [
+  { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+  { rel: 'icon', href: '/favicon-48.png', type: 'image/png', sizes: '48x48' },
+  { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+  { rel: 'manifest', href: '/manifest.webmanifest' },
+];
 
 /**
  * Subdomains are shareable addresses: water.is.gratis redirects to is.gratis/<lang>/water,
@@ -59,6 +64,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#0b1d3a" />
         <ColorSchemeScript defaultColorScheme="auto" />
         <Meta />
         <Links />

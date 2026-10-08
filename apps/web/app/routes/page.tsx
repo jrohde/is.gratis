@@ -11,7 +11,8 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { data, Link, redirect, useRevalidator } from 'react-router';
-import { SECTION_LABELS, toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
+import { linkContent, SECTION_LABELS, toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
+import { useMemo } from 'react';
 import type { Route } from './+types/page';
 import { DraftRequest } from '~/components/DraftRequest';
 import { FactsGrid } from '~/components/FactsGrid';
@@ -20,7 +21,7 @@ import { ScaleMeter } from '~/components/ScaleMeter';
 import { SectionTitle } from '~/components/SectionTitle';
 import { TimePriceCard } from '~/components/TimePriceCard';
 import { TriviaList } from '~/components/TriviaList';
-import { Markdown } from '~/components/Markdown';
+import { Markdown, WikiLinkContext } from '~/components/Markdown';
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { VerdictBadge } from '~/components/VerdictBadge';
@@ -30,7 +31,7 @@ import { CACHE } from '~/lib/cache';
 import { env } from '~/lib/env.server';
 import { formatDate, LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { jsonForScript, plainText } from '~/lib/markdown';
-import { mediaUrl } from '~/lib/media';
+import { pageCard, socialMeta } from '~/lib/social';
 import { parseLang } from '~/lib/params';
 import { DEFAULT_REGION } from '~/lib/regions';
 import { usePreferences } from '~/stores/preferences';
@@ -75,20 +76,26 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   return [
     { title: `${question} ${VERDICT_LABELS[page.lang][page.content.verdict]}. | is.gratis` },
     { name: 'description', content: description },
-    { property: 'og:title', content: question },
-    { property: 'og:description', content: description },
-    { property: 'og:type', content: 'article' },
-    { property: 'og:url', content: url },
-    ...(page.content.image
-      ? [
-          { property: 'og:image', content: `${loaderData.origin}${mediaUrl(page.content.image.assetId, 1600)}` },
-          { property: 'og:image:alt', content: page.content.image.alt },
-          { name: 'twitter:card', content: 'summary_large_image' },
-        ]
-      : []),
+    ...socialMeta({
+      origin: loaderData.origin,
+      lang: page.lang,
+      title: `${question} ${VERDICT_LABELS[page.lang][page.content.verdict]}.`,
+      description,
+      url,
+      image: pageCard(page.lang, page.slug, page.currentRevision.number),
+      imageAlt: `${question} ${VERDICT_LABELS[page.lang][page.content.verdict]}.`,
+      type: 'article',
+    }),
     { tagName: 'link', rel: 'canonical', href: url },
     // The same page as plain Markdown, for language models and other tools (llms.txt convention).
     { tagName: 'link', rel: 'alternate', type: 'text/markdown', href: `${url}/llms.txt` },
+    {
+      tagName: 'link',
+      rel: 'alternate',
+      type: 'application/rss+xml',
+      title: t.feedTitle(question),
+      href: `${url}/feed.xml`,
+    },
     { tagName: 'link', rel: 'alternate', hrefLang: page.lang, href: url },
     ...page.translations.map((tr) => ({
       tagName: 'link' as const,
@@ -178,8 +185,14 @@ function PageView({ page }: { page: Page }) {
         : page.currentRevision.authorName;
 
   const sections = SECTION_LABELS[page.lang];
-  const { content } = page;
+  // Wikipedia-style links: [[links]] and the first mention of other subjects become clickable.
+  const content = useMemo(() => linkContent(page.content, page.lang, page.links), [page]);
+  const linkInfo = useMemo(
+    () => ({ missing: new Set(page.links.missing), missingTitle: t.missingLink }),
+    [page.links.missing, t.missingLink],
+  );
   return (
+    <WikiLinkContext.Provider value={linkInfo}>
     <Container size="md">
       {page.status === 'published' && <StructuredData page={page} question={question} />}
       <Stack gap="xl">
@@ -296,6 +309,7 @@ function PageView({ page }: { page: Page }) {
         </Group>
       </Stack>
     </Container>
+    </WikiLinkContext.Provider>
   );
 }
 

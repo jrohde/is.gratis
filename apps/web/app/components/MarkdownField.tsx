@@ -2,6 +2,7 @@ import { Box, Group, SegmentedControl, Stack, Text, Textarea } from '@mantine/co
 import { useState } from 'react';
 import type { Language } from '@isgratis/types';
 import { messages } from '~/lib/i18n';
+import { renderWikiLinks } from '@isgratis/types';
 import { Markdown } from './Markdown';
 
 export function MarkdownField({
@@ -55,7 +56,7 @@ export function MarkdownField({
         />
       ) : (
         <Box p="sm" style={{ border: '1px solid var(--mantine-color-default-border)', borderRadius: 8, minHeight: 80 }}>
-          <Markdown>{value || '–'}</Markdown>
+          <Markdown>{renderWikiLinks(value, lang) || '–'}</Markdown>
         </Box>
       )}
     </Stack>

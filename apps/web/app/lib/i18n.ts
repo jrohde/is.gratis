@@ -60,7 +60,7 @@ const nl = {
   verdict: 'Oordeel',
   summary: 'Kort antwoord',
   summaryHint: 'Eén of twee zinnen die de vraag direct beantwoorden.',
-  markdownHint: 'Markdown: lijstjes met -, **vet**, [link](https://…). Geen HTML.',
+  markdownHint: 'Markdown: lijstjes met -, **vet**, [link](https://…) en [[onderwerp]] voor een andere is.gratis-pagina. Geen HTML.',
   region: 'Regio',
   text: 'Tekst',
   addRegion: 'Regio toevoegen',
@@ -158,6 +158,16 @@ const nl = {
   methodologyTitle: 'Hoe meten we hoe gratis iets is?',
   methodologyLink: 'Methode',
   infobox: 'Infoblok',
+  indexLink: 'A–Z',
+  indexTitle: 'Alle onderwerpen van A tot Z',
+  indexIntro: (count: number) => `${count} onderwerpen met een antwoord op de vraag: is het gratis?`,
+  developers: 'Ontwikkelaars',
+  feed: 'RSS-feed',
+  feedTitle: (subject: string) => `Wijzigingen: ${subject}`,
+  recentFeedTitle: 'is.gratis: nieuw en bijgewerkt',
+  missingLink: 'Deze pagina bestaat nog niet. Klik om er een te laten schrijven.',
+  noResults: 'Nog geen pagina. Druk op Enter om er een te maken.',
+  wikiHint: 'Link naar een ander onderwerp met [[onderwerp]] of [[onderwerp|eigen tekst]].',
   errorGeneric: 'Er ging iets mis.',
 };
 
@@ -216,7 +226,7 @@ const en: Messages = {
   verdict: 'Verdict',
   summary: 'Short answer',
   summaryHint: 'One or two sentences that answer the question directly.',
-  markdownHint: 'Markdown: lists with -, **bold**, [link](https://…). No HTML.',
+  markdownHint: 'Markdown: lists with -, **bold**, [link](https://…) and [[subject]] for another is.gratis page. No HTML.',
   region: 'Region',
   text: 'Text',
   addRegion: 'Add region',
@@ -314,6 +324,16 @@ const en: Messages = {
   methodologyTitle: 'How do we measure how free something is?',
   methodologyLink: 'Method',
   infobox: 'Infobox',
+  indexLink: 'A–Z',
+  indexTitle: 'All subjects from A to Z',
+  indexIntro: (count) => `${count} subjects with an answer to the question: is it free?`,
+  developers: 'Developers',
+  feed: 'RSS feed',
+  feedTitle: (subject) => `Changes: ${subject}`,
+  recentFeedTitle: 'is.gratis: new and updated',
+  missingLink: 'This page does not exist yet. Click to have one written.',
+  noResults: 'No page yet. Press Enter to create one.',
+  wikiHint: 'Link to another subject with [[subject]] or [[subject|your own text]].',
   errorGeneric: 'Something went wrong.',
 };
 
@@ -399,6 +419,8 @@ const de: Messages = {
   notFound: 'Diese Seite gibt es nicht.',
   backHome: 'Zur Startseite',
   footer: 'Jeder mit einem Konto kann Seiten verbessern.',
+  indexTitle: 'Alle Themen von A bis Z',
+  developers: 'Entwickler',
   errorGeneric: 'Etwas ist schiefgelaufen.',
 };
 
@@ -485,6 +507,8 @@ const es: Messages = {
   notFound: 'Esta página no existe.',
   backHome: 'Ir a la portada',
   footer: 'Cualquiera con una cuenta puede mejorar las páginas.',
+  indexTitle: 'Todos los temas de la A a la Z',
+  developers: 'Desarrolladores',
   errorGeneric: 'Algo ha ido mal.',
 };
 

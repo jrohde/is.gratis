@@ -17,6 +17,11 @@ export function loader() {
     '',
     ...LANGUAGES.map((lang) => `- [${LANGUAGE_NAMES[lang]}](${origin}/${lang}/llms.txt): ${messages(lang).tagline}`),
     '',
+    '## Tools for AI agents',
+    '',
+    `- [MCP server](${origin}/api/mcp): Model Context Protocol over Streamable HTTP, no key, read-only. Tools: is_it_free, search, get_page, recent_changes`,
+    `- [Developer overview](${origin}/developers?lang=en): MCP setup, REST API, llms.txt and RSS feeds`,
+    '',
     '## Method',
     '',
     `- [How the free scale and time prices work](${origin}/methodology?lang=en): definitions, scientific basis and references`,
@@ -25,6 +30,7 @@ export function loader() {
     '',
     `- [API documentation](${origin}/api/docs): JSON API for pages, revisions and drafts (OpenAPI)`,
     `- [Sitemap](${origin}/sitemap.xml)`,
+    ...LANGUAGES.map((lang) => `- [RSS feed (${LANGUAGE_NAMES[lang]})](${origin}/${lang}/feed.xml): new and updated pages`),
     '',
   ].join('\n');
   return textResponse(body, 'public, max-age=0, s-maxage=3600');

@@ -188,6 +188,8 @@ export interface Page {
   content: PageContent;
   currentRevision: RevisionSummary;
   sponsoredOffers: SponsoredOffer[];
+  /** Red links and automatic links for the text; see wikilinks.ts. */
+  links: import('./wikilinks.js').PageLinks;
   /** Other languages this topic exists in, so the UI can link between them. */
   translations: Array<{ lang: Language; slug: string; title: string }>;
   createdAt: string;
@@ -333,3 +335,5 @@ export function toSlug(input: string): string {
 }
 export * from './labels.js';
 export * from './markdown.js';
+export * from './wikilinks.js';
+export * from './brand.js';

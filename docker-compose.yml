@@ -31,6 +31,7 @@ services:
       dockerfile: deploy/docker/api.Dockerfile
     environment: &api-env
       DATABASE_URL: postgres://isgratis:isgratis@postgres:5432/isgratis
+      PUBLIC_ORIGIN: http://localhost:8080
       MIGRATE_ON_START: 'true'
       TRUSTED_ORIGINS: http://localhost:8080
       COOKIE_SECURE: 'false'

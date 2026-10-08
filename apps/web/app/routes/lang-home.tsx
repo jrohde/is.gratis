@@ -1,7 +1,7 @@
 import { Anchor, Card, Group, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
 import { motion } from 'motion/react';
 import { data, Link } from 'react-router';
-import { LANGUAGES, type PageListItem } from '@isgratis/types';
+import { LANGUAGES, SLOGAN, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/lang-home';
 import { SearchBox } from '~/components/SearchBox';
 import { VerdictBadge } from '~/components/VerdictBadge';
@@ -11,6 +11,7 @@ import { env } from '~/lib/env.server';
 import { messages } from '~/lib/i18n';
 import { plainText } from '~/lib/markdown';
 import { parseLang } from '~/lib/params';
+import { siteCard, socialMeta } from '~/lib/social';
 import { wasHydratedBeforeMount } from '~/lib/use-hydrated';
 
 const MotionDiv = motion.div;
@@ -25,18 +26,30 @@ export const headers: Route.HeadersFunction = ({ loaderHeaders }) => loaderHeade
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
   if (!loaderData) return [];
-  const t = messages(loaderData.lang);
+  const { lang, origin } = loaderData;
+  const t = messages(lang);
+  const url = `${origin}/${lang}`;
   return [
-    { title: `is.gratis · ${t.tagline}` },
-    { name: 'description', content: t.howText },
-    { tagName: 'link', rel: 'canonical', href: `${loaderData.origin}/${loaderData.lang}` },
-    ...LANGUAGES.map((lang) => ({
+    { title: `is.gratis · ${SLOGAN[lang]}` },
+    { name: 'description', content: `${t.tagline} ${t.howText}` },
+    ...socialMeta({
+      origin,
+      lang,
+      title: `is.gratis · ${t.tagline}`,
+      description: SLOGAN[lang],
+      url,
+      image: siteCard(lang),
+      imageAlt: SLOGAN[lang],
+    }),
+    { tagName: 'link', rel: 'canonical', href: url },
+    { tagName: 'link', rel: 'alternate', type: 'application/rss+xml', title: t.recentFeedTitle, href: `${url}/feed.xml` },
+    ...LANGUAGES.map((code) => ({
       tagName: 'link' as const,
       rel: 'alternate',
-      hrefLang: lang,
-      href: `${loaderData.origin}/${lang}`,
+      hrefLang: code,
+      href: `${origin}/${code}`,
     })),
-    { tagName: 'link', rel: 'alternate', hrefLang: 'x-default', href: `${loaderData.origin}/` },
+    { tagName: 'link', rel: 'alternate', hrefLang: 'x-default', href: `${origin}/` },
   ];
 };
 
@@ -48,12 +61,16 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
     <Container size="md">
       <Stack gap={48}>
         <Stack gap="md" align="center" ta="center" py="xl">
+          <img src="/favicon.svg" width={96} height={96} alt="" />
           <MotionDiv initial={play ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             <Title order={1} fz={{ base: 40, sm: 56 }} lh={1.1}>
               {t.searchButton}
             </Title>
           </MotionDiv>
-          <Text size="lg" c="dimmed" maw={560}>
+          <Text size="xl" fw={600} maw={620}>
+            {SLOGAN[lang]}
+          </Text>
+          <Text size="md" c="dimmed" maw={560}>
             {t.tagline}
           </Text>
           <div style={{ width: '100%', maxWidth: 560 }}>

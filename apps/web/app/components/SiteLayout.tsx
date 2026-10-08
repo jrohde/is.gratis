@@ -1,24 +1,14 @@
-import { Anchor, Box, Button, Container, Group, Menu, Text, UnstyledButton } from '@mantine/core';
+import { Anchor, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { IconLanguage, IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { LANGUAGES } from '@isgratis/types';
+import { LANGUAGES, SLOGAN } from '@isgratis/types';
 import { LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
 import { usePreferences } from '~/stores/preferences';
+import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-
-function Logo({ href }: { href: string }) {
-  return (
-    <Anchor component={Link} to={href} underline="never" c="inherit" fw={900} fz={24} lh={1}>
-      is.
-      <Text span inherit c="green.7">
-        gratis
-      </Text>
-    </Anchor>
-  );
-}
 
 function UserMenu() {
   const lang = useUiLang();
@@ -106,6 +96,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <Group justify="space-between">
             <Logo href={`/${lang}`} />
             <Group gap="sm">
+              <Anchor component={Link} to={`/a-z/${lang}`} size="sm" fw={600} c="dimmed" visibleFrom="xs">
+                {t.indexLink}
+              </Anchor>
               <LanguageMenu />
               <ThemeToggle />
               <UserMenu />
@@ -118,19 +111,31 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       </Box>
       <Box component="footer" py="lg" style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}>
         <Container size="md">
-          <Group justify="space-between" gap="xs">
-            <Text size="sm" c="dimmed">
-              {t.footer}
-            </Text>
+          <Group justify="space-between" gap="sm" align="start">
+            <Stack gap={4}>
+              <Logo href={`/${lang}`} size={20} />
+              <Text size="sm" c="dimmed">
+                {SLOGAN[lang]}
+              </Text>
+              <Text size="xs" c="dimmed">
+                {t.footer}
+              </Text>
+            </Stack>
             <Group gap="md">
+              <Anchor component={Link} to={`/a-z/${lang}`} size="sm" c="dimmed">
+                {t.indexLink}
+              </Anchor>
               <Anchor component={Link} to={`/methodology?lang=${lang}`} size="sm" c="dimmed">
                 {t.methodologyLink}
+              </Anchor>
+              <Anchor component={Link} to={`/developers?lang=${lang}`} size="sm" c="dimmed">
+                {t.developers}
               </Anchor>
               <Anchor component={Link} to={`/advertise?lang=${lang}`} size="sm" c="dimmed">
                 {t.advertiseTitle}
               </Anchor>
-              <Anchor href="/api/docs" size="sm" c="dimmed">
-                {t.api}
+              <Anchor href={`/${lang}/feed.xml`} size="sm" c="dimmed">
+                RSS
               </Anchor>
             </Group>
           </Group>

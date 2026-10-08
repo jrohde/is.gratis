@@ -27,6 +27,7 @@ import {
   type Verdict,
 } from './index.js';
 import { FREE_TYPE_LABELS, SCALE_NAME, SECTION_KEYS, SECTION_LABELS, type SectionKey } from './labels.js';
+import { renderWikiLinks } from './wikilinks.js';
 
 const SOURCE_WORD: Record<Language, string> = { nl: 'bron', en: 'source', de: 'Quelle', es: 'fuente' };
 
@@ -194,7 +195,8 @@ export function pageToLlmsText(page: LlmsPage): string {
     if (body) lines.push('', `## ${SECTION_LABELS[lang][key]}`, '', body);
   }
   lines.push('');
-  return lines.join('\n');
+  // [[links]] become absolute links, which work outside the site too.
+  return renderWikiLinks(lines.join('\n'), lang, new URL(page.url).origin);
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -23,6 +23,7 @@ import {
   publishPage,
   revertPage,
   saveRevision,
+  searchPages,
   sitemapEntries,
 } from '../services/pages.js';
 
@@ -43,12 +44,30 @@ export const pageRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInval
           lang: languageSchema.optional(),
           status: z.enum(['draft', 'published']).optional(),
           limit: z.coerce.number().int().min(1).max(1000).default(20),
-          offset: z.coerce.number().int().min(0).max(10_000).default(0),
+          offset: z.coerce.number().int().min(0).max(100_000).default(0),
+          sort: z.enum(['updated', 'title']).default('updated'),
         }),
         response: { 200: z.object({ pages: z.array(pageListItemSchema) }) },
       },
     },
     async (request) => ({ pages: await listPages(db, request.query) }),
+  );
+
+  app.get(
+    '/search',
+    {
+      schema: {
+        tags: ['pages'],
+        summary: 'Search pages by title, slug and short answer',
+        querystring: z.object({
+          lang: languageSchema,
+          q: z.string().trim().min(1).max(80),
+          limit: z.coerce.number().int().min(1).max(20).default(8),
+        }),
+        response: { 200: z.object({ pages: z.array(pageListItemSchema) }) },
+      },
+    },
+    async (request) => ({ pages: await searchPages(db, request.query.lang, request.query.q, request.query.limit) }),
   );
 
   app.get(

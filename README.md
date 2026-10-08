@@ -90,6 +90,39 @@ Afbeeldingen staan in Postgres, dus er is geen aparte objectopslag nodig. Elke u
 
 Beeldgeneratie gebruikt elk OpenAI-compatibel images-endpoint (`IMAGE_MODEL`, standaard uit). De prompt vraagt om een illustratie zonder tekst, logo's of herkenbare personen. Met `DRAFT_WITH_IMAGE=true` krijgt elk nieuw LLM-concept er automatisch een. Bewerkers kunnen ook zelf een afbeelding genereren of uploaden. Bij uploaden bevestigen ze dat ze het recht hebben om de afbeelding te gebruiken.
 
+### Links tussen pagina's
+
+Net als op Wikipedia linken pagina's naar elkaar:
+
+- **Handmatig** met `[[onderwerp]]` of `[[onderwerp|eigen tekst]]`. `[[de huisarts]]` vindt ook de pagina `huisarts`.
+- **Rode links.** Een link naar een pagina die nog niet bestaat, wordt rood. Wie erop klikt, kan een eerste versie laten schrijven.
+- **Automatisch.** De eerste vermelding van een ander bestaand onderwerp wordt vanzelf klikbaar. Dat gebeurt alleen bij hele woorden en nooit binnen bestaande links. De opgeslagen tekst verandert daarbij niet; alleen de weergave krijgt de links.
+
+### Logo en slogan
+
+Het beeldmerk is een planeet met een gouden ring, een ster en een maan. De gratis dingen in het leven zijn de aarde, de zon, de maan en de sterren. De slogan staat in elke taal: *"Zon, maan en sterren zijn gratis. De rest zoeken wij uit."* Het merk staat als SVG in `packages/types/src/brand.ts`. Favicon, app-iconen en manifest maak je opnieuw met `node scripts/generate-brand-assets.mjs`.
+
+### Index, feeds en deelkaarten
+
+| Adres | Inhoud |
+|---|---|
+| `/a-z/<taal>` | Alle onderwerpen van A tot Z |
+| `/<taal>/feed.xml` | RSS: nieuwe en bijgewerkte pagina's |
+| `/<taal>/<pagina>/feed.xml` | RSS: elke wijziging van één pagina |
+| `/api/og/<taal>/<pagina>.png` | Deelkaart van 1200 × 630 voor Open Graph en X/Twitter |
+
+De deelkaarten worden met satori en sharp getekend, zonder lettertypen op de server. Het versienummer staat in de URL, zodat sociale netwerken na een bewerking een nieuwe kaart ophalen.
+
+### MCP-server voor AI-agents
+
+`/api/mcp` is een openbare MCP-server (Model Context Protocol, Streamable HTTP). Hij is stateless en alleen-lezen, zonder sleutel, en schaalt mee met de API-pods. De tools zijn `is_it_free`, `search`, `get_page` en `recent_changes`. Toevoegen aan Claude Code:
+
+```bash
+claude mcp add --transport http is-gratis https://is.gratis/api/mcp
+```
+
+De pagina `/developers` beschrijft de MCP-server, de REST-API, llms.txt en de feeds.
+
 ### Donkere modus
 
 De site volgt de systeeminstelling. Via het schermpictogram in de kop kun je licht of donker vastzetten.

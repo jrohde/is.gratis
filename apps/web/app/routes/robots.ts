@@ -7,6 +7,7 @@ export function loader() {
     'Disallow: /admin',
     'Disallow: /api/',
     'Allow: /api/media/',
+    'Allow: /api/og/',
     '',
     `Sitemap: ${env.publicOrigin}/sitemap.xml`,
     '# Markdown versions of every page for language models: /llms.txt',

@@ -25,6 +25,8 @@ import { assetRoutes } from './routes/assets.js';
 import { authRoutes } from './routes/auth.js';
 import { draftRoutes } from './routes/drafts.js';
 import { healthRoutes } from './routes/health.js';
+import { mcpRoutes } from './routes/mcp.js';
+import { ogRoutes } from './routes/og.js';
 import { pageRoutes } from './routes/pages.js';
 import { sponsorRoutes } from './routes/sponsors.js';
 
@@ -104,6 +106,7 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
         { name: 'auth' },
         { name: 'sponsors' },
         { name: 'assets' },
+        { name: 'mcp' },
         { name: 'admin' },
         { name: 'health' },
       ],
@@ -122,6 +125,8 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
       await api.register(draftRoutes, { db, config });
       await api.register(sponsorRoutes, { db, cache });
       await api.register(assetRoutes, { db, config });
+      await api.register(ogRoutes, { db });
+      await api.register(mcpRoutes, { db, config });
     },
     { prefix: '/api' },
   );
