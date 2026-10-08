@@ -4,6 +4,14 @@ De encyclopedie die één vraag beantwoordt: **is het gratis?**
 
 Elke pagina geeft een oordeel in één woord (Ja, Nee, Meestal, Hangt ervan af), legt uit wanneer iets wel en niet gratis is, en beschrijft de verschillen per land. Iedereen met een account kan pagina's verbeteren. Bestaat een pagina nog niet, dan schrijft een taalmodel op verzoek een eerste versie. Die blijft een gemarkeerd concept, buiten zoekmachines, tot een mens hem heeft nagekeken.
 
+Naast het oordeel heeft elke pagina:
+
+- een **Gratis-schaal** van 0 tot 5. Het niveau volgt uit het mechanisme: wie betaalt er, en wanneer. De onderbouwing met literatuur staat op `/methodology`.
+- optioneel een **tijdprijs**: hoeveel werktijd iets kost bij een opgegeven uurloon, met bron. Dat is een gangbare maat in de economie.
+- **achtergrond en wetenschap**, **kerncijfers** en **"Wist je dat?"**.
+- een **emoji** en optioneel een **afbeelding**: geüpload of gegenereerd met een beeldmodel, en dan altijd gelabeld als AI.
+- een **llms.txt**: dezelfde inhoud als Markdown voor taalmodellen. Zie [llms.txt](#llmstxt).
+
 Inkomsten komen uit **gesponsorde aanbiedingen**: een apart, duidelijk gelabeld blok "Hier gratis te krijgen" onder het antwoord, voor proefpakketten, demo's en gratis abonnementen. Adverteerders vragen een plek aan via `/advertise`. Een beheerder keurt de aanvraag goed en stelt de looptijd in.
 
 ## Architectuur
@@ -20,7 +28,7 @@ Inkomsten komen uit **gesponsorde aanbiedingen**: een apart, duidelijk gelabeld 
 
 - **api**: Fastify, Drizzle ORM, Zod. Volledige REST-API met OpenAPI-documentatie op `/api/docs`.
 - **worker**: zelfde image, verwerkt de wachtrij voor LLM-concepten. De wachtrij staat in Postgres (`FOR UPDATE SKIP LOCKED`), dus geen Redis of message broker nodig.
-- **web**: React Router 7 (framework-modus, Vite, server-side rendering), Mantine, Motion, Zustand. Rendert complete HTML met structured data en hreflang.
+- **web**: React Router 7 (framework-modus, Vite, server-side rendering), Mantine, Motion, Zustand en Tabler-iconen. Rendert complete HTML met structured data, hreflang en llms.txt.
 - **Varnish**: cachet pagina's een dag. De API stuurt bij elke wijziging een BAN naar elke Varnish-replica, zodat bezoekers direct de nieuwe versie zien.
 - **PostgreSQL**: via de CloudNativePG-operator.
 
@@ -29,6 +37,62 @@ Buiten het taalmodel gebruikt niets een externe dienst. Ook het taalmodel kan in
 ### Hoe het schaalt
 
 Een gepubliceerde pagina wordt één keer gerenderd en daarna uit de Varnish-cache geserveerd. De web- en API-pods zijn stateless en schalen met een HorizontalPodAutoscaler op CPU. De worker schaalt optioneel met KEDA op het aantal wachtende concepten. Sessies staan in Postgres, dus elke pod kan elk verzoek afhandelen.
+
+### Bewerken in Markdown, zoals Wikipedia
+
+Wikipedia bewaart elke pagina als *wikitext*, een eigen opmaaktaal met sjablonen voor infoboxen. Bewerkers kiezen tussen die broncode en de VisualEditor, die dezelfde wikitext achter de schermen schrijft. Elke bewerking wordt een volledige nieuwe versie, en verschillen worden op de broncode berekend.
+
+is.gratis werkt hetzelfde, maar met Markdown in plaats van wikitext:
+
+- De editor heeft een **formulier** en een **Markdown-bron**. De bron is de hele pagina als één document. De gestructureerde velden staan bovenaan tussen `---`, als infoblok.
+- Beide modi schrijven dezelfde gestructureerde inhoud. Fouten in de bron worden met regelnummer gemeld.
+- Elke opslag is een volledige nieuwe versie. De geschiedenis toont de verschillen per sectie van de Markdown-bron.
+
+```markdown
+---
+title: water
+verdict: depends
+emoji: 💧
+scale: partial
+scale-region: NL
+---
+
+> Hangt ervan af. Kraanwater kost geld, maar minder dan een cent per liter.
+
+## Wanneer wel gratis
+
+- **Openbare watertappunten** in steden en parken.
+
+## Per land en regio
+
+### Frankrijk [FR]: Ja
+
+Bij een maaltijd hoort een karaf kraanwater gratis te zijn.
+```
+
+De omzetting staat in `packages/types/src/markdown.ts` en wordt door tests heen en terug gecontroleerd.
+
+### llms.txt
+
+Volgens de [llms.txt-conventie](https://llmstxt.org) biedt de site Markdown voor taalmodellen en andere tools. Alles wordt automatisch uit dezelfde inhoud gemaakt en door Varnish gecachet:
+
+| Adres | Inhoud |
+|---|---|
+| `/llms.txt` | Wat is.gratis is, met links naar de talen en de methode |
+| `/<taal>/llms.txt` | Alle gepubliceerde pagina's in die taal, met het korte antwoord |
+| `/<taal>/<pagina>/llms.txt` | De hele pagina als Markdown, met oordeel, schaal en status |
+
+Elke HTML-pagina verwijst ernaar met `<link rel="alternate" type="text/markdown">`.
+
+### Afbeeldingen
+
+Afbeeldingen staan in Postgres, dus er is geen aparte objectopslag nodig. Elke upload wordt gecontroleerd, rechtop gezet en ontdaan van metadata zoals GPS-locaties. Daarna wordt hij verkleind tot maximaal 1600 pixels en als WebP opgeslagen. De API levert drie breedtes voor responsieve afbeeldingen. Varnish cachet ze voor altijd, want de adressen veranderen nooit.
+
+Beeldgeneratie gebruikt elk OpenAI-compatibel images-endpoint (`IMAGE_MODEL`, standaard uit). De prompt vraagt om een illustratie zonder tekst, logo's of herkenbare personen. Met `DRAFT_WITH_IMAGE=true` krijgt elk nieuw LLM-concept er automatisch een. Bewerkers kunnen ook zelf een afbeelding genereren of uploaden. Bij uploaden bevestigen ze dat ze het recht hebben om de afbeelding te gebruiken.
+
+### Donkere modus
+
+De site volgt de systeeminstelling. Via het schermpictogram in de kop kun je licht of donker vastzetten.
 
 ### Subdomeinen
 
@@ -79,7 +143,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/isgratis_test npm 
 npm run typecheck
 ```
 
-De API-tests draaien tegen een echte database: accounts, bewerkingen met conflictdetectie, terugzetten, de conceptwachtrij met retries en rate limits, de LLM-client tegen een nep-endpoint, sponsorplekken en cache-invalidatie.
+De API-tests draaien tegen een echte database: accounts, bewerkingen met conflictdetectie, terugzetten, de conceptwachtrij met retries en rate limits, de LLM-client tegen een nep-endpoint, afbeeldingen en beeldgeneratie, sponsorplekken en cache-invalidatie. De tests van het gedeelde pakket controleren dat de Markdown-bron zonder verlies heen en terug gaat.
 
 ## Uitrollen op Kubernetes
 
@@ -123,7 +187,8 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 - **E-mailverificatie en wachtwoordherstel.** Daarvoor is een mailserver nodig; die is nu bewust weggelaten.
 - **Betalingen.** Sponsorplekken worden nu met de hand gefactureerd.
 - **Licentie voor bijdragen.** Kies onder welke licentie bewerkers hun tekst bijdragen en vermeld dat bij het registreren.
-- **Startinhoud nalopen.** De twaalf startpagina's zijn zorgvuldig geformuleerd maar niet tegen bronnen gecontroleerd. Loop ze na voor livegang.
+- **Startinhoud nalopen.** De twaalf startpagina's zijn zorgvuldig geformuleerd, ook de achtergrondteksten, kerncijfers en weetjes, maar niet tegen bronnen gecontroleerd. Loop ze na voor livegang. Tijdprijzen zijn bewust leeg gelaten: die vragen een prijs en een uurloon met gecontroleerde bron.
+- **Beeldmodel kiezen.** Beeldgeneratie staat standaard uit. Voor alles in eigen beheer is een zelf gehost model achter een OpenAI-compatibele server nodig, zoals LocalAI. Dat vraagt een GPU-node.
 - **Moderatie.** Iedereen met een account kan bewerken en terugzetten. Bij vandalisme zijn pagina-vergrendeling en een moderatorenoverzicht de volgende stap.
 - **Vertalingen koppelen.** Door het taalmodel geschreven pagina's worden automatisch gekoppeld aan dezelfde pagina in andere talen. Met de hand gemaakte pagina's nog niet.
 - **Rate limits** voor inloggen en bewerken gelden per pod. Het dure deel, conceptgeneratie, wordt wel centraal in Postgres begrensd.

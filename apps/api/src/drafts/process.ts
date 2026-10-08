@@ -1,46 +1,58 @@
 /**
- * Processes one draft job: ask the LLM, validate, store as a draft page, purge the cache.
+ * Processes one job from the queue: a first draft of a page, or an illustration for a page.
  */
 import type { FastifyBaseLogger } from 'fastify';
+import type { Language } from '@isgratis/types';
 import type { Config } from '../config.js';
 import type { Database } from '../db/client.js';
+import type { DraftJobRow } from '../db/schema.js';
 import type { CacheInvalidator } from '../lib/cache.js';
 import { HttpError } from '../lib/errors.js';
+import { hashIp } from '../lib/hash.js';
+import { buildImagePrompt, generateImage } from '../lib/image-llm.js';
+import { normalizeImage } from '../lib/images.js';
 import { LlmError, writeDraft, type DraftResult } from '../lib/llm.js';
-import { claimNextJob, finishJob } from '../services/drafts.js';
+import { storeAsset } from '../services/assets.js';
+import { claimNextJob, enqueueImage, finishJob } from '../services/drafts.js';
 import { getPage, saveRevision } from '../services/pages.js';
 
 export interface WorkerDeps {
   db: Database;
-  config: Pick<Config, 'llm' | 'drafts'>;
+  config: Pick<Config, 'llm' | 'drafts' | 'images' | 'ipHashSalt'>;
   cache: CacheInvalidator;
   logger: Pick<FastifyBaseLogger, 'info' | 'warn' | 'error'>;
   /** Injectable for tests. */
   write?: typeof writeDraft;
+  generate?: typeof generateImage;
 }
 
-/** Returns false when the queue was empty. */
-export async function processNextJob(deps: WorkerDeps): Promise<boolean> {
-  const job = await claimNextJob(deps.db, deps.config.drafts.maxAttempts);
-  if (!job) return false;
-  const log = { jobId: job.id, lang: job.lang, slug: job.slug, attempt: job.attempts };
-  deps.logger.info(log, 'writing draft');
+const ALT_TEXT: Record<Language, (title: string) => string> = {
+  nl: (title) => `Illustratie bij ${title}`,
+  en: (title) => `Illustration of ${title}`,
+  de: (title) => `Illustration zu ${title}`,
+  es: (title) => `Ilustración sobre ${title}`,
+};
 
+async function failOrRetry(deps: WorkerDeps, job: DraftJobRow, error: unknown, log: object) {
+  const message = error instanceof Error ? error.message : String(error);
+  const retry = error instanceof LlmError && job.attempts < deps.config.drafts.maxAttempts;
+  deps.logger.warn({ ...log, error: message, retry }, 'job failed');
+  await finishJob(deps.db, job.id, { status: retry ? 'queued' : 'failed', error: message });
+}
+
+async function processPageJob(deps: WorkerDeps, job: DraftJobRow, log: object) {
   let result: DraftResult;
   try {
     result = await (deps.write ?? writeDraft)(deps.config.llm, job.lang, job.slug);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const retry = error instanceof LlmError && job.attempts < deps.config.drafts.maxAttempts;
-    deps.logger.warn({ ...log, error: message, retry }, 'draft failed');
-    await finishJob(deps.db, job.id, { status: retry ? 'queued' : 'failed', error: message });
-    return true;
+    await failOrRetry(deps, job, error, log);
+    return;
   }
 
   if (!result.ok) {
     deps.logger.info({ ...log, reason: result.reason }, 'subject rejected by the model');
     await finishJob(deps.db, job.id, { status: 'failed', error: `not_a_topic: ${result.reason}` });
-    return true;
+    return;
   }
 
   try {
@@ -61,12 +73,78 @@ export async function processNextJob(deps: WorkerDeps): Promise<boolean> {
       const message = error instanceof Error ? error.message : String(error);
       deps.logger.error({ ...log, error: message }, 'storing draft failed');
       await finishJob(deps.db, job.id, { status: 'failed', error: `store_failed: ${message}` });
-      return true;
+      return;
     }
   }
   const page = await getPage(deps.db, job.lang, job.slug);
   await finishJob(deps.db, job.id, { status: 'done', pageId: page.id });
   await deps.cache.purgePage(job.lang, job.slug);
   deps.logger.info(log, 'draft stored');
+
+  if (deps.config.drafts.withImage && deps.config.images.enabled && !page.content.image) {
+    await enqueueImage(
+      deps.db,
+      { lang: job.lang, slug: job.slug, userId: null, ipHash: hashIp('worker', deps.config.ipHashSalt), attach: true },
+      { perUserPerHour: Number.POSITIVE_INFINITY, globalPerHour: deps.config.images.globalPerHour },
+    ).catch((error: unknown) => deps.logger.warn({ ...log, error: String(error) }, 'could not queue an image'));
+  }
+}
+
+async function processImageJob(deps: WorkerDeps, job: DraftJobRow, log: object) {
+  if (!deps.config.images.enabled) {
+    await finishJob(deps.db, job.id, { status: 'failed', error: 'Image generation is not configured' });
+    return;
+  }
+  let page;
+  try {
+    page = await getPage(deps.db, job.lang, job.slug);
+  } catch {
+    await finishJob(deps.db, job.id, { status: 'failed', error: 'The page no longer exists' });
+    return;
+  }
+
+  const prompt = buildImagePrompt(job.lang, page.title, page.content.summary);
+  let asset;
+  try {
+    const raw = await (deps.generate ?? generateImage)(deps.config.images, prompt);
+    const image = await normalizeImage(raw);
+    asset = await storeAsset(deps.db, image, { source: 'ai', prompt, createdBy: job.requestedBy });
+  } catch (error) {
+    await failOrRetry(deps, job, error, log);
+    return;
+  }
+
+  if (job.attach) {
+    // Only fill an empty spot: never replace an image a person chose.
+    const current = await getPage(deps.db, job.lang, job.slug);
+    if (!current.content.image) {
+      await saveRevision(deps.db, {
+        lang: job.lang,
+        slug: job.slug,
+        title: current.title,
+        content: {
+          ...current.content,
+          image: { assetId: asset.id, alt: ALT_TEXT[job.lang](current.title), width: asset.width, height: asset.height, ai: true },
+        },
+        editSummary: 'Afbeelding gegenereerd',
+        baseRevisionId: current.currentRevision.id,
+        authorId: null,
+        source: 'llm',
+      }).catch((error: unknown) => deps.logger.warn({ ...log, error: String(error) }, 'could not attach image'));
+      await deps.cache.purgePage(job.lang, job.slug);
+    }
+  }
+  await finishJob(deps.db, job.id, { status: 'done', pageId: page.id, assetId: asset.id });
+  deps.logger.info({ ...log, assetId: asset.id }, 'image stored');
+}
+
+/** Returns false when the queue was empty. */
+export async function processNextJob(deps: WorkerDeps): Promise<boolean> {
+  const job = await claimNextJob(deps.db, deps.config.drafts.maxAttempts);
+  if (!job) return false;
+  const log = { jobId: job.id, kind: job.kind, lang: job.lang, slug: job.slug, attempt: job.attempts };
+  deps.logger.info(log, 'processing job');
+  if (job.kind === 'image') await processImageJob(deps, job, log);
+  else await processPageJob(deps, job, log);
   return true;
 }

@@ -3,6 +3,7 @@
  * place, so history, diffs and reverts are trivial and nothing is ever lost.
  */
 import { and, asc, desc, eq, gt, isNull, lte, max, ne, or, sql } from 'drizzle-orm';
+import { normalizeContent } from '@isgratis/types';
 import type {
   Language,
   Page,
@@ -84,7 +85,7 @@ export async function getPage(db: Database, lang: Language, slug: string): Promi
     slug: row.page.slug,
     title: row.page.title,
     status: row.page.status,
-    content: row.revision.content,
+    content: normalizeContent(row.revision.content),
     currentRevision: toRevisionSummary(row.revision, row.authorName),
     sponsoredOffers: offers,
     translations,
@@ -113,6 +114,7 @@ export async function listPages(
     lang: page.lang,
     slug: page.slug,
     title: page.title,
+    ...(content.emoji ? { emoji: content.emoji } : {}),
     verdict: content.verdict,
     status: page.status,
     summary: content.summary,
@@ -281,7 +283,7 @@ export async function getRevision(db: Database, lang: Language, slug: string, nu
   return {
     ...toRevisionSummary(row.revision, row.authorName),
     title: row.revision.title,
-    content: row.revision.content,
+    content: normalizeContent(row.revision.content),
   };
 }
 

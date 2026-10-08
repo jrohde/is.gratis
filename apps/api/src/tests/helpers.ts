@@ -44,7 +44,7 @@ export type TestContext = Awaited<ReturnType<typeof createTestApp>>;
 
 export async function resetDatabase(ctx: TestContext) {
   await ctx.db.execute(
-    sql`truncate table sessions, sponsored_offers, draft_jobs, revisions, pages, topics, users restart identity cascade`,
+    sql`truncate table sessions, sponsored_offers, draft_jobs, assets, revisions, pages, topics, users restart identity cascade`,
   );
 }
 
@@ -66,6 +66,9 @@ export function sampleContent(overrides: Partial<PageContent> = {}): PageContent
     summary: 'Hangt ervan af.',
     whenFree: '- Soms',
     whenNotFree: '- Soms niet',
+    background: '',
+    facts: [],
+    trivia: [],
     regions: [{ region: 'NL', verdict: 'depends', text: 'Per gemeente verschillend.' }],
     sources: [{ title: 'Voorbeeld', url: 'https://example.com' }],
     ...overrides,

@@ -23,3 +23,22 @@ export async function api<T>(method: string, path: string, body?: unknown): Prom
   }
   return payload as T;
 }
+
+/** Uploads an image file as the raw request body; the API normalises it to WebP. */
+export async function uploadImage(file: File): Promise<{ id: string; width: number; height: number; source: 'upload' | 'ai' }> {
+  const response = await fetch('/api/assets', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'content-type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+  const payload = (await response.json().catch(() => ({}))) as {
+    asset?: { id: string; width: number; height: number; source: 'upload' | 'ai' };
+    error?: string;
+    message?: string;
+  };
+  if (!response.ok || !payload.asset) {
+    throw new ClientApiError(response.status, payload.error ?? 'error', payload.message ?? response.statusText);
+  }
+  return payload.asset;
+}

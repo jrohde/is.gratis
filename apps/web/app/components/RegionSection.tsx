@@ -1,4 +1,5 @@
-import { Badge, Card, Group, Select, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, Select, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { REGIONS, type Language, type Region, type RegionBlock } from '@isgratis/types';
 import { messages } from '~/lib/i18n';
@@ -17,11 +18,13 @@ export function RegionSection({
   lang,
   selected,
   onSelect,
+  icon,
 }: {
   blocks: RegionBlock[];
   lang: Language;
   selected: Region;
   onSelect: (region: Region) => void;
+  icon?: ReactNode;
 }) {
   const t = messages(lang);
   const ordered = [...blocks].sort((a, b) => Number(b.region === selected) - Number(a.region === selected));
@@ -29,9 +32,16 @@ export function RegionSection({
   return (
     <Stack gap="sm">
       <Group justify="space-between" align="end">
-        <Title order={2} size="h3">
-          {t.regions}
-        </Title>
+        <Group gap="xs" wrap="nowrap">
+          {icon && (
+            <ThemeIcon variant="light" color="cyan" size="md" radius="md" aria-hidden>
+              {icon}
+            </ThemeIcon>
+          )}
+          <Title order={2} size="h4">
+            {t.regions}
+          </Title>
+        </Group>
         <Select
           aria-label={t.chooseRegion}
           label={t.yourRegion}

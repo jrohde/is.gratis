@@ -6,7 +6,7 @@
  * with the same schema as a human edit before anything is stored.
  */
 import { z } from 'zod';
-import { REGIONS, type Language, type PageContent } from '@isgratis/types';
+import { FREE_TYPES, REGIONS, type Language, type PageContent } from '@isgratis/types';
 import { pageContentSchema, titleSchema } from './content.js';
 
 export interface LlmConfig {
@@ -70,9 +70,14 @@ Otherwise answer:
   "title": "<the subject as written in the middle of a ${LANGUAGE_NAMES[lang]} sentence, e.g. water, openbaar vervoer, Netflix>",
   "content": {
     "verdict": "yes" | "no" | "usually" | "depends",
+    "emoji": "<one emoji for the subject>",
     "summary": "<one or two sentences that directly answer the question>",
     "whenFree": "<Markdown: the situations in which it is free>",
     "whenNotFree": "<Markdown: the situations in which it costs money, and roughly what>",
+    "background": "<Markdown, one or two short paragraphs: why it is or is not free; the economic, legal or scientific mechanism; well-established research where relevant>",
+    "scale": { "type": "<one of: ${FREE_TYPES.join(', ')}>", "region": "<region code the type applies to>" },
+    "facts": [ { "label": "<short label>", "value": "<short value>", "sourceUrl": "https://... (optional)" } ],
+    "trivia": [ "<one surprising, true sentence>" ],
     "regions": [ { "region": "<code>", "verdict": "...", "text": "<Markdown>" } ],
     "sources": [ { "title": "...", "url": "https://..." } ]
   }
@@ -81,10 +86,17 @@ Otherwise answer:
 Rules:
 - verdict "yes" means free almost everywhere for almost everyone, "no" means it almost always costs money,
   "usually" means free in most common situations, "depends" means it truly depends on context.
+- scale.type describes WHY it is free in the most common situation in that region:
+  free_good = not scarce, nobody pays even indirectly (air); collective = free at the point of use, paid by taxes or
+  insurance premiums (public schools); third_party = free for the user, paid by a seller, advertiser or employer
+  (wifi in a cafe); partial = free only for some groups, times or places, or as a basic version; exception = only free
+  through promotions, trials or rare exceptions; paid = always paid.
 - Markdown only: paragraphs, bullet lists, bold, links. No headings, no HTML, no tables.
 - Region codes must be one of: ${REGIONS.join(', ')}. Only add a region when something specific is true there
   (a law, a national scheme, a common local practice). At most 6 regions. Never repeat a region.
 - Prefer stating rules and mechanisms over exact prices, which change. If you give a price, say it is indicative.
+- facts: at most 4, only figures you are certain about (dates of laws, physical quantities, well-known statistics).
+  trivia: at most 3, each one true and checkable. Leave both empty rather than guess.
 - When you are not sure about a regional fact, leave it out or say plainly that it varies.
 - Sources: only URLs you are certain exist and are stable, such as official government sites or Wikipedia articles.
   An empty list is better than a guessed URL.
@@ -145,5 +157,8 @@ export async function writeDraft(config: LlmConfig, lang: Language, slug: string
     throw new LlmError(`LLM answer does not match the page schema: ${parsed.error.issues[0]?.message ?? ''}`);
   }
   if (!parsed.data.valid) return { ok: false, reason: parsed.data.reason };
-  return { ok: true, topicKey: parsed.data.topicKey, title: parsed.data.title, content: parsed.data.content };
+  // A model never sets an image or a time price: images are generated separately and time
+  // prices need figures with a source a person has checked.
+  const { image: _image, timePrice: _timePrice, ...content } = parsed.data.content;
+  return { ok: true, topicKey: parsed.data.topicKey, title: parsed.data.title, content };
 }

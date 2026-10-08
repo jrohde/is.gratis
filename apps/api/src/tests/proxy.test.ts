@@ -6,7 +6,7 @@ beforeAll(async () => {
   // One trusted proxy (Varnish) in front of the API.
   ctx = await createTestApp({
     trustProxy: 1,
-    drafts: { perIpPerHour: 2, globalPerHour: 100, maxAttempts: 2, pollIntervalMs: 10 },
+    drafts: { perIpPerHour: 2, globalPerHour: 100, maxAttempts: 2, pollIntervalMs: 10, withImage: false },
   });
 });
 afterAll(async () => ctx.close());

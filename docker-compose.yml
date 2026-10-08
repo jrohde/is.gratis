@@ -39,6 +39,10 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      IMAGE_BASE_URL: ${IMAGE_BASE_URL:-}
+      IMAGE_API_KEY: ${IMAGE_API_KEY:-}
+      IMAGE_MODEL: ${IMAGE_MODEL:-}
+      DRAFT_WITH_IMAGE: ${DRAFT_WITH_IMAGE:-false}
       CACHE_BAN_TARGET: varnish:8081
       TRUST_PROXY: '1'
     depends_on:

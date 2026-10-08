@@ -2,6 +2,8 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { LANGUAGES, pickLanguage } from '@isgratis/types';
 import { requireUser } from '../auth.js';
+import { badRequest } from '../lib/errors.js';
+import { getAssetMeta } from '../services/assets.js';
 import type { Database } from '../db/client.js';
 import type { CacheInvalidator } from '../lib/cache.js';
 import { languageSchema, pageContentSchema, slugSchema, titleSchema } from '../lib/content.js';
@@ -40,7 +42,7 @@ export const pageRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInval
         querystring: z.object({
           lang: languageSchema.optional(),
           status: z.enum(['draft', 'published']).optional(),
-          limit: z.coerce.number().int().min(1).max(100).default(20),
+          limit: z.coerce.number().int().min(1).max(1000).default(20),
           offset: z.coerce.number().int().min(0).max(10_000).default(0),
         }),
         response: { 200: z.object({ pages: z.array(pageListItemSchema) }) },
@@ -85,10 +87,18 @@ export const pageRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInval
     async (request, reply) => {
       const user = requireUser(request);
       const { lang, slug } = request.params;
+      const content = { ...request.body.content };
+      if (content.image) {
+        // Size and the AI label come from the stored image, never from the client.
+        const asset = await getAssetMeta(db, content.image.assetId);
+        if (!asset) throw badRequest('unknown_image', 'This image does not exist');
+        content.image = { ...content.image, width: asset.width, height: asset.height, ai: asset.source === 'ai' };
+      }
       const { created } = await saveRevision(db, {
         lang,
         slug,
         ...request.body,
+        content,
         authorId: user.id,
         source: 'human',
       });

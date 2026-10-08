@@ -62,14 +62,24 @@ export const pageListItemSchema = z.object({
   lang: languageEnum,
   slug: z.string(),
   title: z.string(),
+  emoji: z.string().optional(),
   verdict: verdictSchema,
   status: z.enum(['draft', 'published']),
   summary: z.string(),
   updatedAt: z.string(),
 });
 
+export const assetSchema = z.object({
+  id: z.string(),
+  width: z.number().int(),
+  height: z.number().int(),
+  source: z.enum(['upload', 'ai']),
+});
+
 export const draftJobSchema = z.object({
   id: z.string(),
+  kind: z.enum(['page', 'image']),
+  asset: assetSchema.nullable(),
   lang: languageEnum,
   slug: z.string(),
   status: z.enum(['queued', 'running', 'done', 'failed']),

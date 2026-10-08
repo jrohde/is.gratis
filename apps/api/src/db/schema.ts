@@ -9,6 +9,8 @@
 import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
+  boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -19,6 +21,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import type {
+  DraftJobKind,
   DraftJobStatus,
   Language,
   PageContent,
@@ -30,6 +33,10 @@ import type {
 } from '@isgratis/types';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => 'bytea',
+});
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -101,10 +108,28 @@ export const revisions = pgTable(
   (table) => [uniqueIndex('revisions_page_number_idx').on(table.pageId, table.number)],
 );
 
+/**
+ * Images, normalised to WebP and stored in Postgres. They are served once per size and then
+ * cached by Varnish forever (their URLs never change), so the database barely notices.
+ */
+export const assets = pgTable('assets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sha256: text('sha256').notNull().unique(),
+  width: integer('width').notNull(),
+  height: integer('height').notNull(),
+  bytes: bytea('bytes').notNull(),
+  source: text('source').$type<'upload' | 'ai'>().notNull(),
+  prompt: text('prompt'),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+});
+
 export const draftJobs = pgTable(
   'draft_jobs',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** "page" writes a first version; "image" generates an illustration for a page. */
+    kind: text('kind').$type<DraftJobKind>().notNull().default('page'),
     lang: text('lang').$type<Language>().notNull(),
     slug: text('slug').notNull(),
     status: text('status').$type<DraftJobStatus>().notNull().default('queued'),
@@ -114,6 +139,9 @@ export const draftJobs = pgTable(
     ipHash: text('ip_hash').notNull(),
     requestedBy: uuid('requested_by').references(() => users.id, { onDelete: 'set null' }),
     pageId: uuid('page_id').references(() => pages.id, { onDelete: 'set null' }),
+    assetId: uuid('asset_id').references(() => assets.id, { onDelete: 'set null' }),
+    /** Image jobs: put the image on the page when it has none yet. */
+    attach: boolean('attach').notNull().default(false),
     createdAt: createdAt(),
     startedAt: timestamp('started_at', { withTimezone: true }),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
@@ -121,9 +149,9 @@ export const draftJobs = pgTable(
   (table) => [
     index('draft_jobs_status_created_idx').on(table.status, table.createdAt),
     index('draft_jobs_ip_created_idx').on(table.ipHash, table.createdAt),
-    // At most one open job per page address.
-    uniqueIndex('draft_jobs_open_idx')
-      .on(table.lang, table.slug)
+    // At most one open job of each kind per page address.
+    uniqueIndex('draft_jobs_open_kind_idx')
+      .on(table.kind, table.lang, table.slug)
       .where(sql`status in ('queued', 'running')`),
   ],
 );
@@ -156,3 +184,4 @@ export type PageRow = typeof pages.$inferSelect;
 export type RevisionRow = typeof revisions.$inferSelect;
 export type DraftJobRow = typeof draftJobs.$inferSelect;
 export type SponsoredOfferRow = typeof sponsoredOffers.$inferSelect;
+export type AssetRow = typeof assets.$inferSelect;

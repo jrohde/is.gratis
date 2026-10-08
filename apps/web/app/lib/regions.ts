@@ -1,18 +1,8 @@
-import type { Language, Region } from '@isgratis/types';
+import { regionName, type Language, type Region } from '@isgratis/types';
 
-const WIDE_AREAS: Record<'EU' | 'WORLD', Record<Language, string>> = {
-  EU: { nl: 'Europese Unie', en: 'European Union', de: 'Europäische Union', es: 'Unión Europea' },
-  WORLD: { nl: 'Wereldwijd', en: 'Worldwide', de: 'Weltweit', es: 'Todo el mundo' },
-};
-
-/** Country names in the reader's language, from the runtime's own locale data. */
+/** Country names in the reader's language. */
 export function regionLabel(region: Region, lang: Language): string {
-  if (region === 'EU' || region === 'WORLD') return WIDE_AREAS[region][lang];
-  try {
-    return new Intl.DisplayNames([lang], { type: 'region' }).of(region) ?? region;
-  } catch {
-    return region;
-  }
+  return regionName(region, lang);
 }
 
 export function regionFlag(region: Region): string {

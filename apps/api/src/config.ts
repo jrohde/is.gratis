@@ -73,6 +73,19 @@ export interface Config {
     globalPerHour: number;
     maxAttempts: number;
     pollIntervalMs: number;
+    /** Also generate an illustration for every new LLM draft (needs image generation). */
+    withImage: boolean;
+  };
+  /** Image generation through an OpenAI-compatible images endpoint. Off when no model is set. */
+  images: {
+    enabled: boolean;
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+    size: string;
+    timeoutMs: number;
+    perUserPerHour: number;
+    globalPerHour: number;
   };
   /**
    * host:port of the HTTP cache (Varnish) to send BAN requests to after a page changes.
@@ -110,6 +123,17 @@ export function loadConfig(): Config {
       globalPerHour: int('DRAFT_GLOBAL_LIMIT_PER_HOUR', 200),
       maxAttempts: int('DRAFT_MAX_ATTEMPTS', 3),
       pollIntervalMs: int('DRAFT_POLL_INTERVAL_MS', 2000),
+      withImage: bool('DRAFT_WITH_IMAGE', false),
+    },
+    images: {
+      enabled: str('IMAGE_MODEL', '') !== '',
+      baseUrl: str('IMAGE_BASE_URL', str('LLM_BASE_URL', 'https://api.openai.com/v1')).replace(/\/+$/, ''),
+      apiKey: str('IMAGE_API_KEY', str('LLM_API_KEY', '')),
+      model: str('IMAGE_MODEL', ''),
+      size: str('IMAGE_SIZE', '1536x1024'),
+      timeoutMs: int('IMAGE_TIMEOUT_MS', 180_000),
+      perUserPerHour: int('IMAGE_RATE_LIMIT_PER_HOUR', 5),
+      globalPerHour: int('IMAGE_GLOBAL_LIMIT_PER_HOUR', 50),
     },
     cacheBanTarget: cacheBanTarget || undefined,
   };

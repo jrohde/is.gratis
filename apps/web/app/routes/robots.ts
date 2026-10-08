@@ -6,8 +6,10 @@ export function loader() {
     'Disallow: /account/',
     'Disallow: /admin',
     'Disallow: /api/',
+    'Allow: /api/media/',
     '',
     `Sitemap: ${env.publicOrigin}/sitemap.xml`,
+    '# Markdown versions of every page for language models: /llms.txt',
     '',
   ].join('\n');
   return new Response(body, {

@@ -77,6 +77,11 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
                 <Card withBorder padding="md" h="100%">
                   <Group justify="space-between" wrap="nowrap" mb={6}>
                     <Anchor component={Link} to={`/${lang}/${page.slug}`} fw={700} c="inherit">
+                      {page.emoji && (
+                        <Text span mr={8} aria-hidden>
+                          {page.emoji}
+                        </Text>
+                      )}
                       {t.question(page.title)}
                     </Anchor>
                     <VerdictBadge verdict={page.verdict} lang={lang} size="sm" />

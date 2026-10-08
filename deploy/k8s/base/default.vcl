@@ -2,8 +2,9 @@ vcl 4.1;
 
 # HTTP cache in front of the web app and the API.
 #
-#   ingress -> varnish -> /api/*      -> api  (never cached)
-#                      -> everything  -> web  (cached per s-maxage)
+#   ingress -> varnish -> /api/media/* -> api  (images, cached for a year)
+#                      -> /api/*       -> api  (never cached)
+#                      -> everything   -> web  (cached per s-maxage)
 #
 # The API sends "BAN" requests with an X-Ban-Url regex when a page changes, so published
 # pages can stay cached for a day and still update the moment someone edits them.
@@ -50,6 +51,13 @@ sub vcl_recv {
   }
   if (req.method == "BAN" || req.method == "PURGE") {
     return (synth(405, "Not allowed"));
+  }
+
+  # Images have immutable URLs: cache them like static files.
+  if (req.url ~ "^/api/media/" && (req.method == "GET" || req.method == "HEAD")) {
+    set req.backend_hint = api;
+    unset req.http.Cookie;
+    return (hash);
   }
 
   if (req.url ~ "^/api/") {

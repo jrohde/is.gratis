@@ -1,7 +1,7 @@
 import { Anchor, Badge, Box, Button, Card, Container, Group, Stack, Table, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { data, Link, useNavigate } from 'react-router';
-import type { Revision, RevisionSummary } from '@isgratis/types';
+import { normalizeContent, type Revision, type RevisionSummary } from '@isgratis/types';
 import type { Route } from './+types/page-history';
 import { api, ClientApiError } from '~/lib/api.client';
 import { ApiError, apiGet } from '~/lib/api.server';
@@ -54,7 +54,11 @@ export default function PageHistory({ loaderData }: Route.ComponentProps) {
   const [error, setError] = useState<string | null>(null);
   const base = `/${lang}/${slug}`;
   const latest = revisions[0]!.number;
-  const empty = { ...toRevision, title: '', content: { ...toRevision.content, summary: '', whenFree: '', whenNotFree: '', regions: [], sources: [] } };
+  const empty = {
+    ...toRevision,
+    title: toRevision.title,
+    content: normalizeContent({ verdict: toRevision.content.verdict, summary: '' }),
+  };
   const diff = diffRevisions(fromRevision ?? empty, toRevision, lang);
 
   const authorOf = (revision: RevisionSummary) =>

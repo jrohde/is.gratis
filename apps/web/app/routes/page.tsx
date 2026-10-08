@@ -1,9 +1,25 @@
 import { Alert, Anchor, Button, Card, Container, Divider, Group, List, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import {
+  IconBook2,
+  IconCircleCheck,
+  IconCircleX,
+  IconFileText,
+  IconFlask,
+  IconHistory,
+  IconPencil,
+  IconWorld,
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import { data, Link, redirect, useRevalidator } from 'react-router';
-import { toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
+import { SECTION_LABELS, toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
 import type { Route } from './+types/page';
 import { DraftRequest } from '~/components/DraftRequest';
+import { FactsGrid } from '~/components/FactsGrid';
+import { PageHero } from '~/components/PageHero';
+import { ScaleMeter } from '~/components/ScaleMeter';
+import { SectionTitle } from '~/components/SectionTitle';
+import { TimePriceCard } from '~/components/TimePriceCard';
+import { TriviaList } from '~/components/TriviaList';
 import { Markdown } from '~/components/Markdown';
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
@@ -14,6 +30,7 @@ import { CACHE } from '~/lib/cache';
 import { env } from '~/lib/env.server';
 import { formatDate, LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { jsonForScript, plainText } from '~/lib/markdown';
+import { mediaUrl } from '~/lib/media';
 import { parseLang } from '~/lib/params';
 import { DEFAULT_REGION } from '~/lib/regions';
 import { usePreferences } from '~/stores/preferences';
@@ -62,7 +79,16 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
     { property: 'og:description', content: description },
     { property: 'og:type', content: 'article' },
     { property: 'og:url', content: url },
+    ...(page.content.image
+      ? [
+          { property: 'og:image', content: `${loaderData.origin}${mediaUrl(page.content.image.assetId, 1600)}` },
+          { property: 'og:image:alt', content: page.content.image.alt },
+          { name: 'twitter:card', content: 'summary_large_image' },
+        ]
+      : []),
     { tagName: 'link', rel: 'canonical', href: url },
+    // The same page as plain Markdown, for language models and other tools (llms.txt convention).
+    { tagName: 'link', rel: 'alternate', type: 'text/markdown', href: `${url}/llms.txt` },
     { tagName: 'link', rel: 'alternate', hrefLang: page.lang, href: url },
     ...page.translations.map((tr) => ({
       tagName: 'link' as const,
@@ -151,52 +177,85 @@ function PageView({ page }: { page: Page }) {
         ? t.seedAuthor
         : page.currentRevision.authorName;
 
+  const sections = SECTION_LABELS[page.lang];
+  const { content } = page;
   return (
     <Container size="md">
       {page.status === 'published' && <StructuredData page={page} question={question} />}
       <Stack gap="xl">
         {page.status === 'draft' && <DraftBanner page={page} />}
 
-        <Stack gap="sm">
-          <Title order={1} fz={{ base: 32, sm: 44 }} lh={1.15}>
-            {question}
-          </Title>
-          <div>
-            <VerdictBadge verdict={page.content.verdict} lang={page.lang} size="xl" animate />
-          </div>
-          <Markdown size="lg">{page.content.summary}</Markdown>
+        <Stack gap="md">
+          {content.image && <PageHero content={content} lang={page.lang} />}
+          <Group gap="lg" wrap="nowrap" align="center">
+            {!content.image && <PageHero content={content} lang={page.lang} />}
+            <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
+              <Title order={1} fz={{ base: 30, sm: 44 }} lh={1.15}>
+                {question}
+              </Title>
+              <div>
+                <VerdictBadge verdict={content.verdict} lang={page.lang} size="xl" animate />
+              </div>
+            </Stack>
+          </Group>
+          <Markdown size="lg">{content.summary}</Markdown>
         </Stack>
+
+        {(content.scale || content.timePrice) && (
+          <SimpleGrid cols={{ base: 1, sm: content.scale && content.timePrice ? 2 : 1 }}>
+            {content.scale && <ScaleMeter scale={content.scale} lang={page.lang} />}
+            {content.timePrice && <TimePriceCard timePrice={content.timePrice} lang={page.lang} />}
+          </SimpleGrid>
+        )}
 
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Card withBorder padding="lg" style={{ borderTop: '4px solid var(--mantine-color-green-6)' }}>
-            <Title order={2} size="h4" mb="sm">
-              {t.whenFree}
-            </Title>
-            <Markdown>{page.content.whenFree || '–'}</Markdown>
+            <SectionTitle icon={<IconCircleCheck size={18} />} color="green">
+              {sections.whenFree}
+            </SectionTitle>
+            <Markdown>{content.whenFree || '–'}</Markdown>
           </Card>
           <Card withBorder padding="lg" style={{ borderTop: '4px solid var(--mantine-color-red-6)' }}>
-            <Title order={2} size="h4" mb="sm">
-              {t.whenNotFree}
-            </Title>
-            <Markdown>{page.content.whenNotFree || '–'}</Markdown>
+            <SectionTitle icon={<IconCircleX size={18} />} color="red">
+              {sections.whenNotFree}
+            </SectionTitle>
+            <Markdown>{content.whenNotFree || '–'}</Markdown>
           </Card>
         </SimpleGrid>
 
         <SponsoredBlock offers={page.sponsoredOffers} lang={page.lang} slug={page.slug} region={region} />
 
-        <RegionSection blocks={page.content.regions} lang={page.lang} selected={region} onSelect={setRegion} />
+        {content.background && (
+          <section>
+            <SectionTitle icon={<IconFlask size={18} />} color="violet">
+              {sections.background}
+            </SectionTitle>
+            <Markdown>{content.background}</Markdown>
+          </section>
+        )}
 
-        <Stack gap="xs">
-          <Title order={2} size="h4">
-            {t.sources}
-          </Title>
-          {page.content.sources.length === 0 ? (
+        <FactsGrid facts={content.facts} lang={page.lang} />
+        <TriviaList items={content.trivia} lang={page.lang} />
+
+        <section>
+          <RegionSection
+            blocks={content.regions}
+            lang={page.lang}
+            selected={region}
+            onSelect={setRegion}
+            icon={<IconWorld size={18} />}
+          />
+        </section>
+
+        <section>
+          <SectionTitle icon={<IconBook2 size={18} />}>{sections.sources}</SectionTitle>
+          {content.sources.length === 0 ? (
             <Text c="dimmed" size="sm">
               {t.noSources}
             </Text>
           ) : (
             <List size="sm">
-              {page.content.sources.map((source) => (
+              {content.sources.map((source) => (
                 <List.Item key={source.url}>
                   <Anchor href={source.url} rel="nofollow ugc noopener" target="_blank">
                     {source.title}
@@ -205,7 +264,7 @@ function PageView({ page }: { page: Page }) {
               ))}
             </List>
           )}
-        </Stack>
+        </section>
 
         <Divider />
         <Group justify="space-between" gap="xs">
@@ -218,10 +277,19 @@ function PageView({ page }: { page: Page }) {
                 {LANGUAGE_NAMES[tr.lang]}
               </Anchor>
             ))}
-            <Anchor component={Link} to={`${base}/history`} size="sm">
-              {t.history}
+            <Anchor href={`${base}/llms.txt`} size="sm" title="Markdown (llms.txt)">
+              <Group gap={4} wrap="nowrap" component="span">
+                <IconFileText size={14} aria-hidden />
+                llms.txt
+              </Group>
             </Anchor>
-            <Button component={Link} to={`${base}/edit`} size="xs" variant="light">
+            <Anchor component={Link} to={`${base}/history`} size="sm">
+              <Group gap={4} wrap="nowrap" component="span">
+                <IconHistory size={14} aria-hidden />
+                {t.history}
+              </Group>
+            </Anchor>
+            <Button component={Link} to={`${base}/edit`} size="xs" variant="light" leftSection={<IconPencil size={14} />}>
               {t.edit}
             </Button>
           </Group>

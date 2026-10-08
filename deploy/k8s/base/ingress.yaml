@@ -8,6 +8,8 @@ metadata:
   annotations:
     # cert-manager.io/cluster-issuer: letsencrypt-dns01
     # Varnish needs the real Host header for subdomain redirects; most controllers keep it.
+    # Image uploads can be up to 10 MB; ingress-nginx allows 1 MB by default.
+    nginx.ingress.kubernetes.io/proxy-body-size: 12m
 spec:
   # ingressClassName: nginx
   tls:

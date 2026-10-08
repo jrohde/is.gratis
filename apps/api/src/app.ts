@@ -21,6 +21,7 @@ import type { Config } from './config.js';
 import type { Database } from './db/client.js';
 import type { CacheInvalidator } from './lib/cache.js';
 import { HttpError } from './lib/errors.js';
+import { assetRoutes } from './routes/assets.js';
 import { authRoutes } from './routes/auth.js';
 import { draftRoutes } from './routes/drafts.js';
 import { healthRoutes } from './routes/health.js';
@@ -102,6 +103,7 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
         { name: 'drafts' },
         { name: 'auth' },
         { name: 'sponsors' },
+        { name: 'assets' },
         { name: 'admin' },
         { name: 'health' },
       ],
@@ -119,6 +121,7 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
       await api.register(pageRoutes, { db, cache });
       await api.register(draftRoutes, { db, config });
       await api.register(sponsorRoutes, { db, cache });
+      await api.register(assetRoutes, { db, config });
     },
     { prefix: '/api' },
   );

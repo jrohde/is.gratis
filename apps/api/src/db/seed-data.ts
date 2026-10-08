@@ -1,6 +1,8 @@
 /**
  * Starting content: hand-written pages that show what a good page looks like.
- * Facts are deliberately phrased as rules rather than prices, which change.
+ * Facts are deliberately phrased as rules rather than prices, which change. Background texts,
+ * key figures and trivia stick to well-established facts; time prices are left to editors
+ * because they need figures with a checked source.
  * Review before going live; editors improve them from there.
  */
 import type { Language, PageContent } from '@isgratis/types';
@@ -21,6 +23,17 @@ export const seedPages: SeedPage[] = [
     title: 'lucht',
     content: {
       verdict: 'yes',
+      emoji: "🌬️",
+      scale: { type: 'free_good', region: 'NL' },
+      background: "Economen noemen lucht het schoolvoorbeeld van een **vrij goed**: er is zoveel van dat niemand er een prijs voor kan vragen. Pas waar lucht schaars wordt, ontstaat een markt: perslucht in een duikfles, of schone lucht in een kantoor met luchtfilters.\n\nDat onderscheid tussen vrije en economische goederen staat in vrijwel elk inleidend economieboek. Het laat zien dat een prijs niet uit een ding zelf komt, maar uit schaarste.",
+      facts: [
+        { label: "Samenstelling droge lucht", value: "ongeveer 78% stikstof, 21% zuurstof, 0,9% argon" },
+        { label: "Ademhaling in rust", value: "ongeveer 6 liter lucht per minuut" }
+      ],
+      trivia: [
+        "Een volwassene ademt in rust zo'n 12 tot 20 keer per minuut.",
+        "In ruimtevaart is lucht wél schaars: een ruimtestation moet zuurstof aanvoeren of zelf maken."
+      ],
       summary:
         'Ja. De lucht die je inademt is overal gratis. Je betaalt hooguit voor een dienst rond lucht, zoals perslucht om een duikfles te vullen.',
       whenFree: [
@@ -60,6 +73,17 @@ export const seedPages: SeedPage[] = [
     title: 'water',
     content: {
       verdict: 'depends',
+      emoji: "💧",
+      scale: { type: 'partial', region: 'NL' },
+      background: "Drinkwater is in Nederland een nutsvoorziening. De drinkwaterbedrijven zijn volgens de Drinkwaterwet in handen van de overheid en rekenen een kostendekkend tarief, geen winstprijs.\n\nDe Verenigde Naties erkennen sinds 2010 toegang tot veilig drinkwater als mensenrecht. Dat betekent dat water betaalbaar en bereikbaar moet zijn, niet dat het gratis moet zijn.",
+      facts: [
+        { label: "Mensenrecht sinds (VN-resolutie 64/292)", value: "2010" },
+        { label: "Prijs kraanwater", value: "minder dan een cent per liter (indicatief)" }
+      ],
+      trivia: [
+        "Een liter kraanwater kost in Nederland minder dan een cent, flessenwater vaak honderden keren meer.",
+        "In Frankrijk hoort een karaf kraanwater bij een maaltijd in een restaurant gratis te zijn."
+      ],
       summary:
         'Hangt ervan af. Kraanwater thuis betaal je aan het drinkwaterbedrijf, maar een liter kost een fractie van een cent. Aan openbare watertappunten is het gratis, en in sommige landen moet een restaurant je gratis kraanwater geven.',
       whenFree: [
@@ -118,6 +142,16 @@ export const seedPages: SeedPage[] = [
     title: 'onderwijs',
     content: {
       verdict: 'usually',
+      emoji: "🎓",
+      scale: { type: 'collective', region: 'NL' },
+      background: "Onderwijs is een klassiek voorbeeld van een **meritgoed**: de overheid betaalt het, omdat de samenleving als geheel ervan profiteert als iedereen naar school gaat. Gratis bij gebruik betekent dus niet dat het niets kost; het wordt via belastingen betaald.",
+      facts: [
+        { label: "Leerplicht in Nederland", value: "sinds 1901" },
+        { label: "Leeftijd leerplicht", value: "van 5 tot 16 jaar, daarna kwalificatieplicht tot 18 jaar" }
+      ],
+      trivia: [
+        "De eerste Nederlandse leerplichtwet is uit 1900 en ging in 1901 in."
+      ],
       summary:
         'Meestal. In Nederland zijn de basisschool en de middelbare school gratis: de overheid betaalt. Scholen mogen een vrijwillige ouderbijdrage vragen. Voor hoger onderwijs betaal je collegegeld.',
       whenFree: [
@@ -163,6 +197,15 @@ export const seedPages: SeedPage[] = [
     title: 'de bibliotheek',
     content: {
       verdict: 'usually',
+      emoji: "📚",
+      scale: { type: 'partial', region: 'NL' },
+      background: "Openbare bibliotheken worden in Nederland vooral door gemeenten betaald. Sinds 2015 legt de Wet stelsel openbare bibliotheekvoorzieningen vast welke taken een bibliotheek heeft, zoals het bevorderen van lezen en het bieden van toegang tot informatie.",
+      facts: [
+        { label: "Wettelijk kader", value: "Wet stelsel openbare bibliotheekvoorzieningen, sinds 2015" }
+      ],
+      trivia: [
+        "Het woord bibliotheek komt van het Griekse biblion (boek) en thèkè (bewaarplaats)."
+      ],
       summary:
         'Meestal. Een openbare bibliotheek binnenlopen, er lezen en de wifi gebruiken is gratis. Boeken lenen is in Nederland voor kinderen tot 18 jaar meestal gratis; volwassenen betalen een abonnement.',
       whenFree: [
@@ -208,6 +251,16 @@ export const seedPages: SeedPage[] = [
     title: 'openbaar vervoer',
     content: {
       verdict: 'no',
+      emoji: "🚌",
+      scale: { type: 'exception', region: 'NL' },
+      background: "Gratis openbaar vervoer wordt wereldwijd onderzocht. Luxemburg voerde het in 2020 als eerste land landelijk in. Onderzoek naar gratis vervoer voor inwoners van Tallinn liet zien dat het aantal reizigers steeg, maar dat een deel van die groei kwam van mensen die eerder liepen.\n\nDe les: gratis maken verandert gedrag, maar niet altijd het gedrag dat beleidsmakers hopen.",
+      facts: [
+        { label: "Gratis in Luxemburg sinds", value: "1 maart 2020" },
+        { label: "Gratis in Tallinn sinds", value: "2013, voor geregistreerde inwoners" }
+      ],
+      trivia: [
+        "Luxemburg was het eerste land ter wereld met landelijk gratis openbaar vervoer."
+      ],
       summary:
         'Nee, meestal niet. In Nederland betaal je voor bus, tram, metro en trein. Kleine kinderen reizen gratis, en in Luxemburg is al het openbaar vervoer gratis.',
       whenFree: [
@@ -254,6 +307,15 @@ export const seedPages: SeedPage[] = [
     title: 'parkeren',
     content: {
       verdict: 'depends',
+      emoji: "🅿️",
+      scale: { type: 'partial', region: 'NL' },
+      background: "De Amerikaanse verkeerskundige Donald Shoup liet in *The High Cost of Free Parking* (2005) zien dat gratis parkeren niet echt gratis is. De kosten zitten in huren, winkelprijzen en belastingen, en gratis plekken leiden tot meer zoekverkeer.\n\nDaarom kiezen steeds meer steden voor betaald parkeren in drukke gebieden: een prijs zorgt ervoor dat er een plek vrij blijft voor wie hem het hardst nodig heeft.",
+      facts: [
+        { label: "Wie bepaalt de tarieven", value: "de gemeente" }
+      ],
+      trivia: [
+        "Een gewoon parkeervak is ongeveer 2,5 bij 5 meter: meer vloeroppervlak dan veel slaapkamers."
+      ],
       summary:
         'Hangt ervan af. In Nederland bepaalt de gemeente waar en wanneer je betaalt. Buiten de centra is parkeren vaak gratis, in de binnensteden bijna nooit.',
       whenFree: [
@@ -294,6 +356,15 @@ export const seedPages: SeedPage[] = [
     title: 'de huisarts',
     content: {
       verdict: 'usually',
+      emoji: "🩺",
+      scale: { type: 'collective', region: 'NL' },
+      background: "Dat de huisarts in Nederland buiten het eigen risico valt, is een bewuste keuze. De huisarts is de **poortwachter** van de zorg: wie eerst naar de huisarts gaat, komt alleen bij de duurdere specialist als dat nodig is. Een drempel bij de huisarts zou die rol ondermijnen.",
+      facts: [
+        { label: "Rol van de huisarts", value: "poortwachter: voor de meeste specialistische zorg is een verwijzing nodig" }
+      ],
+      trivia: [
+        "Het verplichte eigen risico was in Nederland jarenlang 385 euro per jaar; de huisarts viel er altijd buiten."
+      ],
       summary:
         'Meestal. In Nederland betaal je voor een bezoek aan de huisarts niets extra: het valt onder de basisverzekering en niet onder het eigen risico. Je betaalt wel de premie van je zorgverzekering.',
       whenFree: [
@@ -342,6 +413,15 @@ export const seedPages: SeedPage[] = [
     title: 'wifi',
     content: {
       verdict: 'usually',
+      emoji: "📶",
+      scale: { type: 'third_party', region: 'NL' },
+      background: "Wifi in een café of trein is een voorbeeld van wat econoom Chris Anderson in *Free* (2009) een **kruissubsidie** noemt: het is gratis voor jou, omdat de aanbieder er iets anders mee verdient, zoals koffie of een treinkaartje.",
+      facts: [
+        { label: "Technische standaard", value: "IEEE 802.11" }
+      ],
+      trivia: [
+        "De naam Wi-Fi is een merknaam van de Wi-Fi Alliance en geen afkorting."
+      ],
       summary:
         'Meestal. Op veel openbare plekken is wifi gratis, zoals in bibliotheken, treinen en horeca. In vliegtuigen en sommige hotels betaal je ervoor.',
       whenFree: [
@@ -377,6 +457,13 @@ export const seedPages: SeedPage[] = [
     title: 'een openbaar toilet',
     content: {
       verdict: 'depends',
+      emoji: "🚻",
+      scale: { type: 'partial', region: 'NL' },
+      background: "Openbare toiletten zijn in Nederland een gemeentelijke keuze; er is geen landelijke wet die gemeenten verplicht ze aan te bieden. Daardoor verschilt het aanbod sterk per stad, en vragen veel exploitanten een vergoeding voor schoonmaak en onderhoud.",
+      facts: [],
+      trivia: [
+        "De Engelse uitdrukking “to spend a penny” komt van openbare toiletten die vroeger een penny kostten."
+      ],
       summary:
         'Hangt ervan af. In Nederland kosten toiletten op stations en in winkelcentra vaak een klein bedrag. In musea, bibliotheken en gemeentelijke gebouwen kun je meestal gratis terecht.',
       whenFree: [
@@ -415,6 +502,15 @@ export const seedPages: SeedPage[] = [
     title: 'een museum',
     content: {
       verdict: 'depends',
+      emoji: "🏛️",
+      scale: { type: 'partial', region: 'NL' },
+      background: "Het Verenigd Koninkrijk schafte in 2001 de entree voor de vaste collecties van de nationale musea af. Het aantal bezoekers steeg daarna sterk. Het is een veelgebruikt voorbeeld van hoe een prijs van nul gedrag verandert.",
+      facts: [
+        { label: "Gratis nationale musea in het VK sinds", value: "2001" }
+      ],
+      trivia: [
+        "Het British Museum was bij de opening in 1759 al gratis toegankelijk."
+      ],
       summary:
         'Hangt ervan af. In Nederland betalen volwassenen meestal entree, maar veel grote musea zijn gratis voor wie jonger is dan 18. In het Verenigd Koninkrijk zijn de nationale musea gratis.',
       whenFree: [
@@ -461,6 +557,16 @@ export const seedPages: SeedPage[] = [
     title: 'air',
     content: {
       verdict: 'yes',
+      emoji: "🌬️",
+      scale: { type: 'free_good', region: 'GB' },
+      background: "Economists call air the textbook example of a **free good**: there is so much of it that nobody can charge for it. A market only appears where air becomes scarce, such as compressed air in a scuba tank.",
+      facts: [
+        { label: "Composition of dry air", value: "about 78% nitrogen, 21% oxygen, 0.9% argon" },
+        { label: "Breathing at rest", value: "about 6 litres of air per minute" }
+      ],
+      trivia: [
+        "On a space station air is scarce: oxygen has to be delivered or produced on board."
+      ],
       summary:
         'Yes. The air you breathe is free everywhere. You only pay for services around air, such as filling a scuba tank.',
       whenFree: [
@@ -495,6 +601,15 @@ export const seedPages: SeedPage[] = [
     title: 'water',
     content: {
       verdict: 'depends',
+      emoji: "💧",
+      scale: { type: 'partial', region: 'GB' },
+      background: "Since 2010 the United Nations recognises access to safe drinking water as a human right. That means water must be affordable and accessible, not that it must be free.",
+      facts: [
+        { label: "Human right since (UN resolution 64/292)", value: "2010" }
+      ],
+      trivia: [
+        "In England, Scotland and Wales, licensed premises must give you free tap water when you ask for it."
+      ],
       summary:
         'It depends. You pay your water company for tap water at home, though a litre costs a fraction of a cent. Public drinking fountains are free, and in some countries restaurants must give you tap water for free.',
       whenFree: [

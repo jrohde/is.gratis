@@ -11,7 +11,7 @@ let ctx: TestContext;
 const logger = pino({ level: 'silent' });
 
 beforeAll(async () => {
-  ctx = await createTestApp({ drafts: { perIpPerHour: 2, globalPerHour: 100, maxAttempts: 2, pollIntervalMs: 10 } });
+  ctx = await createTestApp({ drafts: { perIpPerHour: 2, globalPerHour: 100, maxAttempts: 2, pollIntervalMs: 10, withImage: false } });
 });
 afterAll(async () => ctx.close());
 beforeEach(async () => {

@@ -21,6 +21,12 @@ data:
   # (see optional/ollama.yaml) to keep everything in-house.
   LLM_BASE_URL: https://api.openai.com/v1
   LLM_MODEL: gpt-4o-mini
+  # Illustrations through an OpenAI-compatible images endpoint. Empty IMAGE_MODEL turns it off.
+  # IMAGE_BASE_URL and IMAGE_API_KEY default to the LLM settings.
+  IMAGE_MODEL: ''
+  IMAGE_SIZE: 1536x1024
+  # Give every new LLM draft an illustration as well.
+  DRAFT_WITH_IMAGE: 'false'
   DRAFT_RATE_LIMIT_PER_HOUR: '3'
   DRAFT_GLOBAL_LIMIT_PER_HOUR: '200'
   ADMIN_EMAILS: ''
@@ -28,5 +34,6 @@ data:
 # Create the real secret yourself; this file only documents its keys:
 #   kubectl -n isgratis create secret generic isgratis-secrets \
 #     --from-literal=IP_HASH_SALT="$(openssl rand -hex 32)" \
-#     --from-literal=LLM_API_KEY=sk-...
-# (LLM_API_KEY may be empty for a local model.)
+#     --from-literal=LLM_API_KEY=sk-... \
+#     --from-literal=IMAGE_API_KEY=
+# (Both keys may be empty for a model in your own cluster.)
