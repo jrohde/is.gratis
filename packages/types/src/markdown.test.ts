@@ -16,7 +16,7 @@ const content: PageContent = {
   summary: 'Hangt ervan af. Kraanwater kost geld,\nmaar weinig.',
   whenFree: '- **Openbare watertappunten**\n- Regenwater',
   whenNotFree: 'Thuis betaal je per kubieke meter.\n\nFlessenwater is duurder.',
-  background: 'Drinkwater is een nutsvoorziening.',
+  background: 'Drinkwater is een nutsvoorziening.[^drinkwater]',
   scale: { type: 'partial', region: 'NL' },
   timePrice: {
     unit: '1 liter kraanwater',
@@ -35,7 +35,7 @@ const content: PageContent = {
     { region: 'NL', verdict: 'depends', text: 'Horeca mag geld vragen.' },
     { region: 'FR', verdict: 'yes', text: 'Een karaf is gratis.\n\nBij een maaltijd.' },
   ],
-  sources: [{ title: 'Drinkwater (Wikipedia)', url: 'https://nl.wikipedia.org/wiki/Drinkwater' }],
+  sources: [{ id: 'drinkwater', title: 'Drinkwater (Wikipedia)', url: 'https://nl.wikipedia.org/wiki/Drinkwater' }],
 };
 
 describe('Markdown source', () => {

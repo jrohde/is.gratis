@@ -94,7 +94,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       <Box component="header" py="md" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
         <Container size="md">
           <Group justify="space-between">
-            <Logo href={`/${lang}`} />
+            <Logo href={`/${lang}`} lang={lang} />
             <Group gap="sm">
               <Anchor component={Link} to={`/a-z/${lang}`} size="sm" fw={600} c="dimmed" visibleFrom="xs">
                 {t.indexLink}
@@ -113,7 +113,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         <Container size="md">
           <Group justify="space-between" gap="sm" align="start">
             <Stack gap={4}>
-              <Logo href={`/${lang}`} size={20} />
+              <Logo href={`/${lang}`} size={22} lang={lang} />
               <Text size="sm" c="dimmed">
                 {SLOGAN[lang]}
               </Text>

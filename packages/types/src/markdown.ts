@@ -28,17 +28,18 @@ import {
 } from './index.js';
 import { FREE_TYPE_LABELS, SCALE_NAME, SECTION_KEYS, SECTION_LABELS, type SectionKey } from './labels.js';
 import { renderWikiLinks } from './wikilinks.js';
+import { citationStats, renderCitations, unknownCitations, withSourceIds } from './citations.js';
 
 const SOURCE_WORD: Record<Language, string> = { nl: 'bron', en: 'source', de: 'Quelle', es: 'fuente' };
 
 const META_LABELS: Record<
   Language,
-  { verdict: string; timePrice: string; draft: string; updated: string; version: string; url: string; translations: string; of: string; forUnit: string; atWage: string }
+  { verdict: string; timePrice: string; sourced: string; draft: string; updated: string; version: string; url: string; translations: string; of: string; forUnit: string; atWage: string }
 > = {
-  nl: { verdict: 'Oordeel', timePrice: 'Tijdprijs', draft: 'Status: concept, geschreven door een taalmodel en nog niet nagekeken', updated: 'Bijgewerkt', version: 'versie', url: 'Pagina', translations: 'Andere talen', of: 'van', forUnit: 'werk voor', atWage: 'bij een uurloon van' },
-  en: { verdict: 'Verdict', timePrice: 'Time price', draft: 'Status: draft, written by a language model and not reviewed yet', updated: 'Updated', version: 'version', url: 'Page', translations: 'Other languages', of: 'of', forUnit: 'of work for', atWage: 'at an hourly wage of' },
-  de: { verdict: 'Urteil', timePrice: 'Zeitpreis', draft: 'Status: Entwurf, von einem Sprachmodell geschrieben und noch nicht geprüft', updated: 'Aktualisiert', version: 'Version', url: 'Seite', translations: 'Andere Sprachen', of: 'von', forUnit: 'Arbeit für', atWage: 'bei einem Stundenlohn von' },
-  es: { verdict: 'Veredicto', timePrice: 'Precio en tiempo', draft: 'Estado: borrador, escrito por un modelo de lenguaje y aún sin revisar', updated: 'Actualizado', version: 'versión', url: 'Página', translations: 'Otros idiomas', of: 'de', forUnit: 'de trabajo por', atWage: 'con un salario por hora de' },
+  nl: { verdict: 'Oordeel', timePrice: 'Tijdprijs', sourced: 'Beweringen met bron', draft: 'Status: concept, geschreven door een taalmodel en nog niet nagekeken', updated: 'Bijgewerkt', version: 'versie', url: 'Pagina', translations: 'Andere talen', of: 'van', forUnit: 'werk voor', atWage: 'bij een uurloon van' },
+  en: { verdict: 'Verdict', timePrice: 'Time price', sourced: 'Claims with a source', draft: 'Status: draft, written by a language model and not reviewed yet', updated: 'Updated', version: 'version', url: 'Page', translations: 'Other languages', of: 'of', forUnit: 'of work for', atWage: 'at an hourly wage of' },
+  de: { verdict: 'Urteil', timePrice: 'Zeitpreis', sourced: 'Aussagen mit Quelle', draft: 'Status: Entwurf, von einem Sprachmodell geschrieben und noch nicht geprüft', updated: 'Aktualisiert', version: 'Version', url: 'Seite', translations: 'Andere Sprachen', of: 'von', forUnit: 'Arbeit für', atWage: 'bei einem Stundenlohn von' },
+  es: { verdict: 'Veredicto', timePrice: 'Precio en tiempo', sourced: 'Afirmaciones con fuente', draft: 'Estado: borrador, escrito por un modelo de lenguaje y aún sin revisar', updated: 'Actualizado', version: 'versión', url: 'Página', translations: 'Otros idiomas', of: 'de', forUnit: 'de trabajo por', atWage: 'con un salario por hora de' },
 };
 
 const QUESTION: Record<Language, (subject: string) => string> = {
@@ -107,7 +108,12 @@ function factLine(fact: Fact, lang: Language): string {
   return `- **${fact.label}**: ${fact.value}${source}`;
 }
 
-function sectionBody(key: SectionKey, content: PageContent, lang: Language): string {
+function sectionBody(key: SectionKey, content: PageContent, lang: Language, mode: 'source' | 'llms' = 'source'): string {
+  if (mode === 'llms') {
+    // Readers of llms.txt get numbered footnotes instead of [^id] markers.
+    if (key === 'sources') return content.sources.map((s, i) => `${i + 1}. [${s.title}](${s.url})`).join('\n');
+    return renderCitations(sectionBody(key, content, lang, 'source'), content.sources, 'plain');
+  }
   switch (key) {
     case 'whenFree':
     case 'whenNotFree':
@@ -120,7 +126,7 @@ function sectionBody(key: SectionKey, content: PageContent, lang: Language): str
     case 'regions':
       return content.regions.map((block) => `${regionHeading(block, lang)}\n\n${block.text.trim()}`).join('\n\n');
     case 'sources':
-      return content.sources.map((source) => `- [${source.title}](${source.url})`).join('\n');
+      return content.sources.map((source) => `- ${source.id}: [${source.title}](${source.url})`).join('\n');
   }
 }
 
@@ -170,7 +176,12 @@ export interface LlmsPage {
 export function pageToLlmsText(page: LlmsPage): string {
   const { lang, content } = page;
   const meta = META_LABELS[lang];
-  const lines: string[] = [`# ${content.emoji ? `${content.emoji} ` : ''}${questionFor(lang, page.title)}`, '', quote(content.summary), ''];
+  const lines: string[] = [
+    `# ${content.emoji ? `${content.emoji} ` : ''}${questionFor(lang, page.title)}`,
+    '',
+    quote(renderCitations(content.summary, content.sources, 'plain')),
+    '',
+  ];
   lines.push(`- ${meta.verdict}: ${VERDICT_LABELS[lang][content.verdict]}`);
   if (content.scale) {
     const level = FREE_TYPE_LEVEL[content.scale.type];
@@ -184,6 +195,8 @@ export function pageToLlmsText(page: LlmsPage): string {
       `- ${meta.timePrice}: ${formatDuration(timePriceSeconds(tp), lang)} ${meta.forUnit} ${tp.unit}, ${meta.atWage} ${formatMoney(tp.hourlyWage, tp.currency, lang)} (${regionName(tp.region, lang)}; [${tp.source.title}](${tp.source.url}))`,
     );
   }
+  const stats = citationStats(content);
+  if (stats.claims) lines.push(`- ${meta.sourced}: ${stats.cited} ${meta.of} ${stats.claims}`);
   if (page.status === 'draft') lines.push(`- ${meta.draft}`);
   lines.push(`- ${meta.updated}: ${page.updatedAt.slice(0, 10)} (${meta.version} ${page.revision})`);
   lines.push(`- ${meta.url}: ${page.url}`);
@@ -191,7 +204,7 @@ export function pageToLlmsText(page: LlmsPage): string {
     lines.push(`- ${meta.translations}: ${page.translations.map((t) => `[${t.lang}](${t.url})`).join(', ')}`);
   }
   for (const key of SECTION_KEYS) {
-    const body = sectionBody(key, content, lang);
+    const body = sectionBody(key, content, lang, 'llms');
     if (body) lines.push('', `## ${SECTION_LABELS[lang][key]}`, '', body);
   }
   lines.push('');
@@ -226,7 +239,7 @@ const FRONT_KEYS = [
 ] as const;
 
 const FACT_LINE = /^[-*]\s+\*\*(.+?)\*\*\s*:\s*(.+?)(?:\s+\(\[[^\]]*\]\((https?:\/\/[^)\s]+)\)\))?\s*$/;
-const SOURCE_LINE = /^[-*]\s+\[(.+)\]\((https?:\/\/[^)\s]+)\)\s*$/;
+const SOURCE_LINE = /^[-*]\s+(?:([a-z0-9][a-z0-9-]{0,39}):\s+)?\[(.+)\]\((https?:\/\/[^)\s]+)\)\s*$/;
 const REGION_HEADING = /^###\s+.*\[([A-Z]+)\]\s*:\s*(.+?)\s*$/;
 
 function matchVerdict(label: string): Verdict | null {
@@ -380,12 +393,13 @@ export function parseSource(source: string, lang: Language): ParseResult {
 
   const trivia = listItems('trivia').map((item) => item.text.replace(/^[-*]\s+/, '').trim());
 
-  const sources: Source[] = [];
+  const sourceInputs: Array<{ id?: string; title: string; url: string }> = [];
   for (const item of listItems('sources')) {
     const match = SOURCE_LINE.exec(item.text);
-    if (!match) error(item.line, 'A source looks like: - [Title](https://…)');
-    else sources.push({ title: match[1]!.trim(), url: match[2]! });
+    if (!match) error(item.line, 'A source looks like: - id: [Title](https://…)');
+    else sourceInputs.push({ ...(match[1] ? { id: match[1] } : {}), title: match[2]!.trim(), url: match[3]! });
   }
+  const sources: Source[] = withSourceIds(sourceInputs);
 
   const regions: RegionBlock[] = [];
   const regionSection = bodies.get('regions');
@@ -417,6 +431,19 @@ export function parseSource(source: string, lang: Language): ParseResult {
       }
     });
     flush();
+  }
+
+  const unknown = unknownCitations({
+    sources,
+    summary,
+    whenFree: text('whenFree'),
+    whenNotFree: text('whenNotFree'),
+    background: text('background'),
+    trivia,
+    regions,
+  });
+  if (unknown.length) {
+    error(bodies.get('sources')?.start ?? i, `Citations to unknown sources: ${unknown.map((id) => `[^${id}]`).join(', ')}`);
   }
 
   if (errors.length || !verdict) return { ok: false, errors };

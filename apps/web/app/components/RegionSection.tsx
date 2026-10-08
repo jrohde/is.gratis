@@ -74,7 +74,7 @@ export function RegionSection({
                 </Group>
                 <VerdictBadge verdict={block.verdict} lang={lang} size="sm" />
               </Group>
-              <Markdown>{block.text}</Markdown>
+              <Markdown claims>{block.text}</Markdown>
             </Card>
           </MotionDiv>
         );

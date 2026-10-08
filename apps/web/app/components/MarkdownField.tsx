@@ -2,7 +2,7 @@ import { Box, Group, SegmentedControl, Stack, Text, Textarea } from '@mantine/co
 import { useState } from 'react';
 import type { Language } from '@isgratis/types';
 import { messages } from '~/lib/i18n';
-import { renderWikiLinks } from '@isgratis/types';
+import { renderCitations, renderWikiLinks, type Source } from '@isgratis/types';
 import { Markdown } from './Markdown';
 
 export function MarkdownField({
@@ -13,6 +13,7 @@ export function MarkdownField({
   lang,
   minRows = 4,
   maxLength,
+  sources = [],
 }: {
   label: string;
   description?: string;
@@ -21,6 +22,8 @@ export function MarkdownField({
   lang: Language;
   minRows?: number;
   maxLength: number;
+  /** For footnote numbers in the preview. */
+  sources?: Source[];
 }) {
   const t = messages(lang);
   const [mode, setMode] = useState<'write' | 'preview'>('write');
@@ -56,7 +59,7 @@ export function MarkdownField({
         />
       ) : (
         <Box p="sm" style={{ border: '1px solid var(--mantine-color-default-border)', borderRadius: 8, minHeight: 80 }}>
-          <Markdown>{renderWikiLinks(value, lang) || '–'}</Markdown>
+          <Markdown>{renderCitations(renderWikiLinks(value, lang), sources) || '–'}</Markdown>
         </Box>
       )}
     </Stack>

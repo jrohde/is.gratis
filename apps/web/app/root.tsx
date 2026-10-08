@@ -1,4 +1,5 @@
 import '@mantine/core/styles.css';
+import './app.css';
 import { Button, ColorSchemeScript, Container, MantineProvider, Stack, Text, Title, mantineHtmlProps } from '@mantine/core';
 import { useEffect, type ReactNode } from 'react';
 import {
@@ -21,6 +22,8 @@ import { useMarkHydrated } from './lib/use-hydrated';
 import { useUiLang } from './lib/use-lang';
 import { usePreferences } from './stores/preferences';
 import { useSession } from './stores/session';
+import { useSky } from './stores/sky';
+import { logoSvg } from '@isgratis/types';
 import { theme } from './theme';
 
 export const links: Route.LinksFunction = () => [
@@ -80,8 +83,26 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 }
 
+/** The logo and the favicon follow the real sky: refresh it now and every ten minutes. */
+function useLiveSky() {
+  const refresh = useSky((store) => store.refresh);
+  const sky = useSky((store) => store.state);
+  const live = useSky((store) => store.live);
+  useEffect(() => {
+    refresh();
+    const timer = setInterval(refresh, 10 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [refresh]);
+  useEffect(() => {
+    if (!live) return;
+    const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"][type="image/svg+xml"]');
+    if (icon) icon.href = `data:image/svg+xml,${encodeURIComponent(logoSvg(sky, { idPrefix: 'favicon' }))}`;
+  }, [sky, live]);
+}
+
 function useClientState() {
   useMarkHydrated();
+  useLiveSky();
   const loadSession = useSession((state) => state.load);
   useEffect(() => {
     void usePreferences.persist.rehydrate();

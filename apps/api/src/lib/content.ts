@@ -3,7 +3,7 @@
  * can never store anything a human editor could not.
  */
 import { z } from 'zod';
-import { FREE_TYPES, LANGUAGES, REGIONS, VERDICTS, isValidSlug } from '@isgratis/types';
+import { FREE_TYPES, LANGUAGES, REGIONS, SOURCE_ID, VERDICTS, isValidSlug, unknownCitations, withSourceIds } from '@isgratis/types';
 
 export const languageSchema = z.enum(LANGUAGES);
 export const verdictSchema = z.enum(VERDICTS);
@@ -39,9 +39,15 @@ export const regionBlockSchema = z.object({
   text: markdown(3000).min(1),
 });
 
-export const sourceSchema = z.object({
+/** A link to a source, as used by a time price. */
+export const sourceLinkSchema = z.object({
   title: z.string().min(1).max(200),
   url: httpUrlSchema,
+});
+
+/** A page source; claims cite it with [^id]. The id is derived from the title when missing. */
+export const sourceSchema = sourceLinkSchema.extend({
+  id: z.string().regex(SOURCE_ID, 'Use lowercase letters, digits and hyphens').optional(),
 });
 
 export const freeTypeSchema = z.enum(FREE_TYPES);
@@ -66,7 +72,7 @@ export const timePriceSchema = z.object({
   hourlyWage: z.number().positive().max(1e6),
   currency: z.string().regex(/^[A-Z]{3}$/),
   region: regionSchema,
-  source: sourceSchema,
+  source: sourceLinkSchema,
 });
 
 export const pageImageSchema = z.object({
@@ -103,6 +109,20 @@ export const pageContentSchema = z
   .refine(
     (content) => new Set(content.regions.map((block) => block.region)).size === content.regions.length,
     { message: 'Each region may appear only once', path: ['regions'] },
-  );
+  )
+  .refine((content) => new Set(content.sources.flatMap((s) => (s.id ? [s.id] : []))).size === content.sources.filter((s) => s.id).length, {
+    message: 'Each source id may appear only once',
+    path: ['sources'],
+  })
+  .superRefine((content, ctx) => {
+    const unknown = unknownCitations({ ...content, sources: withSourceIds(content.sources) });
+    if (unknown.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['sources'],
+        message: `Citations to unknown sources: ${unknown.map((id) => `[^${id}]`).join(', ')}`,
+      });
+    }
+  });
 
 export const titleSchema = z.string().trim().min(1).max(120);

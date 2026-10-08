@@ -5,6 +5,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { and, eq } from 'drizzle-orm';
+import { normalizeContent } from '@isgratis/types';
 import { pageContentSchema } from '../lib/content.js';
 import { loadConfig } from '../config.js';
 import { createDatabase, type Database } from './client.js';
@@ -15,7 +16,7 @@ import { seedPages } from './seed-data.js';
 export async function seed(db: Database): Promise<number> {
   let inserted = 0;
   for (const page of seedPages) {
-    const content = pageContentSchema.parse(page.content);
+    const content = normalizeContent(pageContentSchema.parse(page.content));
     const created = await db.transaction(async (tx) => {
       const [existing] = await tx
         .select({ id: pages.id })

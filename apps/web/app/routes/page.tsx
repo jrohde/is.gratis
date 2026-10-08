@@ -1,4 +1,4 @@
-import { Alert, Anchor, Button, Card, Container, Divider, Group, List, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Card, Container, Divider, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import {
   IconBook2,
   IconCircleCheck,
@@ -11,7 +11,7 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { data, Link, redirect, useRevalidator } from 'react-router';
-import { linkContent, SECTION_LABELS, toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
+import { citationStats, citeContent, linkContent, SECTION_LABELS, toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
 import { useMemo } from 'react';
 import type { Route } from './+types/page';
 import { DraftRequest } from '~/components/DraftRequest';
@@ -19,9 +19,10 @@ import { FactsGrid } from '~/components/FactsGrid';
 import { PageHero } from '~/components/PageHero';
 import { ScaleMeter } from '~/components/ScaleMeter';
 import { SectionTitle } from '~/components/SectionTitle';
+import { SourcingSummary } from '~/components/SourcingSummary';
 import { TimePriceCard } from '~/components/TimePriceCard';
 import { TriviaList } from '~/components/TriviaList';
-import { Markdown, WikiLinkContext } from '~/components/Markdown';
+import { CitationContext, Markdown, WikiLinkContext } from '~/components/Markdown';
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { VerdictBadge } from '~/components/VerdictBadge';
@@ -185,14 +186,28 @@ function PageView({ page }: { page: Page }) {
         : page.currentRevision.authorName;
 
   const sections = SECTION_LABELS[page.lang];
-  // Wikipedia-style links: [[links]] and the first mention of other subjects become clickable.
-  const content = useMemo(() => linkContent(page.content, page.lang, page.links), [page]);
+  // Wikipedia-style links and footnotes: [[links]], the first mention of other subjects and
+  // [^id] citations all become clickable. The stored text itself is not changed.
+  const content = useMemo(() => citeContent(linkContent(page.content, page.lang, page.links)), [page]);
+  const stats = useMemo(() => citationStats(page.content), [page.content]);
+  const highlight = usePreferences((state) => state.highlightUnsourced);
   const linkInfo = useMemo(
     () => ({ missing: new Set(page.links.missing), missingTitle: t.missingLink }),
     [page.links.missing, t.missingLink],
   );
+  const citationInfo = useMemo(
+    () => ({
+      sources: page.content.sources,
+      lang: page.lang,
+      highlight,
+      neededLabel: t.citationNeeded,
+      neededHelp: t.citationNeededHelp,
+    }),
+    [page.content.sources, page.lang, highlight, t.citationNeeded, t.citationNeededHelp],
+  );
   return (
     <WikiLinkContext.Provider value={linkInfo}>
+    <CitationContext.Provider value={citationInfo}>
     <Container size="md">
       {page.status === 'published' && <StructuredData page={page} question={question} />}
       <Stack gap="xl">
@@ -214,25 +229,24 @@ function PageView({ page }: { page: Page }) {
           <Markdown size="lg">{content.summary}</Markdown>
         </Stack>
 
-        {(content.scale || content.timePrice) && (
-          <SimpleGrid cols={{ base: 1, sm: content.scale && content.timePrice ? 2 : 1 }}>
-            {content.scale && <ScaleMeter scale={content.scale} lang={page.lang} />}
-            {content.timePrice && <TimePriceCard timePrice={content.timePrice} lang={page.lang} />}
-          </SimpleGrid>
-        )}
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
+          {content.scale && <ScaleMeter scale={content.scale} lang={page.lang} />}
+          {content.timePrice && <TimePriceCard timePrice={content.timePrice} lang={page.lang} />}
+          {stats.claims > 0 && <SourcingSummary stats={stats} lang={page.lang} />}
+        </SimpleGrid>
 
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Card withBorder padding="lg" style={{ borderTop: '4px solid var(--mantine-color-green-6)' }}>
             <SectionTitle icon={<IconCircleCheck size={18} />} color="green">
               {sections.whenFree}
             </SectionTitle>
-            <Markdown>{content.whenFree || '–'}</Markdown>
+            <Markdown claims>{content.whenFree || '–'}</Markdown>
           </Card>
           <Card withBorder padding="lg" style={{ borderTop: '4px solid var(--mantine-color-red-6)' }}>
             <SectionTitle icon={<IconCircleX size={18} />} color="red">
               {sections.whenNotFree}
             </SectionTitle>
-            <Markdown>{content.whenNotFree || '–'}</Markdown>
+            <Markdown claims>{content.whenNotFree || '–'}</Markdown>
           </Card>
         </SimpleGrid>
 
@@ -243,7 +257,7 @@ function PageView({ page }: { page: Page }) {
             <SectionTitle icon={<IconFlask size={18} />} color="violet">
               {sections.background}
             </SectionTitle>
-            <Markdown>{content.background}</Markdown>
+            <Markdown claims>{content.background}</Markdown>
           </section>
         )}
 
@@ -260,22 +274,45 @@ function PageView({ page }: { page: Page }) {
           />
         </section>
 
-        <section>
+        <section id="bronnen" style={{ scrollMarginTop: 80 }}>
           <SectionTitle icon={<IconBook2 size={18} />}>{sections.sources}</SectionTitle>
           {content.sources.length === 0 ? (
             <Text c="dimmed" size="sm">
               {t.noSources}
             </Text>
           ) : (
-            <List size="sm">
-              {content.sources.map((source) => (
-                <List.Item key={source.url}>
-                  <Anchor href={source.url} rel="nofollow ugc noopener" target="_blank">
-                    {source.title}
-                  </Anchor>
-                </List.Item>
+            <Stack gap={6} component="ol" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {content.sources.map((source, index) => (
+                <Group
+                  key={source.id}
+                  component="li"
+                  id={`bron-${index + 1}`}
+                  gap="xs"
+                  wrap="nowrap"
+                  align="baseline"
+                  className="source-item"
+                  style={{ scrollMarginTop: 80 }}
+                >
+                  <Text size="sm" fw={700} c="dimmed" w={28} style={{ flexShrink: 0 }}>
+                    [{index + 1}]
+                  </Text>
+                  <Text size="sm">
+                    <Anchor href={source.url} rel="nofollow ugc noopener" target="_blank">
+                      {source.title}
+                    </Anchor>{' '}
+                    <Text span size="xs" c="dimmed">
+                      {(() => {
+                        try {
+                          return new URL(source.url).hostname.replace(/^www\./, '');
+                        } catch {
+                          return '';
+                        }
+                      })()}
+                    </Text>
+                  </Text>
+                </Group>
               ))}
-            </List>
+            </Stack>
           )}
         </section>
 
@@ -309,6 +346,7 @@ function PageView({ page }: { page: Page }) {
         </Group>
       </Stack>
     </Container>
+    </CitationContext.Provider>
     </WikiLinkContext.Provider>
   );
 }

@@ -308,6 +308,7 @@ export default function PageEdit({ loaderData }: Route.ComponentProps) {
               value={content.whenFree}
               onChange={(value) => editor.setText('whenFree', value)}
               lang={lang}
+              sources={content.sources}
               maxLength={5000}
             />
             <MarkdownField
@@ -315,6 +316,7 @@ export default function PageEdit({ loaderData }: Route.ComponentProps) {
               value={content.whenNotFree}
               onChange={(value) => editor.setText('whenNotFree', value)}
               lang={lang}
+              sources={content.sources}
               maxLength={5000}
             />
             <MarkdownField
@@ -322,6 +324,7 @@ export default function PageEdit({ loaderData }: Route.ComponentProps) {
               value={content.background}
               onChange={(value) => editor.setText('background', value)}
               lang={lang}
+              sources={content.sources}
               maxLength={8000}
             />
 
@@ -506,6 +509,7 @@ export default function PageEdit({ loaderData }: Route.ComponentProps) {
                       value={block.text}
                       onChange={(value) => editor.updateRegion(index, { text: value })}
                       lang={lang}
+                      sources={content.sources}
                       minRows={2}
                       maxLength={3000}
                     />
@@ -540,8 +544,23 @@ export default function PageEdit({ loaderData }: Route.ComponentProps) {
               <Title order={2} size="h4">
                 {sections.sources}
               </Title>
+              <Text size="xs" c="dimmed">
+                {t.citeHint}
+              </Text>
               {content.sources.map((source, index) => (
                 <Group key={index} gap="xs" align="end" wrap="nowrap">
+                  <Text fw={700} c="dimmed" mb={8} w={28}>
+                    [{index + 1}]
+                  </Text>
+                  <TextInput
+                    label={t.sourceId}
+                    value={source.id}
+                    onChange={(event) =>
+                      editor.updateSource(index, { id: event.currentTarget.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })
+                    }
+                    w={150}
+                    maxLength={40}
+                  />
                   <TextInput
                     label={t.sourceTitle}
                     value={source.title}

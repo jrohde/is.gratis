@@ -111,7 +111,7 @@ describe('pages', () => {
           { region: 'NL', verdict: 'no', text: 'b' },
         ],
       }),
-      sampleContent({ sources: [{ title: 'x', url: 'javascript:alert(1)' }] }),
+      sampleContent({ sources: [{ id: 'x', title: 'x', url: 'javascript:alert(1)' }] }),
     ];
     for (const content of attempts) {
       const response = await ctx.app.inject({
@@ -122,6 +122,32 @@ describe('pages', () => {
       });
       expect(response.statusCode).toBe(400);
     }
+  });
+
+  it('gives sources ids and refuses citations to sources that do not exist', async () => {
+    const { cookie } = await register(ctx, 'editor@example.com');
+    const save = (content: object) =>
+      ctx.app.inject({
+        method: 'PUT',
+        url: '/api/pages/nl/bronnen',
+        headers: { cookie },
+        payload: { title: 'bronnen', content: { ...sampleContent(), ...content }, baseRevisionId: null },
+      });
+    const unknown = await save({ whenFree: 'Gratis.[^bestaat-niet]' });
+    expect(unknown.statusCode).toBe(400);
+    expect(unknown.json().message).toContain('[^bestaat-niet]');
+
+    const duplicate = await save({ sources: [{ id: 'a', title: 'A', url: 'https://a.nl' }, { id: 'a', title: 'B', url: 'https://b.nl' }] });
+    expect(duplicate.statusCode).toBe(400);
+
+    const ok = await save({
+      whenFree: 'Gratis.[^drinkwater-wikipedia]',
+      sources: [{ title: 'Drinkwater Wikipedia', url: 'https://nl.wikipedia.org/wiki/Drinkwater' }],
+    });
+    expect(ok.statusCode).toBe(201);
+    expect(ok.json().content.sources).toEqual([
+      { id: 'drinkwater-wikipedia', title: 'Drinkwater Wikipedia', url: 'https://nl.wikipedia.org/wiki/Drinkwater' },
+    ]);
   });
 
   it('returns 404 for unknown pages and validates slugs', async () => {

@@ -26,8 +26,8 @@ export interface PageLinks {
 }
 
 const WIKILINK = /\[\[([^[\]|\n]+?)(?:\|([^[\]\n]+?))?\]\]/g;
-// Text that must never get a link inside it: existing links, wikilinks, code and bare URLs.
-const PROTECTED = /(\[\[[^\]\n]*\]\]|!?\[[^\]\n]*\]\([^)\n]*\)|`[^`\n]*`|https?:\/\/\S+)/g;
+// Text that must never get a link inside it: existing links, wikilinks, citations, code and URLs.
+const PROTECTED = /(\[\[[^\]\n]*\]\]|\[\^[^\]\n]*\]|!?\[[^\]\n]*\]\([^)\n]*\)|`[^`\n]*`|https?:\/\/\S+)/g;
 
 const ARTICLES: Record<Language, string[]> = {
   nl: ['de', 'het', 'een', "'t"],

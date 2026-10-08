@@ -1,6 +1,7 @@
 import { Anchor, Card, SimpleGrid, Text } from '@mantine/core';
 import { IconChartBar } from '@tabler/icons-react';
 import { SECTION_LABELS, type Fact, type Language } from '@isgratis/types';
+import { CitationNeeded } from './Markdown';
 import { SectionTitle } from './SectionTitle';
 
 export function FactsGrid({ facts, lang }: { facts: Fact[]; lang: Language }) {
@@ -22,7 +23,10 @@ export function FactsGrid({ facts, lang }: { facts: Fact[]; lang: Language }) {
                   {fact.label}
                 </Anchor>
               ) : (
-                fact.label
+                <>
+                  {fact.label}
+                  <CitationNeeded />
+                </>
               )}
             </Text>
           </Card>

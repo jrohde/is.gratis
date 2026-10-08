@@ -85,7 +85,13 @@ export const useEditor = create<EditorState>((set) => {
     updateRegion: (index, patch) =>
       patchContent((c) => ({ ...c, regions: c.regions.map((r, i) => (i === index ? { ...r, ...patch } : r)) })),
     removeRegion: (index) => patchContent((c) => ({ ...c, regions: c.regions.filter((_, i) => i !== index) })),
-    addSource: () => patchContent((c) => ({ ...c, sources: [...c.sources, { title: '', url: 'https://' }] })),
+    addSource: () =>
+      patchContent((c) => {
+        const taken = new Set(c.sources.map((source) => source.id));
+        let n = c.sources.length + 1;
+        while (taken.has(`bron-${n}`)) n++;
+        return { ...c, sources: [...c.sources, { id: `bron-${n}`, title: '', url: 'https://' }] };
+      }),
     updateSource: (index, patch) =>
       patchContent((c) => ({ ...c, sources: c.sources.map((s, i) => (i === index ? { ...s, ...patch } : s)) })),
     removeSource: (index) => patchContent((c) => ({ ...c, sources: c.sources.filter((_, i) => i !== index) })),

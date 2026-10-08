@@ -98,9 +98,28 @@ Net als op Wikipedia linken pagina's naar elkaar:
 - **Rode links.** Een link naar een pagina die nog niet bestaat, wordt rood. Wie erop klikt, kan een eerste versie laten schrijven.
 - **Automatisch.** De eerste vermelding van een ander bestaand onderwerp wordt vanzelf klikbaar. Dat gebeurt alleen bij hele woorden en nooit binnen bestaande links. De opgeslagen tekst verandert daarbij niet; alleen de weergave krijgt de links.
 
+### Bronnen en onderbouwing
+
+Net als op Wikipedia moet elke bewering te controleren zijn:
+
+- **Citaties.** Elke bron heeft een kenmerk. Een bewering verwijst ernaar met `[^kenmerk]`, direct achter de zin. Lezers zien een genummerde voetnoot die naar de bronnenlijst springt, met de titel van de bron bij het aanwijzen.
+- **Beweringen zonder bron.** Een alinea of opsommingspunt zonder citatie krijgt het label **[bron?]** en een oranje stippellijn. Een kerncijfer zonder bron krijgt alleen het label. Lezers kunnen de markering uitzetten. Het korte antwoord bovenaan telt niet mee.
+- **Onderbouwingsscore.** Elke pagina toont hoeveel beweringen een bron hebben. Ook llms.txt en MCP vermelden dit, met genummerde voetnoten.
+- **Controle bij opslaan.** Een citatie naar een bron die niet bestaat, wordt geweigerd, zowel in de editor als in de API. Het taalmodel citeert alleen bronnen die een bewering echt dekken. De rest laat het open, zodat mensen het kunnen nakijken.
+
 ### Logo en slogan
 
-Het beeldmerk is een planeet met een gouden ring, een ster en een maan. De gratis dingen in het leven zijn de aarde, de zon, de maan en de sterren. De slogan staat in elke taal: *"Zon, maan en sterren zijn gratis. De rest zoeken wij uit."* Het merk staat als SVG in `packages/types/src/brand.ts`. Favicon, app-iconen en manifest maak je opnieuw met `node scripts/generate-brand-assets.mjs`.
+Het logo is een **prijskaartje zonder prijs, gevuld met de hemel**. Door het oogje van het kaartje kijk je naar de echte lucht van dat moment:
+
+- **Overdag** zit de zon in het oogje, tussen wolkjes.
+- **'s Avonds en 's ochtends** kleurt het kaartje naar schemering.
+- **'s Nachts** staat de maan in het oogje, in de echte fase van die nacht. Het donkere deel heeft aardschijn, zodat ook een nieuwe maan als maan te herkennen is.
+- **Op het zuidelijk halfrond** is de maan gespiegeld, zoals hij daar ook aan de hemel staat. Het halfrond volgt uit de tijdzone van de bezoeker.
+- **De punt** in "is.gratis" is dezelfde zon of maan. Het favicon in het tabblad beweegt mee.
+
+Iedere bezoeker ziet dus een ander logo, en morgen ziet het er weer anders uit. Het merk staat in `packages/types/src/brand.ts`, met tests voor de maanfase tegen gepubliceerde nieuwe en volle manen. Voor vaste plekken, zoals app-iconen en deelkaarten, is er een statische versie met een jonge maan. Die maak je opnieuw met `node scripts/generate-brand-assets.mjs`.
+
+De slogan staat in elke taal: *"Zon, maan en sterren zijn gratis. De rest zoeken wij uit."*
 
 ### Index, feeds en deelkaarten
 

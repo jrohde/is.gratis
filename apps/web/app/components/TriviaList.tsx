@@ -18,7 +18,7 @@ export function TriviaList({ items, lang }: { items: string[]; lang: Language })
               <ThemeIcon variant="light" color="yellow" size="sm" radius="xl" mt={4} aria-hidden>
                 <IconBulb size={14} />
               </ThemeIcon>
-              <Markdown>{item}</Markdown>
+              <Markdown claims>{item}</Markdown>
             </Group>
           </Card>
         ))}

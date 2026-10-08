@@ -6,7 +6,7 @@
  * with the same schema as a human edit before anything is stored.
  */
 import { z } from 'zod';
-import { FREE_TYPES, REGIONS, type Language, type PageContent } from '@isgratis/types';
+import { FREE_TYPES, REGIONS, normalizeContent, type Language, type PageContent } from '@isgratis/types';
 import { pageContentSchema, titleSchema } from './content.js';
 
 export interface LlmConfig {
@@ -79,7 +79,7 @@ Otherwise answer:
     "facts": [ { "label": "<short label>", "value": "<short value>", "sourceUrl": "https://... (optional)" } ],
     "trivia": [ "<one surprising, true sentence>" ],
     "regions": [ { "region": "<code>", "verdict": "...", "text": "<Markdown>" } ],
-    "sources": [ { "title": "...", "url": "https://..." } ]
+    "sources": [ { "id": "<short lowercase id, e.g. drinkwaterwet>", "title": "...", "url": "https://..." } ]
   }
 }
 
@@ -100,6 +100,9 @@ Rules:
 - When you are not sure about a regional fact, leave it out or say plainly that it varies.
 - Sources: only URLs you are certain exist and are stable, such as official government sites or Wikipedia articles.
   An empty list is better than a guessed URL.
+- Citations: put [^id] directly after a sentence that a source supports, e.g. "Restaurants must serve free tap water.[^ley-7-2022]".
+  Only cite a source for claims it actually supports. Leave other sentences uncited: the site marks them as
+  "citation needed" so people can check them. Never cite an id that is not in sources.
 - Never mention specific shops or brands as recommendations.`;
   const user = `Subject slug: "${slug}"\nQuestion: ${QUESTION[lang](subject)}`;
   return [
@@ -160,5 +163,5 @@ export async function writeDraft(config: LlmConfig, lang: Language, slug: string
   // A model never sets an image or a time price: images are generated separately and time
   // prices need figures with a source a person has checked.
   const { image: _image, timePrice: _timePrice, ...content } = parsed.data.content;
-  return { ok: true, topicKey: parsed.data.topicKey, title: parsed.data.title, content };
+  return { ok: true, topicKey: parsed.data.topicKey, title: parsed.data.title, content: normalizeContent(content) };
 }

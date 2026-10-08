@@ -1,6 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { LANGUAGES, pickLanguage } from '@isgratis/types';
+import { LANGUAGES, normalizeContent, pickLanguage } from '@isgratis/types';
 import { requireUser } from '../auth.js';
 import { badRequest } from '../lib/errors.js';
 import { getAssetMeta } from '../services/assets.js';
@@ -106,7 +106,8 @@ export const pageRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInval
     async (request, reply) => {
       const user = requireUser(request);
       const { lang, slug } = request.params;
-      const content = { ...request.body.content };
+      // Sources get their ids here, so the stored content always has them.
+      const content = normalizeContent(request.body.content);
       if (content.image) {
         // Size and the AI label come from the stored image, never from the client.
         const asset = await getAssetMeta(db, content.image.assetId);

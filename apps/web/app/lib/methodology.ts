@@ -19,6 +19,10 @@ export interface Methodology {
   time: string;
   limitsTitle: string;
   limits: string;
+  sourcesTitle: string;
+  sources: string;
+  logoTitle: string;
+  logo: string;
   referencesTitle: string;
 }
 
@@ -61,6 +65,20 @@ const nl: Methodology = {
   limitsTitle: 'Wat we niet meten',
   limits:
     'De schaal zegt niets over kwaliteit of waarde, alleen over de prijs voor jou. Het oordeel bovenaan een pagina (Ja, Nee, Meestal, Hangt ervan af) is de korte samenvatting; de schaal legt uit waarom. Elke beoordeling geldt voor één regio, die erbij staat.',
+  sourcesTitle: 'Bronnen en onderbouwing',
+  sources: [
+    'Net als op Wikipedia moet elke bewering te controleren zijn. Bewerkers verwijzen achter een zin naar een bron met `[^kenmerk]`; lezers zien dan een voetnoot zoals [1] die naar de bron springt.',
+    '',
+    'Een alinea of opsommingspunt zonder bron krijgt het label **[bron?]** en een oranje stippellijn. Dat betekent niet dat het onjuist is, alleen dat niemand het nog heeft onderbouwd. Bovenaan elke pagina staat hoeveel beweringen een bron hebben. De markering kun je daar uitzetten.',
+    '',
+    'Het korte antwoord bovenaan telt niet mee: dat vat de onderbouwde punten eronder samen.',
+  ].join('\n'),
+  logoTitle: 'Het logo',
+  logo: [
+    'Het logo is een prijskaartje zonder prijs, gevuld met de hemel. Door het oogje kijk je naar de echte lucht van dit moment: overdag de zon, \'s avonds de schemering en \'s nachts de maan in de stand van vandaag. Op het zuidelijk halfrond staat de maan gespiegeld, zoals hij daar ook aan de hemel staat.',
+    '',
+    'Daardoor ziet iedere bezoeker een ander logo, en het ziet er morgen weer anders uit dan vandaag. Het laat zien waar is.gratis over gaat: de mooiste dingen hebben geen prijs.',
+  ].join('\n'),
   referencesTitle: 'Literatuur',
 };
 
@@ -103,6 +121,20 @@ const en: Methodology = {
   limitsTitle: 'What we do not measure',
   limits:
     'The scale says nothing about quality or value, only about the price for you. The verdict at the top of a page (Yes, No, Usually, It depends) is the short summary; the scale explains why. Every assessment applies to one region, which is shown with it.',
+  sourcesTitle: 'Sources and verification',
+  sources: [
+    'As on Wikipedia, every claim should be verifiable. Editors cite a source after a sentence with `[^id]`; readers then see a footnote such as [1] that jumps to the source.',
+    '',
+    'A paragraph or list item without a source gets the label **[citation needed]** and an orange dotted underline. That does not mean it is wrong, only that nobody has backed it up yet. Each page shows how many of its claims have a source; you can turn the marking off there.',
+    '',
+    'The short answer at the top does not count: it sums up the sourced points below it.',
+  ].join('\n'),
+  logoTitle: 'The logo',
+  logo: [
+    'The logo is a price tag without a price, filled with sky. Through its eyelet you look at the real sky of this moment: the sun by day, dusk in the evening and the moon in tonight\'s phase at night. In the southern hemisphere the moon is mirrored, just as it appears in the sky there.',
+    '',
+    'So every visitor sees a different logo, and tomorrow it looks different again. It shows what is.gratis is about: the best things in life have no price.',
+  ].join('\n'),
   referencesTitle: 'References',
 };
 

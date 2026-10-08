@@ -1,0 +1,6 @@
+/* Highlight the footnote a reader jumped to, like Wikipedia does. */
+.source-item:target {
+  background: var(--mantine-color-yellow-light);
+  border-radius: 6px;
+  outline: 4px solid var(--mantine-color-yellow-light);
+}

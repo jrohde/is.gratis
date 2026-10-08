@@ -5,14 +5,14 @@
  * because they need figures with a checked source.
  * Review before going live; editors improve them from there.
  */
-import type { Language, PageContent } from '@isgratis/types';
+import type { ContentInput, Language } from '@isgratis/types';
 
 export interface SeedPage {
   topicKey: string;
   lang: Language;
   slug: string;
   title: string;
-  content: PageContent;
+  content: ContentInput;
 }
 
 export const seedPages: SeedPage[] = [
@@ -27,7 +27,7 @@ export const seedPages: SeedPage[] = [
       scale: { type: 'free_good', region: 'NL' },
       background: "Economen noemen lucht het schoolvoorbeeld van een **vrij goed**: er is zoveel van dat niemand er een prijs voor kan vragen. Pas waar lucht schaars wordt, ontstaat een markt: perslucht in een duikfles, of schone lucht in een kantoor met luchtfilters.\n\nDat onderscheid tussen vrije en economische goederen staat in vrijwel elk inleidend economieboek. Het laat zien dat een prijs niet uit een ding zelf komt, maar uit schaarste.",
       facts: [
-        { label: "Samenstelling droge lucht", value: "ongeveer 78% stikstof, 21% zuurstof, 0,9% argon" },
+        { label: "Samenstelling droge lucht", value: "ongeveer 78% stikstof, 21% zuurstof, 0,9% argon", sourceUrl: "https://en.wikipedia.org/wiki/Atmosphere_of_Earth" },
         { label: "Ademhaling in rust", value: "ongeveer 6 liter lucht per minuut" }
       ],
       trivia: [
@@ -63,7 +63,7 @@ export const seedPages: SeedPage[] = [
           text: 'Bandenpompen bij tankstations kosten vaak een klein bedrag per beurt.',
         },
       ],
-      sources: [{ title: 'Atmosphere of Earth (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Atmosphere_of_Earth' }],
+      sources: [{ id: 'atmosphere', title: 'Atmosphere of Earth (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Atmosphere_of_Earth' }],
     },
   },
   {
@@ -75,9 +75,9 @@ export const seedPages: SeedPage[] = [
       verdict: 'depends',
       emoji: "💧",
       scale: { type: 'partial', region: 'NL' },
-      background: "Drinkwater is in Nederland een nutsvoorziening. De drinkwaterbedrijven zijn volgens de Drinkwaterwet in handen van de overheid en rekenen een kostendekkend tarief, geen winstprijs.\n\nDe Verenigde Naties erkennen sinds 2010 toegang tot veilig drinkwater als mensenrecht. Dat betekent dat water betaalbaar en bereikbaar moet zijn, niet dat het gratis moet zijn.",
+      background: "Drinkwater is in Nederland een nutsvoorziening. De drinkwaterbedrijven zijn volgens de Drinkwaterwet in handen van de overheid en rekenen een kostendekkend tarief, geen winstprijs.[^drinkwater]\n\nDe Verenigde Naties erkennen sinds 2010 toegang tot veilig drinkwater als mensenrecht.[^vn-64-292] Dat betekent dat water betaalbaar en bereikbaar moet zijn, niet dat het gratis moet zijn.",
       facts: [
-        { label: "Mensenrecht sinds (VN-resolutie 64/292)", value: "2010" },
+        { label: "Mensenrecht sinds (VN-resolutie 64/292)", value: "2010", sourceUrl: "https://undocs.org/A/RES/64/292" },
         { label: "Prijs kraanwater", value: "minder dan een cent per liter (indicatief)" }
       ],
       trivia: [
@@ -130,8 +130,9 @@ export const seedPages: SeedPage[] = [
         },
       ],
       sources: [
-        { title: 'Drinkwater (Wikipedia)', url: 'https://nl.wikipedia.org/wiki/Drinkwater' },
-        { title: 'Tap water (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Tap_water' },
+        { id: 'drinkwater', title: 'Drinkwater (Wikipedia)', url: 'https://nl.wikipedia.org/wiki/Drinkwater' },
+        { id: 'tap-water', title: 'Tap water (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Tap_water' },
+        { id: 'vn-64-292', title: 'Resolutie 64/292 van de Algemene Vergadering van de VN (2010)', url: 'https://undocs.org/A/RES/64/292' },
       ],
     },
   },
@@ -161,7 +162,7 @@ export const seedPages: SeedPage[] = [
       ].join('\n'),
       whenNotFree: [
         '- **Particuliere scholen** zonder overheidsgeld rekenen schoolgeld.',
-        '- **Mbo**: voor studenten van 18 jaar en ouder kan lesgeld gelden. Kijk bij DUO voor de actuele regels.',
+        '- **Mbo**: voor studenten van 18 jaar en ouder kan lesgeld gelden. Kijk bij DUO voor de actuele regels.[^duo]',
         '- **Hbo en universiteit**: je betaalt wettelijk collegegeld, enkele duizenden euro’s per jaar.',
         '- **Extra’s** zoals schoolreizen, een eigen laptop of bijles zijn vaak niet gratis.',
       ].join('\n'),
@@ -187,7 +188,7 @@ export const seedPages: SeedPage[] = [
           text: 'Openbare scholen tot en met de high school zijn gratis. Colleges en universiteiten rekenen meestal hoge tuition fees.',
         },
       ],
-      sources: [{ title: 'DUO', url: 'https://www.duo.nl' }],
+      sources: [{ id: 'duo', title: 'DUO', url: 'https://www.duo.nl' }],
     },
   },
   {
@@ -241,7 +242,7 @@ export const seedPages: SeedPage[] = [
           text: 'Veel stadsbibliotheken vragen volwassenen een jaarbijdrage. Kinderen zijn vaak gratis lid.',
         },
       ],
-      sources: [{ title: 'De Bibliotheek', url: 'https://www.bibliotheek.nl' }],
+      sources: [{ id: 'bibliotheek-nl', title: 'De Bibliotheek', url: 'https://www.bibliotheek.nl' }],
     },
   },
   {
@@ -253,7 +254,7 @@ export const seedPages: SeedPage[] = [
       verdict: 'no',
       emoji: "🚌",
       scale: { type: 'exception', region: 'NL' },
-      background: "Gratis openbaar vervoer wordt wereldwijd onderzocht. Luxemburg voerde het in 2020 als eerste land landelijk in. Onderzoek naar gratis vervoer voor inwoners van Tallinn liet zien dat het aantal reizigers steeg, maar dat een deel van die groei kwam van mensen die eerder liepen.\n\nDe les: gratis maken verandert gedrag, maar niet altijd het gedrag dat beleidsmakers hopen.",
+      background: "Gratis openbaar vervoer wordt wereldwijd onderzocht. Luxemburg voerde het in 2020 als eerste land landelijk in.[^gratis-ov] Onderzoek naar gratis vervoer voor inwoners van Tallinn liet zien dat het aantal reizigers steeg, maar dat een deel van die groei kwam van mensen die eerder liepen.\n\nDe les: gratis maken verandert gedrag, maar niet altijd het gedrag dat beleidsmakers hopen.",
       facts: [
         { label: "Gratis in Luxemburg sinds", value: "1 maart 2020" },
         { label: "Gratis in Tallinn sinds", value: "2013, voor geregistreerde inwoners" }
@@ -281,7 +282,7 @@ export const seedPages: SeedPage[] = [
         {
           region: 'LU',
           verdict: 'yes',
-          text: 'Sinds 1 maart 2020 is het openbaar vervoer in heel Luxemburg gratis. Alleen de eerste klas in de trein is betaald.',
+          text: 'Sinds 1 maart 2020 is het openbaar vervoer in heel Luxemburg gratis. Alleen de eerste klas in de trein is betaald.[^gratis-ov]',
         },
         {
           region: 'EE',
@@ -295,8 +296,8 @@ export const seedPages: SeedPage[] = [
         },
       ],
       sources: [
-        { title: 'Free public transport (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Free_public_transport' },
-        { title: 'NS', url: 'https://www.ns.nl' },
+        { id: 'gratis-ov', title: 'Free public transport (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Free_public_transport' },
+        { id: 'ns', title: 'NS', url: 'https://www.ns.nl' },
       ],
     },
   },
@@ -403,7 +404,7 @@ export const seedPages: SeedPage[] = [
           text: 'Je betaalt per bezoek, afhankelijk van je verzekering via een vast bedrag (copay) of het volledige tarief.',
         },
       ],
-      sources: [{ title: 'Zorginstituut Nederland', url: 'https://www.zorginstituutnederland.nl' }],
+      sources: [{ id: 'zorginstituut', title: 'Zorginstituut Nederland', url: 'https://www.zorginstituutnederland.nl' }],
     },
   },
   {
@@ -420,7 +421,7 @@ export const seedPages: SeedPage[] = [
         { label: "Technische standaard", value: "IEEE 802.11" }
       ],
       trivia: [
-        "De naam Wi-Fi is een merknaam van de Wi-Fi Alliance en geen afkorting."
+        "De naam Wi-Fi is een merknaam van de Wi-Fi Alliance en geen afkorting.[^wifi]"
       ],
       summary:
         'Meestal. Op veel openbare plekken is wifi gratis, zoals in bibliotheken, treinen en horeca. In vliegtuigen en sommige hotels betaal je ervoor.',
@@ -447,7 +448,7 @@ export const seedPages: SeedPage[] = [
           text: 'Met WiFi4EU heeft de EU gemeenten geholpen gratis wifi aan te bieden op openbare plekken.',
         },
       ],
-      sources: [{ title: 'Wifi (Wikipedia)', url: 'https://nl.wikipedia.org/wiki/Wifi' }],
+      sources: [{ id: 'wifi', title: 'Wifi (Wikipedia)', url: 'https://nl.wikipedia.org/wiki/Wifi' }],
     },
   },
   {
@@ -514,8 +515,8 @@ export const seedPages: SeedPage[] = [
       summary:
         'Hangt ervan af. In Nederland betalen volwassenen meestal entree, maar veel grote musea zijn gratis voor wie jonger is dan 18. In het Verenigd Koninkrijk zijn de nationale musea gratis.',
       whenFree: [
-        '- **Kinderen en jongeren**: veel Nederlandse musea, waaronder het Rijksmuseum, zijn gratis tot 18 jaar.',
-        '- **Met een Museumkaart** kom je zonder extra betaling binnen bij honderden musea. De kaart zelf kost wel geld.',
+        '- **Kinderen en jongeren**: veel Nederlandse musea, waaronder het Rijksmuseum, zijn gratis tot 18 jaar.[^rijksmuseum]',
+        '- **Met een Museumkaart** kom je zonder extra betaling binnen bij honderden musea. De kaart zelf kost wel geld.[^museumkaart]',
         '- **Kleine en gemeentelijke musea** zijn soms helemaal gratis.',
       ].join('\n'),
       whenNotFree: [
@@ -545,8 +546,8 @@ export const seedPages: SeedPage[] = [
         },
       ],
       sources: [
-        { title: 'Museumkaart', url: 'https://www.museumkaart.nl' },
-        { title: 'Rijksmuseum', url: 'https://www.rijksmuseum.nl' },
+        { id: 'museumkaart', title: 'Museumkaart', url: 'https://www.museumkaart.nl' },
+        { id: 'rijksmuseum', title: 'Rijksmuseum', url: 'https://www.rijksmuseum.nl' },
       ],
     },
   },
@@ -561,7 +562,7 @@ export const seedPages: SeedPage[] = [
       scale: { type: 'free_good', region: 'GB' },
       background: "Economists call air the textbook example of a **free good**: there is so much of it that nobody can charge for it. A market only appears where air becomes scarce, such as compressed air in a scuba tank.",
       facts: [
-        { label: "Composition of dry air", value: "about 78% nitrogen, 21% oxygen, 0.9% argon" },
+        { label: "Composition of dry air", value: "about 78% nitrogen, 21% oxygen, 0.9% argon", sourceUrl: "https://en.wikipedia.org/wiki/Atmosphere_of_Earth" },
         { label: "Breathing at rest", value: "about 6 litres of air per minute" }
       ],
       trivia: [
@@ -591,7 +592,7 @@ export const seedPages: SeedPage[] = [
           text: 'Tyre pumps at petrol stations often charge a small fee per use.',
         },
       ],
-      sources: [{ title: 'Atmosphere of Earth (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Atmosphere_of_Earth' }],
+      sources: [{ id: 'atmosphere', title: 'Atmosphere of Earth (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Atmosphere_of_Earth' }],
     },
   },
   {
@@ -603,9 +604,9 @@ export const seedPages: SeedPage[] = [
       verdict: 'depends',
       emoji: "💧",
       scale: { type: 'partial', region: 'GB' },
-      background: "Since 2010 the United Nations recognises access to safe drinking water as a human right. That means water must be affordable and accessible, not that it must be free.",
+      background: "Since 2010 the United Nations recognises access to safe drinking water as a human right.[^un-64-292] That means water must be affordable and accessible, not that it must be free.",
       facts: [
-        { label: "Human right since (UN resolution 64/292)", value: "2010" }
+        { label: "Human right since (UN resolution 64/292)", value: "2010", sourceUrl: "https://undocs.org/A/RES/64/292" }
       ],
       trivia: [
         "In England, Scotland and Wales, licensed premises must give you free tap water when you ask for it."
@@ -645,8 +646,9 @@ export const seedPages: SeedPage[] = [
         },
       ],
       sources: [
-        { title: 'Tap water (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Tap_water' },
-        { title: 'Drinking fountain (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Drinking_fountain' },
+        { id: 'tap-water', title: 'Tap water (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Tap_water' },
+        { id: 'drinking-fountain', title: 'Drinking fountain (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Drinking_fountain' },
+        { id: 'un-64-292', title: 'UN General Assembly resolution 64/292 (2010)', url: 'https://undocs.org/A/RES/64/292' },
       ],
     },
   },

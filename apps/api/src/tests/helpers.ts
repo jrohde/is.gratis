@@ -70,7 +70,7 @@ export function sampleContent(overrides: Partial<PageContent> = {}): PageContent
     facts: [],
     trivia: [],
     regions: [{ region: 'NL', verdict: 'depends', text: 'Per gemeente verschillend.' }],
-    sources: [{ title: 'Voorbeeld', url: 'https://example.com' }],
+    sources: [{ id: 'voorbeeld', title: 'Voorbeeld', url: 'https://example.com' }],
     ...overrides,
   };
 }

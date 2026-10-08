@@ -168,6 +168,18 @@ const nl = {
   missingLink: 'Deze pagina bestaat nog niet. Klik om er een te laten schrijven.',
   noResults: 'Nog geen pagina. Druk op Enter om er een te maken.',
   wikiHint: 'Link naar een ander onderwerp met [[onderwerp]] of [[onderwerp|eigen tekst]].',
+  citationNeeded: 'bron?',
+  citationNeededHelp: 'Voor deze bewering is nog geen bron opgegeven. Weet je er een? Bewerk de pagina.',
+  sourcing: 'Onderbouwing',
+  sourcingText: (cited: number, claims: number) => `${cited} van ${claims} beweringen hebben een bron`,
+  highlightUnsourced: 'Markeer beweringen zonder bron',
+  howSourcing: 'Hoe werkt dit?',
+  sourceId: 'Kenmerk',
+  citeHint: 'Verwijs in de tekst naar een bron met [^kenmerk], direct achter de bewering.',
+  skyNow: 'Nu aan de hemel',
+  moonPhases: ['nieuwe maan', 'wassende maansikkel', 'eerste kwartier', 'wassende maan', 'volle maan', 'afnemende maan', 'laatste kwartier', 'afnemende maansikkel'],
+  sunUp: 'de zon',
+  sunLow: 'de zon laag aan de hemel',
   errorGeneric: 'Er ging iets mis.',
 };
 
@@ -334,6 +346,18 @@ const en: Messages = {
   missingLink: 'This page does not exist yet. Click to have one written.',
   noResults: 'No page yet. Press Enter to create one.',
   wikiHint: 'Link to another subject with [[subject]] or [[subject|your own text]].',
+  citationNeeded: 'citation needed',
+  citationNeededHelp: 'No source has been given for this claim yet. Know one? Edit the page.',
+  sourcing: 'Sourcing',
+  sourcingText: (cited, claims) => `${cited} of ${claims} claims have a source`,
+  highlightUnsourced: 'Highlight claims without a source',
+  howSourcing: 'How does this work?',
+  sourceId: 'Id',
+  citeHint: 'Cite a source in the text with [^id], right after the claim.',
+  skyNow: 'In the sky right now',
+  moonPhases: ['new moon', 'waxing crescent', 'first quarter', 'waxing gibbous', 'full moon', 'waning gibbous', 'last quarter', 'waning crescent'],
+  sunUp: 'the sun',
+  sunLow: 'the sun low in the sky',
   errorGeneric: 'Something went wrong.',
 };
 
@@ -420,6 +444,13 @@ const de: Messages = {
   backHome: 'Zur Startseite',
   footer: 'Jeder mit einem Konto kann Seiten verbessern.',
   indexTitle: 'Alle Themen von A bis Z',
+  citationNeeded: 'Quelle?',
+  sourcing: 'Belege',
+  sourcingText: (cited, claims) => `${cited} von ${claims} Aussagen haben eine Quelle`,
+  skyNow: 'Jetzt am Himmel',
+  moonPhases: ['Neumond', 'zunehmende Sichel', 'erstes Viertel', 'zunehmender Mond', 'Vollmond', 'abnehmender Mond', 'letztes Viertel', 'abnehmende Sichel'],
+  sunUp: 'die Sonne',
+  sunLow: 'die tief stehende Sonne',
   developers: 'Entwickler',
   errorGeneric: 'Etwas ist schiefgelaufen.',
 };
@@ -508,6 +539,13 @@ const es: Messages = {
   backHome: 'Ir a la portada',
   footer: 'Cualquiera con una cuenta puede mejorar las páginas.',
   indexTitle: 'Todos los temas de la A a la Z',
+  citationNeeded: '¿fuente?',
+  sourcing: 'Fuentes',
+  sourcingText: (cited, claims) => `${cited} de ${claims} afirmaciones tienen fuente`,
+  skyNow: 'Ahora en el cielo',
+  moonPhases: ['luna nueva', 'luna creciente', 'cuarto creciente', 'gibosa creciente', 'luna llena', 'gibosa menguante', 'cuarto menguante', 'luna menguante'],
+  sunUp: 'el sol',
+  sunLow: 'el sol bajo en el cielo',
   developers: 'Desarrolladores',
   errorGeneric: 'Algo ha ido mal.',
 };
@@ -527,8 +565,12 @@ export const LANGUAGE_NAMES: Record<Language, string> = {
 
 const LOCALES: Record<Language, string> = { nl: 'nl-NL', en: 'en-GB', de: 'de-DE', es: 'es-ES' };
 
+/**
+ * Dates in UTC, so the server and the browser render the same text whatever the visitor's time
+ * zone (a different day around midnight would break hydration).
+ */
 export function formatDate(iso: string, lang: Language): string {
-  return new Intl.DateTimeFormat(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric' }).format(
+  return new Intl.DateTimeFormat(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
     new Date(iso),
   );
 }

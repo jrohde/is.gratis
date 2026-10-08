@@ -28,9 +28,14 @@ export interface RegionBlock {
   text: string;
 }
 
-export interface Source {
+export interface SourceLink {
   title: string;
   url: string;
+}
+
+export interface Source extends SourceLink {
+  /** Short id that claims cite with [^id]. */
+  id: string;
 }
 
 /**
@@ -71,7 +76,7 @@ export interface TimePrice {
   hourlyWage: number;
   currency: string;
   region: Region;
-  source: Source;
+  source: SourceLink;
 }
 
 /** Seconds of work needed to pay for one unit. */
@@ -123,8 +128,12 @@ export interface PageContent {
   image?: PageImage;
 }
 
+/** Content as clients may send it and as old revisions stored it: newer fields may be missing. */
+export type ContentInput = Omit<Partial<PageContent>, 'sources'> &
+  Pick<PageContent, 'verdict'> & { sources?: Array<Omit<Source, 'id'> & { id?: string }> };
+
 /** Fills fields added after a revision was written, so old revisions read like new ones. */
-export function normalizeContent(content: Partial<PageContent> & Pick<PageContent, 'verdict'>): PageContent {
+export function normalizeContent(content: ContentInput): PageContent {
   return {
     ...content,
     verdict: content.verdict,
@@ -135,7 +144,7 @@ export function normalizeContent(content: Partial<PageContent> & Pick<PageConten
     facts: content.facts ?? [],
     trivia: content.trivia ?? [],
     regions: content.regions ?? [],
-    sources: content.sources ?? [],
+    sources: withSourceIds(content.sources ?? []),
   };
 }
 
@@ -337,3 +346,5 @@ export * from './labels.js';
 export * from './markdown.js';
 export * from './wikilinks.js';
 export * from './brand.js';
+export * from './citations.js';
+import { withSourceIds } from './citations.js';

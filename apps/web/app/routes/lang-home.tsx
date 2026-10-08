@@ -1,9 +1,11 @@
 import { Anchor, Card, Group, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
 import { motion } from 'motion/react';
 import { data, Link } from 'react-router';
-import { LANGUAGES, SLOGAN, type PageListItem } from '@isgratis/types';
+import { LANGUAGES, SLOGAN, type Language, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/lang-home';
+import { LiveMark, skyDescription } from '~/components/Logo';
 import { SearchBox } from '~/components/SearchBox';
+import { useSky } from '~/stores/sky';
 import { VerdictBadge } from '~/components/VerdictBadge';
 import { apiGet } from '~/lib/api.server';
 import { CACHE } from '~/lib/cache';
@@ -53,6 +55,17 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   ];
 };
 
+/** "Nu aan de hemel: wassende maansikkel", shown once the browser knows the visitor's sky. */
+function SkyCaption({ lang }: { lang: Language }) {
+  const { state, live } = useSky();
+  const t = messages(lang);
+  return (
+    <Text size="xs" c="dimmed" mt={-8} style={{ visibility: live ? 'visible' : 'hidden' }}>
+      {t.skyNow}: {skyDescription(state, lang)}
+    </Text>
+  );
+}
+
 export default function LangHome({ loaderData }: Route.ComponentProps) {
   const { lang, pages } = loaderData;
   const t = messages(lang);
@@ -61,7 +74,8 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
     <Container size="md">
       <Stack gap={48}>
         <Stack gap="md" align="center" ta="center" py="xl">
-          <img src="/favicon.svg" width={96} height={96} alt="" />
+          <LiveMark size={144} lang={lang} />
+          <SkyCaption lang={lang} />
           <MotionDiv initial={play ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             <Title order={1} fz={{ base: 40, sm: 56 }} lh={1.1}>
               {t.searchButton}
