@@ -1,0 +1,227 @@
+/**
+ * Shared types for is.gratis.
+ *
+ * The API and the web app both import these so the shape of a page, a revision
+ * and a sponsored offer is defined exactly once.
+ */
+
+/** Languages the site serves. The slug of a page is language specific. */
+export const LANGUAGES = ['nl', 'en', 'de', 'es'] as const;
+export type Language = (typeof LANGUAGES)[number];
+
+/** The one-word answer every page starts with. */
+export const VERDICTS = ['yes', 'no', 'usually', 'depends'] as const;
+export type Verdict = (typeof VERDICTS)[number];
+
+/** ISO 3166-1 alpha-2 country codes we accept as region keys, plus a few wider areas. */
+export const REGIONS = [
+  'NL', 'BE', 'DE', 'AT', 'CH', 'FR', 'ES', 'IT', 'PT', 'GB', 'IE', 'US', 'CA',
+  'DK', 'NO', 'SE', 'FI', 'PL', 'LU', 'EE', 'ID', 'EU', 'WORLD',
+] as const;
+export type Region = (typeof REGIONS)[number];
+
+export interface RegionBlock {
+  /** Country or area this block applies to. */
+  region: Region;
+  verdict: Verdict;
+  /** Markdown. */
+  text: string;
+}
+
+export interface Source {
+  title: string;
+  url: string;
+}
+
+/**
+ * The structured content of one page. Stored as JSON in a revision.
+ * Every text field is Markdown without raw HTML.
+ */
+export interface PageContent {
+  verdict: Verdict;
+  /** One or two sentences, the direct answer. Markdown. */
+  summary: string;
+  /** When it is free. Markdown. */
+  whenFree: string;
+  /** When it is not free, or what it costs instead. Markdown. */
+  whenNotFree: string;
+  regions: RegionBlock[];
+  sources: Source[];
+}
+
+export type PageStatus = 'draft' | 'published';
+export type RevisionSource = 'human' | 'llm' | 'seed';
+
+export interface RevisionSummary {
+  id: string;
+  number: number;
+  editSummary: string;
+  source: RevisionSource;
+  authorName: string | null;
+  createdAt: string;
+}
+
+export interface Revision extends RevisionSummary {
+  title: string;
+  content: PageContent;
+}
+
+export interface SponsoredOffer {
+  id: string;
+  advertiserName: string;
+  title: string;
+  /** Plain text, short. What exactly is free. */
+  description: string;
+  url: string;
+  region: Region | null;
+}
+
+/** A sponsored offer as the admin sees it, including the booking details. */
+export interface SponsorBooking extends SponsoredOffer {
+  lang: Language;
+  slug: string;
+  contactEmail: string;
+  message: string | null;
+  status: SponsorRequestStatus;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+}
+
+export interface Page {
+  id: string;
+  topicKey: string;
+  lang: Language;
+  slug: string;
+  title: string;
+  status: PageStatus;
+  content: PageContent;
+  currentRevision: RevisionSummary;
+  sponsoredOffers: SponsoredOffer[];
+  /** Other languages this topic exists in, so the UI can link between them. */
+  translations: Array<{ lang: Language; slug: string; title: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PageListItem {
+  lang: Language;
+  slug: string;
+  title: string;
+  verdict: Verdict;
+  status: PageStatus;
+  summary: string;
+  updatedAt: string;
+}
+
+export interface PageWriteBody {
+  title: string;
+  content: PageContent;
+  editSummary: string;
+  /**
+   * The revision the edit was based on. The API rejects the edit with 409 when the page
+   * changed in the meantime. Null when creating a new page.
+   */
+  baseRevisionId: string | null;
+}
+
+export type DraftJobStatus = 'queued' | 'running' | 'done' | 'failed';
+
+export interface DraftJob {
+  id: string;
+  lang: Language;
+  slug: string;
+  status: DraftJobStatus;
+  error: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+}
+
+export type UserRole = 'user' | 'moderator' | 'admin';
+
+export interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+}
+
+export type SponsorRequestStatus = 'pending' | 'active' | 'rejected' | 'expired';
+
+export interface SponsorRequestBody {
+  lang: Language;
+  slug: string;
+  region: Region | null;
+  advertiserName: string;
+  contactEmail: string;
+  title: string;
+  description: string;
+  url: string;
+  message?: string;
+}
+
+export interface ApiError {
+  error: string;
+  message: string;
+}
+
+/** Human readable labels per language for the verdicts. */
+export const VERDICT_LABELS: Record<Language, Record<Verdict, string>> = {
+  nl: { yes: 'Ja', no: 'Nee', usually: 'Meestal', depends: 'Hangt ervan af' },
+  en: { yes: 'Yes', no: 'No', usually: 'Usually', depends: 'It depends' },
+  de: { yes: 'Ja', no: 'Nein', usually: 'Meistens', depends: 'Kommt darauf an' },
+  es: { yes: 'Sí', no: 'No', usually: 'Normalmente', depends: 'Depende' },
+};
+
+export function isLanguage(value: string): value is Language {
+  return (LANGUAGES as readonly string[]).includes(value);
+}
+
+/** Slugs are lowercase letters, digits and single hyphens, max 64 chars. */
+export const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
+
+export function isValidSlug(value: string): boolean {
+  return SLUG_PATTERN.test(value) && !value.includes('--');
+}
+
+/**
+ * Picks the best language from an Accept-Language header among the available ones.
+ * Returns the fallback when nothing matches. Quality values are respected.
+ */
+export function pickLanguage(
+  header: string | null | undefined,
+  available: readonly Language[] = LANGUAGES,
+  fallback: Language = 'nl',
+): Language {
+  if (!header) return available.includes(fallback) ? fallback : (available[0] ?? fallback);
+  const ranked = header
+    .split(',')
+    .map((part, index) => {
+      const [tag = '', ...params] = part.trim().split(';');
+      const q = params.map((p) => p.trim()).find((p) => p.startsWith('q='));
+      const quality = q ? Number.parseFloat(q.slice(2)) : 1;
+      return { lang: tag.toLowerCase().split('-')[0] ?? '', quality: Number.isNaN(quality) ? 0 : quality, index };
+    })
+    .filter((entry) => entry.quality > 0)
+    .sort((a, b) => b.quality - a.quality || a.index - b.index);
+  for (const entry of ranked) {
+    const match = available.find((lang) => lang === entry.lang);
+    if (match) return match;
+  }
+  return available.includes(fallback) ? fallback : (available[0] ?? fallback);
+}
+
+/**
+ * Turns free text ("Openbaar Vervoer", "café") into a slug ("openbaar-vervoer", "cafe").
+ * Returns an empty string when nothing usable is left.
+ */
+export function toSlug(input: string): string {
+  return input
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64)
+    .replace(/-+$/g, '');
+}
