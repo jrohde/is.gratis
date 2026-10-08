@@ -2,8 +2,12 @@
  * Runtime configuration, read once from the environment.
  *
  * Everything the API and the worker need is configured here so a Kubernetes ConfigMap and
- * Secret are the only inputs. Defaults are chosen for local development.
+ * Secret are the only inputs. Defaults are chosen for local development, where a .env file
+ * in the working directory is read as well. Variables that are already set always win.
  */
+import { existsSync } from 'node:fs';
+
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 function str(name: string, fallback: string): string {
   const value = process.env[name];
@@ -31,12 +35,23 @@ function list(name: string): string[] {
     .filter(Boolean);
 }
 
+function parseTrustProxy(value: string): boolean | number {
+  if (/^\d+$/.test(value)) return Number(value);
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
 export interface Config {
   databaseUrl: string;
   databasePoolMax: number;
   port: number;
   host: string;
   logLevel: string;
+  /**
+   * Proxies in front of the API whose X-Forwarded-For entries are trusted: true trusts all
+   * (local development), a number trusts that many hops (ingress + Varnish = 2), so clients
+   * cannot pick their own IP address for rate limiting.
+   */
+  trustProxy: boolean | number;
   corsOrigins: string[];
   /** Origins allowed to send state-changing requests. Empty disables the check. */
   trustedOrigins: string[];
@@ -75,6 +90,7 @@ export function loadConfig(): Config {
     port: int('PORT', 4000),
     host: str('HOST', '0.0.0.0'),
     logLevel: str('LOG_LEVEL', 'info'),
+    trustProxy: parseTrustProxy(str('TRUST_PROXY', 'true')),
     corsOrigins: list('CORS_ORIGINS'),
     trustedOrigins: list('TRUSTED_ORIGINS'),
     cookieDomain: cookieDomain || undefined,

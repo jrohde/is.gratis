@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { and, eq } from 'drizzle-orm';
 import { pageContentSchema } from '../lib/content.js';
+import { loadConfig } from '../config.js';
 import { createDatabase, type Database } from './client.js';
 import { runMigrations } from './migrate.js';
 import { pages, revisions, topics } from './schema.js';
@@ -49,7 +50,7 @@ export async function seed(db: Database): Promise<number> {
 
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isMain) {
-  const url = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/isgratis';
+  const url = loadConfig().databaseUrl;
   (async () => {
     await runMigrations(url);
     const { db, pool } = createDatabase(url, 2);

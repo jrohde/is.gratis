@@ -21,7 +21,7 @@ export interface WorkerDeps {
 
 /** Returns false when the queue was empty. */
 export async function processNextJob(deps: WorkerDeps): Promise<boolean> {
-  const job = await claimNextJob(deps.db);
+  const job = await claimNextJob(deps.db, deps.config.drafts.maxAttempts);
   if (!job) return false;
   const log = { jobId: job.id, lang: job.lang, slug: job.slug, attempt: job.attempts };
   deps.logger.info(log, 'writing draft');
@@ -57,7 +57,12 @@ export async function processNextJob(deps: WorkerDeps): Promise<boolean> {
     });
   } catch (error) {
     // Someone wrote the page by hand while the model was busy: their version wins.
-    if (!(error instanceof HttpError && error.code === 'page_exists')) throw error;
+    if (!(error instanceof HttpError && error.code === 'page_exists')) {
+      const message = error instanceof Error ? error.message : String(error);
+      deps.logger.error({ ...log, error: message }, 'storing draft failed');
+      await finishJob(deps.db, job.id, { status: 'failed', error: `store_failed: ${message}` });
+      return true;
+    }
   }
   const page = await getPage(deps.db, job.lang, job.slug);
   await finishJob(deps.db, job.id, { status: 'done', pageId: page.id });

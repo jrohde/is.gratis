@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: isgratis-config
+data:
+  # Public addresses
+  PUBLIC_ORIGIN: https://is.gratis
+  BASE_DOMAIN: is.gratis
+  TRUSTED_ORIGINS: https://is.gratis,https://*.is.gratis
+  COOKIE_DOMAIN: .is.gratis
+  COOKIE_SECURE: 'true'
+  # Internal addresses
+  API_INTERNAL_URL: http://api:4000
+  CACHE_BAN_TARGET: varnish-purge:8081
+  # Migrations run in the API's init container, not in every process.
+  MIGRATE_ON_START: 'false'
+  LOG_LEVEL: info
+  # Ingress + Varnish in front of the API: trust exactly two X-Forwarded-For hops.
+  TRUST_PROXY: '2'
+  # LLM for first drafts: any OpenAI-compatible endpoint. Point it at a model in this cluster
+  # (see optional/ollama.yaml) to keep everything in-house.
+  LLM_BASE_URL: https://api.openai.com/v1
+  LLM_MODEL: gpt-4o-mini
+  DRAFT_RATE_LIMIT_PER_HOUR: '3'
+  DRAFT_GLOBAL_LIMIT_PER_HOUR: '200'
+  ADMIN_EMAILS: ''
+---
+# Create the real secret yourself; this file only documents its keys:
+#   kubectl -n isgratis create secret generic isgratis-secrets \
+#     --from-literal=IP_HASH_SALT="$(openssl rand -hex 32)" \
+#     --from-literal=LLM_API_KEY=sk-...
+# (LLM_API_KEY may be empty for a local model.)

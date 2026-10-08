@@ -120,6 +120,48 @@ describe('draft queue', () => {
     const job = (await ctx.app.inject({ method: 'GET', url: `/api/drafts/${other}` })).json().job;
     expect(job.status).toBe('failed');
     expect(job.error).toContain('not_a_topic');
+
+    // A rejected subject is not sent to the model again.
+    const again = await requestDraft('asdfgh', '198.51.100.3');
+    expect(again.statusCode).toBe(409);
+    expect(again.json().error).toBe('not_a_topic');
+    // A transient failure may be retried.
+    expect((await requestDraft('qwrtzpl', '198.51.100.4')).statusCode).toBe(202);
+  });
+
+  it('fails a job whose draft cannot be stored instead of retrying it forever', async () => {
+    const id = (await requestDraft('kapot')).json().job.id;
+    await processNextJob({
+      db: ctx.db,
+      config: ctx.config,
+      cache: ctx.cache,
+      logger,
+      // A value Postgres cannot store makes the insert itself fail.
+      write: async () => ({
+        ok: true,
+        topicKey: 'kapot',
+        title: 'kapot',
+        content: { ...sampleContent(), summary: 'nul\u0000byte' },
+      }),
+    });
+    const job = (await ctx.app.inject({ method: 'GET', url: `/api/drafts/${id}` })).json().job;
+    expect(job.status).toBe('failed');
+    expect(job.error).toContain('store_failed');
+    expect(await processNextJob({ db: ctx.db, config: ctx.config, cache: ctx.cache, logger })).toBe(false);
+  });
+
+  it('recovers jobs from a crashed worker and gives up after the last attempt', async () => {
+    const id = (await requestDraft('verweesd')).json().job.id;
+    const longAgo = new Date(Date.now() - 60 * 60 * 1000);
+    await ctx.db.execute(sql`update draft_jobs set status = 'running', started_at = ${longAgo}, attempts = 1 where id = ${id}`);
+    await processNextJob({ db: ctx.db, config: ctx.config, cache: ctx.cache, logger, write: async () => ({ ok: false, reason: 'x' }) });
+    expect((await ctx.app.inject({ method: 'GET', url: `/api/drafts/${id}` })).json().job.status).toBe('failed');
+
+    const other = (await requestDraft('verweesd-twee', '198.51.100.5')).json().job.id;
+    await ctx.db.execute(sql`update draft_jobs set status = 'running', started_at = ${longAgo}, attempts = 2 where id = ${other}`);
+    expect(await processNextJob({ db: ctx.db, config: ctx.config, cache: ctx.cache, logger })).toBe(false);
+    const job = (await ctx.app.inject({ method: 'GET', url: `/api/drafts/${other}` })).json().job;
+    expect(job).toMatchObject({ status: 'failed', error: 'Worker stopped while writing this draft' });
   });
 
   it('rate limits draft requests per IP', async () => {

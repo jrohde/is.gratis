@@ -1,0 +1,22 @@
+# PostgreSQL via the CloudNativePG operator (https://cloudnative-pg.io), which must be
+# installed in the cluster first. It creates the secret "isgratis-db-app" whose "uri" key
+# the API and worker use as DATABASE_URL. Add replicas or backups to taste.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: isgratis-db
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:16
+  bootstrap:
+    initdb:
+      database: isgratis
+      owner: isgratis
+  storage:
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi

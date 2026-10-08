@@ -1,0 +1,67 @@
+# Optional: a language model inside the cluster, so drafts never leave your infrastructure.
+# Ollama serves an OpenAI-compatible API. After applying, pull a model once:
+#   kubectl -n isgratis exec deploy/ollama -- ollama pull llama3.1:8b
+# and set in isgratis-config:
+#   LLM_BASE_URL: http://ollama:11434/v1
+#   LLM_MODEL: llama3.1:8b
+# For production throughput, vLLM on a GPU node is the faster choice; it speaks the same API.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models
+spec:
+  accessModes: ['ReadWriteOnce']
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports:
+            - name: http
+              containerPort: 11434
+          volumeMounts:
+            - name: models
+              mountPath: /root/.ollama
+          resources:
+            requests:
+              cpu: '2'
+              memory: 8Gi
+            limits:
+              memory: 16Gi
+              # nvidia.com/gpu: 1
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: ollama-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+spec:
+  selector:
+    app.kubernetes.io/name: ollama
+  ports:
+    - name: http
+      port: 11434
+      targetPort: http

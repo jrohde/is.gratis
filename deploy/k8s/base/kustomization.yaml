@@ -1,0 +1,33 @@
+# Base deployment of is.gratis. Apply with:
+#   kubectl apply -k deploy/k8s/base
+# Override images, hosts and replica counts in an overlay of your own.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: isgratis
+
+resources:
+  - namespace.yaml
+  - config.yaml
+  - postgres.yaml
+  - api.yaml
+  - worker.yaml
+  - web.yaml
+  - varnish.yaml
+  - ingress.yaml
+
+configMapGenerator:
+  - name: varnish-vcl
+    files:
+      - default.vcl
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: isgratis
+
+images:
+  - name: isgratis-api
+    newName: registry.example.com/isgratis/api
+    newTag: latest
+  - name: isgratis-web
+    newName: registry.example.com/isgratis/web
+    newTag: latest

@@ -1,0 +1,97 @@
+# Full stack on one machine, the same shape as the Kubernetes deployment:
+#
+#   http://localhost:8080  -> varnish -> web (SSR) / api
+#
+#   docker compose up --build
+#   docker compose --profile llm up --build   # also runs a local LLM with Ollama
+#
+# With the llm profile, pull a model once:
+#   docker compose exec ollama ollama pull llama3.1:8b
+# and set LLM_BASE_URL=http://ollama:11434/v1 and LLM_MODEL=llama3.1:8b (see .env.example).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: isgratis
+      POSTGRES_USER: isgratis
+      POSTGRES_PASSWORD: isgratis
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - '${POSTGRES_HOST_PORT:-5432}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U isgratis -d isgratis']
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/docker/api.Dockerfile
+    environment: &api-env
+      DATABASE_URL: postgres://isgratis:isgratis@postgres:5432/isgratis
+      MIGRATE_ON_START: 'true'
+      TRUSTED_ORIGINS: http://localhost:8080
+      COOKIE_SECURE: 'false'
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      IP_HASH_SALT: ${IP_HASH_SALT:-local-development-salt}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      CACHE_BAN_TARGET: varnish:8081
+      TRUST_PROXY: '1'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4000/api/ready']
+      interval: 5s
+      retries: 20
+
+  worker:
+    build:
+      context: .
+      dockerfile: deploy/docker/api.Dockerfile
+    command: ['node', 'dist/worker.js']
+    environment: *api-env
+    depends_on:
+      api:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/docker/web.Dockerfile
+    environment:
+      API_INTERNAL_URL: http://api:4000
+      PUBLIC_ORIGIN: http://localhost:8080
+      BASE_DOMAIN: localhost
+    depends_on:
+      api:
+        condition: service_healthy
+
+  varnish:
+    image: varnish:7.6
+    # Extra listener for BAN requests from the API; it is not published to the host.
+    command: ['-a', 'purge=:8081']
+    environment:
+      VARNISH_SIZE: 256M
+      VARNISH_HTTP_PORT: '8080'
+    volumes:
+      - ./deploy/k8s/base/default.vcl:/etc/varnish/default.vcl:ro
+    ports:
+      - '${HTTP_PORT:-8080}:8080'
+    depends_on:
+      - web
+      - api
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ['llm']
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  postgres-data:
+  ollama-data:

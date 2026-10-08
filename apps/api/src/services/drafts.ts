@@ -2,7 +2,7 @@
  * The queue for LLM-written first drafts. It lives in Postgres (FOR UPDATE SKIP LOCKED), so
  * any number of worker replicas can share it without Redis or another broker.
  */
-import { and, count, desc, eq, gt, inArray, lt, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, gte, inArray, like, lt, sql } from 'drizzle-orm';
 import type { DraftJob, Language } from '@isgratis/types';
 import type { Database } from '../db/client.js';
 import { draftJobs, pages, type DraftJobRow } from '../db/schema.js';
@@ -10,6 +10,8 @@ import { conflict, notFound, tooManyRequests } from '../lib/errors.js';
 
 /** A running job older than this is assumed to belong to a crashed worker. */
 const STALE_AFTER_MS = 10 * 60 * 1000;
+/** How long a subject the model rejected stays rejected. */
+const REJECTION_MEMORY_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function toDraftJob(row: DraftJobRow): DraftJob {
   return {
@@ -64,6 +66,22 @@ export async function enqueueDraft(
     .limit(1);
   if (open) return { job: toDraftJob(open), created: false };
 
+  // The model said this is not a subject; asking again would only cost money.
+  const [rejected] = await db
+    .select({ id: draftJobs.id })
+    .from(draftJobs)
+    .where(
+      and(
+        eq(draftJobs.lang, input.lang),
+        eq(draftJobs.slug, input.slug),
+        eq(draftJobs.status, 'failed'),
+        like(draftJobs.error, 'not_a_topic%'),
+        gt(draftJobs.createdAt, new Date(Date.now() - REJECTION_MEMORY_MS)),
+      ),
+    )
+    .limit(1);
+  if (rejected) throw conflict('not_a_topic', 'This does not look like a subject we can write about');
+
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
   const [[perIp], [global]] = await Promise.all([
     db
@@ -91,12 +109,22 @@ export async function enqueueDraft(
   return { job, created: false };
 }
 
-/** Claims the oldest queued job, recovering jobs from crashed workers first. */
-export async function claimNextJob(db: Database): Promise<DraftJobRow | null> {
+/**
+ * Claims the oldest queued job. Jobs left running by a crashed worker are queued again, or
+ * failed once they used up their attempts, so a poisonous job cannot loop forever.
+ */
+export async function claimNextJob(db: Database, maxAttempts: number): Promise<DraftJobRow | null> {
+  const staleBefore = new Date(Date.now() - STALE_AFTER_MS);
+  await db
+    .update(draftJobs)
+    .set({ status: 'failed', error: 'Worker stopped while writing this draft', finishedAt: new Date() })
+    .where(
+      and(eq(draftJobs.status, 'running'), lt(draftJobs.startedAt, staleBefore), gte(draftJobs.attempts, maxAttempts)),
+    );
   await db
     .update(draftJobs)
     .set({ status: 'queued' })
-    .where(and(eq(draftJobs.status, 'running'), lt(draftJobs.startedAt, new Date(Date.now() - STALE_AFTER_MS))));
+    .where(and(eq(draftJobs.status, 'running'), lt(draftJobs.startedAt, staleBefore)));
 
   const result = await db.execute<{ id: string }>(sql`
     update ${draftJobs}

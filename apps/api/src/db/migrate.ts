@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
+import { loadConfig } from '../config.js';
 
 const MIGRATION_LOCK_ID = 727_001;
 
@@ -33,7 +34,7 @@ export async function runMigrations(databaseUrl: string): Promise<void> {
 
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isMain) {
-  const url = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/isgratis';
+  const url = loadConfig().databaseUrl;
   runMigrations(url)
     .then(() => {
       console.log('Migrations applied');

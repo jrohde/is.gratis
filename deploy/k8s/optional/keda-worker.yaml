@@ -1,0 +1,28 @@
+# Optional: scale the draft worker on the number of queued jobs with KEDA (https://keda.sh).
+# Apply after the base: kubectl apply -n isgratis -f deploy/k8s/optional/keda-worker.yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: isgratis-db
+spec:
+  secretTargetRef:
+    - parameter: connection
+      name: isgratis-db-app
+      key: uri
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker
+spec:
+  scaleTargetRef:
+    name: worker
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+    - type: postgresql
+      metadata:
+        query: "select count(*) from draft_jobs where status = 'queued'"
+        targetQueryValue: '5'
+      authenticationRef:
+        name: isgratis-db

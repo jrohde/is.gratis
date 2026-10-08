@@ -39,7 +39,11 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
   const app = Fastify({
     ...(logger ? { loggerInstance: logger } : { logger: { level: config.logLevel } }),
     // The API runs behind the ingress and Varnish; take the client IP from X-Forwarded-For.
-    trustProxy: true,
+    // A number means "trust that many hops", like proxy-addr: hop 0 is the socket peer.
+    trustProxy:
+      typeof config.trustProxy === 'number'
+        ? (_address: string, hop: number) => hop < (config.trustProxy as number)
+        : config.trustProxy,
     bodyLimit: 256 * 1024,
   }).withTypeProvider<ZodTypeProvider>();
 

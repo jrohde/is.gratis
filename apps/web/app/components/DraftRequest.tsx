@@ -59,7 +59,8 @@ export function DraftRequest({
     }
   }
 
-  const failedMessage = job?.status === 'failed' ? (job.error?.startsWith('not_a_topic') ? t.notATopic : t.failed) : null;
+  const rejected = job?.status === 'failed' && (job.error?.startsWith('not_a_topic') ?? false);
+  const failedMessage = job?.status === 'failed' ? (rejected ? t.notATopic : t.failed) : null;
 
   return (
     <Stack gap="lg">
@@ -83,7 +84,7 @@ export function DraftRequest({
                 {failedMessage && <Alert color="orange">{failedMessage}</Alert>}
                 {error && <Alert color="red">{error}</Alert>}
                 <Group>
-                  <Button onClick={() => void request()} loading={busy} disabled={job?.status === 'failed'}>
+                  <Button onClick={() => void request()} loading={busy} disabled={rejected}>
                     {t.generate}
                   </Button>
                   <Button component={Link} to={`/${lang}/${slug}/edit`} variant="default">

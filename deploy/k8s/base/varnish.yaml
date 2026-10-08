@@ -1,0 +1,99 @@
+# HTTP cache in front of web and api. Each replica keeps its own cache; the API sends bans to
+# every replica through the headless "varnish-purge" Service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: varnish
+  labels:
+    app.kubernetes.io/name: varnish
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: varnish
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: varnish
+    spec:
+      containers:
+        - name: varnish
+          image: varnish:7.6
+          # The entrypoint adds these flags to its defaults: a separate listener for bans.
+          args: ['-a', 'purge=:8081']
+          env:
+            - name: VARNISH_HTTP_PORT
+              value: '8080'
+            - name: VARNISH_SIZE
+              value: 512M
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: purge
+              containerPort: 8081
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          volumeMounts:
+            - name: vcl
+              mountPath: /etc/varnish
+              readOnly: true
+            - name: workdir
+              mountPath: /var/lib/varnish
+          resources:
+            requests:
+              cpu: 100m
+              memory: 640Mi
+            limits:
+              memory: 900Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: vcl
+          configMap:
+            name: varnish-vcl
+        - name: workdir
+          emptyDir:
+            medium: Memory
+            sizeLimit: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: varnish
+spec:
+  selector:
+    app.kubernetes.io/name: varnish
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# Headless: DNS returns every Varnish pod, so a ban reaches all caches. Not used by the ingress.
+apiVersion: v1
+kind: Service
+metadata:
+  name: varnish-purge
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: varnish
+  ports:
+    - name: purge
+      port: 8081
+      targetPort: purge
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: varnish
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: varnish
