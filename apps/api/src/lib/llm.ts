@@ -211,3 +211,70 @@ Answer with one JSON object and nothing else: {"subjects": ["...", "..."]}`;
   if (!parsed.success) throw new LlmError('LLM answer does not list subjects');
   return parsed.data.subjects.slice(0, 8);
 }
+
+const translationSchema = z.object({ title: titleSchema, content: pageContentSchema });
+
+/**
+ * Translates a page into another language. The answer must match the same schema as an edit,
+ * with the same sources; it is stored as a draft for a person to check, like any LLM text.
+ */
+export async function translatePage(
+  config: LlmConfig,
+  from: Language,
+  to: Language,
+  page: { title: string; content: PageContent },
+): Promise<{ title: string; content: PageContent }> {
+  const { image, timePrice, ...content } = page.content;
+  const system = `You translate pages of is.gratis, an encyclopedia that answers one question per subject: is it free?
+Translate the page below from ${LANGUAGE_NAMES[from]} into ${LANGUAGE_NAMES[to]}. Answer with one JSON object
+{"title": "...", "content": {...}} with exactly the same structure as the input, and nothing else.
+
+Rules:
+- title: the subject as written in the middle of a ${LANGUAGE_NAMES[to]} sentence (lowercase unless it is a name).
+- Translate all text: summary, whenFree, whenNotFree, background, trivia, facts (label and value), region texts.
+- Keep verdict, scale, plural (re-evaluate plural for the ${LANGUAGE_NAMES[to]} title), region codes, source ids and URLs unchanged.
+  Translate source titles only when they are descriptions, not names of documents or websites.
+- Keep every citation marker [^id] directly after the claim it supports. Never add or remove citations.
+- [[links]]: translate the subject inside them into ${LANGUAGE_NAMES[to]}, e.g. [[de huisarts]] becomes [[the GP]] in English.
+- Translate faithfully. Do not add facts, prices or sources. Where something is specific to one country, keep it so.
+- Markdown only: paragraphs, bullet lists, bold, links. No headings, no HTML.`;
+  let response: Response;
+  try {
+    response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(config.apiKey ? { authorization: `Bearer ${config.apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: JSON.stringify({ title: page.title, content }) },
+        ],
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+      }),
+      signal: AbortSignal.timeout(config.timeoutMs),
+    });
+  } catch (error) {
+    throw new LlmError(`LLM request failed: ${(error as Error).message}`);
+  }
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new LlmError(`LLM returned HTTP ${response.status}: ${body.slice(0, 300)}`);
+  }
+  const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string | null } }> };
+  const text = payload.choices?.[0]?.message?.content;
+  if (!text) throw new LlmError('LLM answer has no content');
+  const parsed = translationSchema.safeParse(extractJson(text));
+  if (!parsed.success) {
+    throw new LlmError(`Translation does not match the page schema: ${parsed.error.issues[0]?.message ?? ''}`);
+  }
+  // The image and the time price are not text: they carry over as they are.
+  const translated = normalizeContent(parsed.data.content);
+  return {
+    title: parsed.data.title,
+    content: { ...translated, ...(image ? { image } : {}), ...(timePrice ? { timePrice } : {}) },
+  };
+}

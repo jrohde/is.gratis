@@ -150,6 +150,8 @@ export const draftJobs = pgTable(
     requestedBy: uuid('requested_by').references(() => users.id, { onDelete: 'set null' }),
     pageId: uuid('page_id').references(() => pages.id, { onDelete: 'set null' }),
     assetId: uuid('asset_id').references(() => assets.id, { onDelete: 'set null' }),
+    /** Translation jobs: the language of the page to translate (its slug is in slug). */
+    sourceLang: text('source_lang').$type<Language>(),
     /** Image jobs: put the image on the page when it has none yet. */
     attach: boolean('attach').notNull().default(false),
     createdAt: createdAt(),

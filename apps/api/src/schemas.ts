@@ -131,7 +131,7 @@ export const assetSchema = z.object({
 
 export const draftJobSchema = z.object({
   id: z.string(),
-  kind: z.enum(['page', 'image']),
+  kind: z.enum(['page', 'image', 'translation']),
   asset: assetSchema.nullable(),
   lang: languageEnum,
   slug: z.string(),

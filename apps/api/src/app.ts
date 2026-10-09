@@ -33,6 +33,7 @@ import { regionRoutes } from './routes/regions.js';
 import { reportRoutes } from './routes/reports.js';
 import { reviewRoutes } from './routes/review.js';
 import { searchRoutes } from './routes/search.js';
+import { translationRoutes } from './routes/translations.js';
 import { sponsorRoutes } from './routes/sponsors.js';
 
 export interface AppDeps {
@@ -136,6 +137,7 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
       await api.register(regionRoutes, { db });
       await api.register(searchRoutes, { db, config });
       await api.register(reportRoutes, { db, config });
+      await api.register(translationRoutes, { db, config });
       await api.register(communityRoutes, { db, cache });
       await api.register(assetRoutes, { db, config });
       await api.register(ogRoutes, { db });

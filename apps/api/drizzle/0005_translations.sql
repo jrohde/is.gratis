@@ -1,0 +1,1 @@
+ALTER TABLE "draft_jobs" ADD COLUMN "source_lang" text;

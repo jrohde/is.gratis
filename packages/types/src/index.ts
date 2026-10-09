@@ -339,7 +339,8 @@ export interface PageWriteBody {
 }
 
 export type DraftJobStatus = 'queued' | 'running' | 'done' | 'failed';
-export type DraftJobKind = 'page' | 'image';
+/** page: first version by the LLM; image: illustration; translation: a page translated into another language. */
+export type DraftJobKind = 'page' | 'image' | 'translation';
 
 export interface DraftJob {
   id: string;
