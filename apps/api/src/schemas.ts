@@ -4,7 +4,7 @@
  */
 import { z } from 'zod';
 import { LANGUAGES } from '@isgratis/types';
-import { pageContentSchema, regionSchema, verdictSchema } from './lib/content.js';
+import { freeTypeSchema, pageContentSchema, regionSchema, verdictSchema } from './lib/content.js';
 
 export const errorSchema = z.object({
   error: z.string(),
@@ -73,7 +73,9 @@ export const pageListItemSchema = z.object({
   slug: z.string(),
   title: z.string(),
   emoji: z.string().optional(),
+  plural: z.boolean().optional(),
   verdict: verdictSchema,
+  scale: z.object({ type: freeTypeSchema, region: regionSchema }).optional(),
   status: z.enum(['draft', 'published']),
   summary: z.string(),
   updatedAt: z.string(),
@@ -109,6 +111,7 @@ export const regionEntrySchema = z.object({
   slug: z.string(),
   title: z.string(),
   emoji: z.string().optional(),
+  plural: z.boolean().optional(),
   verdict: verdictSchema,
   text: z.string(),
 });

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useRevalidator } from 'react-router';
 import { isLanguage, LANGUAGES, type ReviewItem } from '@isgratis/types';
 import type { Route } from './+types/review';
-import { VerdictBadge } from '~/components/VerdictBadge';
+import { ClaimRow } from '~/components/Claim';
 import { api, ClientApiError } from '~/lib/api.client';
 import { apiGet } from '~/lib/api.server';
 import { CACHE } from '~/lib/cache';
@@ -32,7 +32,6 @@ function DraftCard({ draft }: { draft: ReviewItem }) {
   const [error, setError] = useState<string | null>(null);
   const ratio = draft.claims ? draft.cited / draft.claims : 0;
   const path = `/pages/${draft.lang}/${draft.slug}`;
-  const pt = messages(draft.lang);
 
   async function run(kind: 'publish' | 'delete') {
     if (kind === 'delete' && !window.confirm(t.confirmDelete)) return;
@@ -52,17 +51,13 @@ function DraftCard({ draft }: { draft: ReviewItem }) {
   return (
     <Card withBorder padding="md">
       <Stack gap={8}>
-        <Group justify="space-between" wrap="nowrap" align="start">
-          <Group gap="xs" wrap="nowrap">
-            <Badge variant="outline" tt="uppercase" size="sm">
-              {draft.lang}
-            </Badge>
-            <Anchor component={Link} to={`/${draft.lang}/${draft.slug}`} fw={700} c="inherit">
-              {draft.emoji ? `${draft.emoji} ` : ''}
-              {pt.question(draft.title)}
-            </Anchor>
-          </Group>
-          <VerdictBadge verdict={draft.verdict} lang={draft.lang} size="sm" />
+        <Group gap="xs" wrap="nowrap" align="baseline">
+          <Badge variant="outline" tt="uppercase" size="sm">
+            {draft.lang}
+          </Badge>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <ClaimRow {...draft} />
+          </div>
         </Group>
         <Text size="sm" c="dimmed">
           {plainText(draft.summary, 220)}

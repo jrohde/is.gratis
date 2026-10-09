@@ -200,4 +200,21 @@ describe('pages', () => {
     expect(response.statusCode).toBe(200);
     expect(Object.keys(response.json().paths)).toContain('/api/pages/{lang}/{slug}');
   });
+
+  it('gives lists what they need for the claim and its footnote', async () => {
+    const { cookie } = await register(ctx, 'lists@example.com');
+    const created = await ctx.app.inject({
+      method: 'PUT',
+      url: '/api/pages/nl/musea',
+      headers: { cookie },
+      payload: {
+        title: 'musea',
+        content: sampleContent({ plural: true, scale: { type: 'partial', region: 'NL' } }),
+        baseRevisionId: null,
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    const [item] = (await ctx.app.inject({ url: '/api/pages?lang=nl' })).json().pages;
+    expect(item).toMatchObject({ slug: 'musea', plural: true, scale: { type: 'partial', region: 'NL' } });
+  });
 });

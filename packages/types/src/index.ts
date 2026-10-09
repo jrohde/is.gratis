@@ -243,6 +243,7 @@ export interface RegionEntry {
   slug: string;
   title: string;
   emoji?: string;
+  plural?: boolean;
   verdict: Verdict;
   text: string;
 }
@@ -267,7 +268,11 @@ export interface PageListItem {
   slug: string;
   title: string;
   emoji?: string;
+  /** For the claim, "Musea zijn gratis*". */
+  plural?: boolean;
   verdict: Verdict;
+  /** For the footnote under the claim. */
+  scale?: FreeScale;
   status: PageStatus;
   summary: string;
   updatedAt: string;

@@ -69,7 +69,7 @@ export function ScaleMeter({ scale, lang }: { scale: FreeScale; lang: Language }
         </Group>
         <Text fw={600}>{FREE_TYPE_LABELS[lang][scale.type]}</Text>
         <Text size="sm" c="dimmed">
-          {FREE_TYPE_DESCRIPTIONS[lang][scale.type]} {t.assessedFor(regionLabel(scale.region, lang))}.{' '}
+          {FREE_TYPE_DESCRIPTIONS[lang][scale.type]} {scale.region === 'WORLD' ? t.assessedWorldwide : t.assessedFor(regionLabel(scale.region, lang))}.{' '}
           <Anchor component={Link} to={`/methodology?lang=${lang}`} size="sm">
             {t.howWeMeasure}
           </Anchor>

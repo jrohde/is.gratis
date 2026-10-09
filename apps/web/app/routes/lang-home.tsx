@@ -1,11 +1,11 @@
-import { Anchor, Card, Group, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
+import { Card, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
 import { motion } from 'motion/react';
-import { data, Link } from 'react-router';
-import { LANGUAGES, SLOGAN, type Language, type PageListItem } from '@isgratis/types';
+import { data } from 'react-router';
+import { LANGUAGES, SLOGAN, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/lang-home';
 import { Slogan, Wordmark } from '~/components/Logo';
 import { SearchBox } from '~/components/SearchBox';
-import { VerdictBadge } from '~/components/VerdictBadge';
+import { ClaimRow } from '~/components/Claim';
 import { apiGet } from '~/lib/api.server';
 import { CACHE } from '~/lib/cache';
 import { env } from '~/lib/env.server';
@@ -92,17 +92,9 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
                 transition={{ delay: Math.min(index, 10) * 0.04 }}
               >
                 <Card withBorder padding="md" h="100%">
-                  <Group justify="space-between" wrap="nowrap" mb={6}>
-                    <Anchor component={Link} to={`/${lang}/${page.slug}`} fw={700} c="inherit">
-                      {page.emoji && (
-                        <Text span mr={8} aria-hidden>
-                          {page.emoji}
-                        </Text>
-                      )}
-                      {t.question(page.title)}
-                    </Anchor>
-                    <VerdictBadge verdict={page.verdict} lang={lang} size="sm" />
-                  </Group>
+                  <div style={{ marginBottom: 6 }}>
+                    <ClaimRow {...page} />
+                  </div>
                   <Text size="sm" c="dimmed" lineClamp={2}>
                     {plainText(page.summary, 200)}
                   </Text>

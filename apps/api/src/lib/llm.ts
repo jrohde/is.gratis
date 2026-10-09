@@ -72,7 +72,7 @@ Otherwise answer:
     "verdict": "yes" | "no" | "usually" | "depends",
     "emoji": "<one emoji for the subject>",
     "plural": <true when the title is a plural noun, e.g. "musea", "museums"; otherwise false>,
-    "summary": "<one or two sentences that directly answer the question>",
+    "summary": "<one or two sentences that directly answer the question. Do not start with the verdict word (yes, no, usually, it depends): the page shows the verdict separately>",
     "whenFree": "<Markdown: the situations in which it is free>",
     "whenNotFree": "<Markdown: the situations in which it costs money, and roughly what>",
     "background": "<Markdown, one or two short paragraphs: why it is or is not free; the economic, legal or scientific mechanism; well-established research where relevant>",

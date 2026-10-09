@@ -27,6 +27,7 @@ export async function regionEntries(db: Database, region: Region, lang: Language
         slug: page.slug,
         title: page.title,
         ...(content.emoji ? { emoji: content.emoji } : {}),
+        ...(content.plural ? { plural: true } : {}),
         verdict: block.verdict,
         text: block.text,
       },

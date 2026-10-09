@@ -3,7 +3,7 @@ import { data, Link, redirect } from 'react-router';
 import { REGIONS, VERDICTS, type Region, type RegionEntry } from '@isgratis/types';
 import type { Route } from './+types/region';
 import { Markdown } from '~/components/Markdown';
-import { VerdictBadge } from '~/components/VerdictBadge';
+import { ClaimLink, ListFootnote } from '~/components/Claim';
 import { WorldMap } from '~/components/WorldMap';
 import { apiGet } from '~/lib/api.server';
 import { env } from '~/lib/env.server';
@@ -91,7 +91,9 @@ export default function RegionRoute({ loaderData }: Route.ComponentProps) {
         {groups.map((group) => (
           <section key={group.verdict}>
             <Group gap="xs" mb="xs">
-              <VerdictBadge verdict={group.verdict} lang={lang} size="lg" />
+              <Text fz="xl">
+                <ListFootnote lang={lang} verdict={group.verdict} />
+              </Text>
               <Text c="dimmed" size="sm">
                 {t.pagesCount(group.pages.length)}
               </Text>
@@ -104,10 +106,9 @@ export default function RegionRoute({ loaderData }: Route.ComponentProps) {
                   padding="md"
                   style={{ borderLeft: `4px solid var(--mantine-color-${VERDICT_COLORS[page.verdict]}-6)` }}
                 >
-                  <Anchor component={Link} to={`/${lang}/${page.slug}`} c="inherit" fw={700} mb={4} display="block">
-                    {page.emoji ? `${page.emoji} ` : ''}
-                    {t.question(page.title)}
-                  </Anchor>
+                  <div style={{ marginBottom: 4 }}>
+                    <ClaimLink lang={lang} slug={page.slug} title={page.title} plural={page.plural} emoji={page.emoji} />
+                  </div>
                   <Markdown>{readable(page.text)}</Markdown>
                 </Card>
               ))}

@@ -1,8 +1,8 @@
 import { Anchor, Badge, Card, Container, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
-import { data, Link } from 'react-router';
+import { data } from 'react-router';
 import { linkTerm, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/a-z';
-import { VerdictBadge } from '~/components/VerdictBadge';
+import { ClaimRow } from '~/components/Claim';
 import { apiGet } from '~/lib/api.server';
 import { env } from '~/lib/env.server';
 import { messages } from '~/lib/i18n';
@@ -89,13 +89,7 @@ export default function AToZ({ loaderData }: Route.ComponentProps) {
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xs">
               {group.pages.map((page) => (
                 <Card key={page.slug} withBorder padding="sm">
-                  <Group justify="space-between" wrap="nowrap" gap="xs">
-                    <Anchor component={Link} to={`/${lang}/${page.slug}`} c="inherit" fw={600}>
-                      {page.emoji ? `${page.emoji} ` : ''}
-                      {t.question(page.title)}
-                    </Anchor>
-                    <VerdictBadge verdict={page.verdict} lang={lang} size="sm" />
-                  </Group>
+                  <ClaimRow {...page} />
                 </Card>
               ))}
             </SimpleGrid>

@@ -24,7 +24,7 @@ export const seedPages: SeedPage[] = [
     content: {
       verdict: 'yes',
       emoji: "🌬️",
-      scale: { type: 'free_good', region: 'NL' },
+      scale: { type: 'free_good', region: 'WORLD' },
       background: "Economen noemen lucht het schoolvoorbeeld van een **vrij goed**: er is zoveel van dat niemand er een prijs voor kan vragen. Pas waar lucht schaars wordt, ontstaat een markt: perslucht in een duikfles, of schone lucht in een kantoor met luchtfilters.\n\nDat onderscheid tussen vrije en economische goederen staat in vrijwel elk inleidend economieboek. Het laat zien dat een prijs niet uit een ding zelf komt, maar uit schaarste.",
       facts: [
         { label: "Samenstelling droge lucht", value: "ongeveer 78% stikstof, 21% zuurstof, 0,9% argon", sourceUrl: "https://en.wikipedia.org/wiki/Atmosphere_of_Earth" },
@@ -35,7 +35,7 @@ export const seedPages: SeedPage[] = [
         "In ruimtevaart is lucht wél schaars: een ruimtestation moet zuurstof aanvoeren of zelf maken."
       ],
       summary:
-        'Ja. De lucht die je inademt is overal gratis. Je betaalt hooguit voor een dienst rond lucht, zoals perslucht om een duikfles te vullen.',
+        'De lucht die je inademt is overal gratis. Je betaalt hooguit voor een dienst rond lucht, zoals perslucht om een duikfles te vullen.',
       whenFree: [
         '- **Ademlucht**, overal en voor iedereen.',
         '- **Bandenlucht** bij veel tankstations, meestal bij een luchtpomp naast het tankeiland.',
@@ -85,7 +85,7 @@ export const seedPages: SeedPage[] = [
         "In Frankrijk hoort een karaf kraanwater bij een maaltijd in een restaurant gratis te zijn."
       ],
       summary:
-        'Hangt ervan af. Kraanwater thuis betaal je aan het drinkwaterbedrijf, maar een liter kost een fractie van een cent. Aan openbare watertappunten is het gratis, en in sommige landen moet een restaurant je gratis kraanwater geven.',
+        'Kraanwater thuis betaal je aan het drinkwaterbedrijf, maar een liter kost een fractie van een cent. Aan openbare watertappunten is het gratis, en in sommige landen moet een restaurant je gratis kraanwater geven.',
       whenFree: [
         '- **Openbare watertappunten** in steden en parken, en op sommige stations en luchthavens.',
         '- **Kraanwater in de horeca** in landen waar dat wettelijk geregeld is, zoals Frankrijk en Spanje. Zie de regio’s hieronder.',
@@ -154,7 +154,7 @@ export const seedPages: SeedPage[] = [
         "De eerste Nederlandse leerplichtwet is uit 1900 en ging in 1901 in."
       ],
       summary:
-        'Meestal. In Nederland zijn de basisschool en de middelbare school gratis: de overheid betaalt. Scholen mogen een vrijwillige ouderbijdrage vragen. Voor hoger onderwijs betaal je collegegeld.',
+        'In Nederland zijn de basisschool en de middelbare school gratis: de overheid betaalt. Scholen mogen een vrijwillige ouderbijdrage vragen. Voor hoger onderwijs betaal je collegegeld.',
       whenFree: [
         '- **Basisonderwijs en voortgezet onderwijs** op scholen die door de overheid worden bekostigd: geen lesgeld.',
         '- **Schoolboeken en lesmateriaal** in het voortgezet onderwijs betaalt de school.',
@@ -208,7 +208,7 @@ export const seedPages: SeedPage[] = [
         "Het woord bibliotheek komt van het Griekse biblion (boek) en thèkè (bewaarplaats)."
       ],
       summary:
-        'Meestal. Een openbare bibliotheek binnenlopen, er lezen en de wifi gebruiken is gratis. Boeken lenen is in Nederland voor kinderen tot 18 jaar meestal gratis; volwassenen betalen een abonnement.',
+        'Een openbare bibliotheek binnenlopen, er lezen en de wifi gebruiken is gratis. Boeken lenen is in Nederland voor kinderen tot 18 jaar meestal gratis; volwassenen betalen een abonnement.',
       whenFree: [
         '- **Binnenlopen en ter plekke lezen**, ook kranten en tijdschriften.',
         '- **Wifi en studieplekken** in de meeste vestigingen.',
@@ -263,7 +263,7 @@ export const seedPages: SeedPage[] = [
         "Luxemburg was het eerste land ter wereld met landelijk gratis openbaar vervoer."
       ],
       summary:
-        'Nee, meestal niet. In Nederland betaal je voor bus, tram, metro en trein. Kleine kinderen reizen gratis, en in Luxemburg is al het openbaar vervoer gratis.',
+        'In Nederland betaal je voor bus, tram, metro en trein. Kleine kinderen reizen gratis, en in Luxemburg is al het openbaar vervoer gratis.',
       whenFree: [
         '- **Kinderen tot 4 jaar** reizen in Nederland gratis mee met trein, bus, tram en metro.',
         '- **Sommige gemeenten** bieden bepaalde groepen gratis busvervoer, bijvoorbeeld ouderen buiten de spits. Dit verschilt per gemeente.',
@@ -318,7 +318,7 @@ export const seedPages: SeedPage[] = [
         "Een gewoon parkeervak is ongeveer 2,5 bij 5 meter: meer vloeroppervlak dan veel slaapkamers."
       ],
       summary:
-        'Hangt ervan af. In Nederland bepaalt de gemeente waar en wanneer je betaalt. Buiten de centra is parkeren vaak gratis, in de binnensteden bijna nooit.',
+        'In Nederland bepaalt de gemeente waar en wanneer je betaalt. Buiten de centra is parkeren vaak gratis, in de binnensteden bijna nooit.',
       whenFree: [
         '- **Buiten de stadscentra** en in de meeste dorpen.',
         '- **In een blauwe zone** met een parkeerschijf, zolang je binnen de toegestane tijd blijft.',
@@ -367,7 +367,7 @@ export const seedPages: SeedPage[] = [
         "Het verplichte eigen risico was in Nederland jarenlang 385 euro per jaar; de huisarts viel er altijd buiten."
       ],
       summary:
-        'Meestal. In Nederland betaal je voor een bezoek aan de huisarts niets extra: het valt onder de basisverzekering en niet onder het eigen risico. Je betaalt wel de premie van je zorgverzekering.',
+        'In Nederland betaal je voor een bezoek aan de huisarts niets extra: het valt onder de basisverzekering en niet onder het eigen risico. Je betaalt wel de premie van je zorgverzekering.',
       whenFree: [
         '- **Consult, telefonisch consult en huisbezoek** bij je eigen huisarts, als je verzekerd bent.',
         '- **De huisartsenpost** buiten kantooruren, op dezelfde manier.',
@@ -424,7 +424,7 @@ export const seedPages: SeedPage[] = [
         "De naam Wi-Fi is een merknaam van de Wi-Fi Alliance en geen afkorting.[^wifi]"
       ],
       summary:
-        'Meestal. Op veel openbare plekken is wifi gratis, zoals in bibliotheken, treinen en horeca. In vliegtuigen en sommige hotels betaal je ervoor.',
+        'Op veel openbare plekken is wifi gratis, zoals in bibliotheken, treinen en horeca. In vliegtuigen en sommige hotels betaal je ervoor.',
       whenFree: [
         '- **[[bibliotheek|Bibliotheken]], gemeentehuizen en veel stations.**',
         '- **In de trein** bij de NS.',
@@ -466,7 +466,7 @@ export const seedPages: SeedPage[] = [
         "De Engelse uitdrukking “to spend a penny” komt van openbare toiletten die vroeger een penny kostten."
       ],
       summary:
-        'Hangt ervan af. In Nederland kosten toiletten op stations en in winkelcentra vaak een klein bedrag. In musea, bibliotheken en gemeentelijke gebouwen kun je meestal gratis terecht.',
+        'In Nederland kosten toiletten op stations en in winkelcentra vaak een klein bedrag. In musea, bibliotheken en gemeentelijke gebouwen kun je meestal gratis terecht.',
       whenFree: [
         '- **Openbare gebouwen** zoals [[bibliotheek|bibliotheken]], gemeentehuizen en [[museum|musea]], vaak ook voor wie geen kaartje heeft voor de collectie.',
         '- **Als klant** in de horeca of een winkel met een klantentoilet.',
@@ -513,7 +513,7 @@ export const seedPages: SeedPage[] = [
         "Het British Museum was bij de opening in 1759 al gratis toegankelijk."
       ],
       summary:
-        'Hangt ervan af. In Nederland betalen volwassenen meestal entree, maar veel grote musea zijn gratis voor wie jonger is dan 18. In het Verenigd Koninkrijk zijn de nationale musea gratis.',
+        'In Nederland betalen volwassenen meestal entree, maar veel grote musea zijn gratis voor wie jonger is dan 18. In het Verenigd Koninkrijk zijn de nationale musea gratis.',
       whenFree: [
         '- **Kinderen en jongeren**: veel Nederlandse musea, waaronder het Rijksmuseum, zijn gratis tot 18 jaar.[^rijksmuseum]',
         '- **Met een Museumkaart** kom je zonder extra betaling binnen bij honderden musea. De kaart zelf kost wel geld.[^museumkaart]',
@@ -559,7 +559,7 @@ export const seedPages: SeedPage[] = [
     content: {
       verdict: 'yes',
       emoji: "🌬️",
-      scale: { type: 'free_good', region: 'GB' },
+      scale: { type: 'free_good', region: 'WORLD' },
       background: "Economists call air the textbook example of a **free good**: there is so much of it that nobody can charge for it. A market only appears where air becomes scarce, such as compressed air in a scuba tank.",
       facts: [
         { label: "Composition of dry air", value: "about 78% nitrogen, 21% oxygen, 0.9% argon", sourceUrl: "https://en.wikipedia.org/wiki/Atmosphere_of_Earth" },
@@ -569,7 +569,7 @@ export const seedPages: SeedPage[] = [
         "On a space station air is scarce: oxygen has to be delivered or produced on board."
       ],
       summary:
-        'Yes. The air you breathe is free everywhere. You only pay for services around air, such as filling a scuba tank.',
+        'The air you breathe is free everywhere. You only pay for services around air, such as filling a scuba tank.',
       whenFree: [
         '- **Breathing air**, everywhere, for everyone.',
         '- **Tyre air** at many petrol stations.',
@@ -612,7 +612,7 @@ export const seedPages: SeedPage[] = [
         "In England, Scotland and Wales, licensed premises must give you free tap water when you ask for it."
       ],
       summary:
-        'It depends. You pay your water company for tap water at home, though a litre costs a fraction of a cent. Public drinking fountains are free, and in some countries restaurants must give you tap water for free.',
+        'You pay your water company for tap water at home, though a litre costs a fraction of a cent. Public drinking fountains are free, and in some countries restaurants must give you tap water for free.',
       whenFree: [
         '- **Public drinking fountains** in cities, parks and some stations and airports.',
         '- **Tap water in restaurants and bars** where the law requires it, such as in the UK, France and Spain.',
