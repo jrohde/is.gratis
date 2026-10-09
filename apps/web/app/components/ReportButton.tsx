@@ -1,14 +1,12 @@
 import { Alert, Button, Modal, Radio, Stack, Textarea } from '@mantine/core';
-import { IconFlag } from '@tabler/icons-react';
 import { useState } from 'react';
 import { REPORT_REASONS, type Language, type ReportReason } from '@isgratis/types';
 import { api, ClientApiError } from '~/lib/api.client';
 import { messages } from '~/lib/i18n';
 
 /** "Melden": tell the moderators something is wrong with this page. No account needed. */
-export function ReportButton({ lang, slug }: { lang: Language; slug: string }) {
+export function ReportModal({ lang, slug, opened, onClose }: { lang: Language; slug: string; opened: boolean; onClose: () => void }) {
   const t = messages(lang);
-  const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ReportReason>('wrong');
   const [message, setMessage] = useState('');
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
@@ -28,10 +26,7 @@ export function ReportButton({ lang, slug }: { lang: Language; slug: string }) {
 
   return (
     <>
-      <Button size="xs" variant="subtle" color="gray" leftSection={<IconFlag size={14} />} onClick={() => setOpen(true)}>
-        {t.report}
-      </Button>
-      <Modal opened={open} onClose={() => setOpen(false)} title={t.reportTitle} centered>
+      <Modal opened={opened} onClose={onClose} title={t.reportTitle} centered>
         {state === 'done' ? (
           <Alert color="green">{t.reportThanks}</Alert>
         ) : (

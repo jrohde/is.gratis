@@ -7,12 +7,12 @@ import { messages } from '~/lib/i18n';
 import { useSession } from '~/stores/session';
 
 /** The lock on a protected page, and the switch for moderators. */
-export function ProtectButton({ page }: { page: Page }) {
+export function ProtectButton({ page, toggle = false }: { page: Page; toggle?: boolean }) {
   const t = messages(page.lang);
   const user = useSession((state) => state.user);
   const revalidator = useRevalidator();
   const moderator = user?.role === 'moderator' || user?.role === 'admin';
-  if (!moderator) {
+  if (!moderator || !toggle) {
     return page.protected ? (
       <Tooltip label={t.protectedHelp} multiline w={260}>
         <Badge variant="light" color="gray" leftSection={<IconLock size={12} />}>

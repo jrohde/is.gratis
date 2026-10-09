@@ -3,7 +3,6 @@ import {
   IconBook2,
   IconCircleCheck,
   IconCircleX,
-  IconFileText,
   IconFlask,
   IconAlertTriangle,
   IconCircleCheckFilled,
@@ -41,9 +40,8 @@ import { CitationContext, Markdown, WikiLinkContext } from '~/components/Markdow
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { Asterisk, Footnote } from '~/components/Logo';
-import { EmbedButton } from '~/components/EmbedButton';
 import { ProtectButton } from '~/components/ProtectButton';
-import { ReportButton } from '~/components/ReportButton';
+import { PageMoreMenu } from '~/components/PageMoreMenu';
 import { TranslateButtons } from '~/components/TranslateButtons';
 import { WatchButton } from '~/components/WatchButton';
 import { api, ClientApiError } from '~/lib/api.client';
@@ -384,12 +382,6 @@ function PageView({ page, origin }: { page: Page; origin: string }) {
                 {LANGUAGE_NAMES[tr.lang]}
               </Anchor>
             ))}
-            <Anchor href={`${base}/llms.txt`} size="sm" title="Markdown (llms.txt)">
-              <Group gap={4} wrap="nowrap" component="span">
-                <IconFileText size={14} aria-hidden />
-                llms.txt
-              </Group>
-            </Anchor>
             <Anchor component={Link} to={`${base}/talk`} size="sm">
               <Group gap={4} wrap="nowrap" component="span">
                 <IconMessages size={14} aria-hidden />
@@ -404,8 +396,7 @@ function PageView({ page, origin }: { page: Page; origin: string }) {
               </Group>
             </Anchor>
             <ProtectButton page={page} />
-            <EmbedButton page={page} origin={origin} />
-            <ReportButton lang={page.lang} slug={page.slug} />
+            <PageMoreMenu page={page} origin={origin} />
             <WatchButton lang={page.lang} slug={page.slug} />
             <Button component={Link} to={`${base}/edit`} size="xs" variant="light" leftSection={<IconPencil size={14} />}>
               {t.edit}

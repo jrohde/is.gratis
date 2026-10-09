@@ -285,6 +285,7 @@ const nl = {
   usersTitle: 'Gebruikers',
   usersSearch: 'Zoek op naam of e-mailadres',
   roles: { user: 'Gebruiker', moderator: 'Moderator', admin: 'Beheerder' },
+  more: 'Meer',
 };
 
 export type Messages = typeof nl;
@@ -567,6 +568,7 @@ const en: Messages = {
   usersTitle: 'Users',
   usersSearch: 'Search by name or email',
   roles: { user: 'User', moderator: 'Moderator', admin: 'Admin' },
+  more: 'More',
 };
 
 const de: Messages = {
@@ -736,6 +738,7 @@ const de: Messages = {
   copied: 'Kopiert',
   protectedLabel: 'Geschützt',
   protectedHelp: 'Nur Moderatoren können diese Seite bearbeiten. Schlage eine Änderung auf der Diskussionsseite vor.',
+  more: 'Mehr',
 };
 
 const es: Messages = {
@@ -906,6 +909,7 @@ const es: Messages = {
   copied: 'Copiado',
   protectedLabel: 'Protegida',
   protectedHelp: 'Solo los moderadores pueden editar esta página. Propón un cambio en la página de discusión.',
+  more: 'Más',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };
