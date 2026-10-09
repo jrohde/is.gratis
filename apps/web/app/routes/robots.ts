@@ -7,6 +7,7 @@ export function loader() {
     'Disallow: /admin',
     'Disallow: /search/',
     'Disallow: /review',
+    'Disallow: /advertise/stats/',
     'Disallow: /api/',
     'Allow: /api/media/',
     'Allow: /api/og/',

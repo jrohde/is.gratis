@@ -12,6 +12,7 @@ export default [
   route('account/register', 'routes/register.tsx'),
   route('account/watchlist', 'routes/watchlist.tsx'),
   route('advertise', 'routes/advertise.tsx'),
+  route('advertise/stats/:token', 'routes/advertise-stats.tsx'),
   route('review', 'routes/review.tsx'),
   route('search/:lang', 'routes/search.tsx'),
   route('offers/:lang', 'routes/offers.tsx'),

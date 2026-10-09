@@ -302,6 +302,14 @@ const nl = {
   quizShare: (score: number, max: number) => `Ik scoorde ${score}/${max} op de is.gratis*-quiz. Weet jij wat echt gratis is?`,
   quizShareButton: 'Deel je score',
   quizAgain: 'Nog een keer',
+  statsLinkHelp: 'Bewaar deze geheime link: daar zie je hoe vaak je aanbod getoond en aangeklikt wordt.',
+  statsLink: 'Jouw statistieken',
+  statsShown: 'Getoond',
+  statsClicks: 'Klikken',
+  statsRate: 'Klikratio',
+  statsDay: 'Dag',
+  statsEmpty: 'Nog geen cijfers: die verschijnen zodra je aanbod loopt.',
+  statsPrivacy: 'We tellen alleen hoe vaak je aanbod getoond en aangeklikt is, zonder cookies en zonder iets over bezoekers.',
 };
 
 export type Messages = typeof nl;
@@ -601,6 +609,14 @@ const en: Messages = {
   quizShare: (score, max) => `I scored ${score}/${max} in the is.gratis* quiz. Do you know what is really free?`,
   quizShareButton: 'Share your score',
   quizAgain: 'Play again',
+  statsLinkHelp: 'Keep this secret link: it shows how often your offer is shown and clicked.',
+  statsLink: 'Your statistics',
+  statsShown: 'Shown',
+  statsClicks: 'Clicks',
+  statsRate: 'Click rate',
+  statsDay: 'Day',
+  statsEmpty: 'No numbers yet: they appear once your offer is running.',
+  statsPrivacy: 'We only count how often your offer was shown and clicked, without cookies and without anything about visitors.',
 };
 
 const de: Messages = {

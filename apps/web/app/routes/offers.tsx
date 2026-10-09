@@ -1,5 +1,7 @@
 import { Anchor, Badge, Button, Card, Container, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { useEffect } from 'react';
 import { data, Link } from 'react-router';
+import { countOfferImpressions } from '~/lib/views';
 import { stampSvg, type SponsoredOffer } from '@isgratis/types';
 import type { Route } from './+types/offers';
 import { ClaimLink } from '~/components/Claim';
@@ -33,6 +35,12 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
 export default function Offers({ loaderData }: Route.ComponentProps) {
   const { lang, offers } = loaderData;
   const t = messages(lang);
+  const ids = offers.map((offer) => offer.id).join(',');
+  useEffect(() => {
+    // The API takes six at a time.
+    const list = ids ? ids.split(',') : [];
+    for (let i = 0; i < list.length; i += 6) countOfferImpressions(list.slice(i, i + 6));
+  }, [ids]);
   return (
     <Container size="md">
       <Stack gap="lg">
@@ -68,7 +76,7 @@ export default function Offers({ loaderData }: Route.ComponentProps) {
                   <Text size="sm" c="dimmed" style={{ minWidth: 0 }}>
                     <ClaimLink {...offer.page} />
                   </Text>
-                  <Button component="a" href={offer.url} rel="sponsored noopener" target="_blank" size="xs" color="dark">
+                  <Button component="a" href={`/api/offers/${offer.id}/go`} rel="sponsored noopener" target="_blank" size="xs" color="dark">
                     {t.viewOffer}
                   </Button>
                 </Group>

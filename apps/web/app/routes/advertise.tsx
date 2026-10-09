@@ -1,6 +1,6 @@
-import { Alert, Button, Card, Container, Group, List, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Card, Container, Group, List, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { isLanguage, LANGUAGES, REGIONS, toSlug, type Language, type Region, type SponsorQuote } from '@isgratis/types';
 import type { Route } from './+types/advertise';
 import { api, ClientApiError } from '~/lib/api.client';
@@ -31,6 +31,7 @@ export default function Advertise() {
   const [status, setStatus] = useState<'idle' | 'busy' | 'done'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<SponsorQuote | null>(null);
+  const [statsLink, setStatsLink] = useState<string | null>(null);
   const slug = toSlug(form.slug);
   // The price follows the page's views; it is fixed when the request is sent.
   useEffect(() => {
@@ -53,11 +54,12 @@ export default function Advertise() {
     setStatus('busy');
     setError(null);
     try {
-      await api('POST', '/sponsors/requests', {
+      const created = await api<{ statsToken: string }>('POST', '/sponsors/requests', {
         ...form,
         slug: toSlug(form.slug),
         message: form.message.trim() || undefined,
       });
+      setStatsLink(`/advertise/stats/${created.statsToken}?lang=${uiLang}`);
       setStatus('done');
     } catch (err) {
       setError(err instanceof ClientApiError ? err.message : t.errorGeneric);
@@ -76,7 +78,19 @@ export default function Advertise() {
           ))}
         </List>
         {status === 'done' ? (
-          <Alert color="green">{t.advertiseSubmitted}</Alert>
+          <Alert color="green">
+            <Stack gap="xs">
+              <Text>{t.advertiseSubmitted}</Text>
+              {statsLink && (
+                <Text size="sm">
+                  {t.statsLinkHelp}{' '}
+                  <Anchor component={Link} to={statsLink} fw={700}>
+                    {t.statsLink}
+                  </Anchor>
+                </Text>
+              )}
+            </Stack>
+          </Alert>
         ) : (
           <Card withBorder padding="lg">
             <form onSubmit={(event) => void submit(event)}>
