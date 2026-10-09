@@ -287,6 +287,9 @@ const nl = {
   roles: { user: 'Gebruiker', moderator: 'Moderator', admin: 'Beheerder' },
   more: 'Meer',
   dailyTitle: 'Gratis van de dag',
+  offersTitle: 'Nu gratis te krijgen',
+  offersIntro: 'Echt gratis aanbod van adverteerders, door ons nagekeken: geen verzendkosten, geen verborgen abonnement.',
+  offersEmpty: 'Er loopt nu geen aanbod.',
 };
 
 export type Messages = typeof nl;
@@ -571,6 +574,9 @@ const en: Messages = {
   roles: { user: 'User', moderator: 'Moderator', admin: 'Admin' },
   more: 'More',
   dailyTitle: 'Free thing of the day',
+  offersTitle: 'Free right now',
+  offersIntro: 'Genuinely free offers from advertisers, checked by us: no shipping costs, no hidden subscription.',
+  offersEmpty: 'No offers running right now.',
 };
 
 const de: Messages = {
@@ -742,6 +748,9 @@ const de: Messages = {
   protectedHelp: 'Nur Moderatoren können diese Seite bearbeiten. Schlage eine Änderung auf der Diskussionsseite vor.',
   more: 'Mehr',
   dailyTitle: 'Gratis des Tages',
+  offersTitle: 'Jetzt gratis',
+  offersIntro: 'Wirklich kostenlose Angebote von Werbekunden, von uns geprüft: keine Versandkosten, kein verstecktes Abo.',
+  offersEmpty: 'Gerade laufen keine Angebote.',
 };
 
 const es: Messages = {
@@ -914,6 +923,9 @@ const es: Messages = {
   protectedHelp: 'Solo los moderadores pueden editar esta página. Propón un cambio en la página de discusión.',
   more: 'Más',
   dailyTitle: 'Lo gratis del día',
+  offersTitle: 'Gratis ahora',
+  offersIntro: 'Ofertas de verdad gratis de anunciantes, revisadas por nosotros: sin gastos de envío ni suscripciones ocultas.',
+  offersEmpty: 'No hay ofertas en este momento.',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

@@ -43,7 +43,10 @@ export function SponsoredBlock({
         </Badge>
       </Group>
       <Text size="xs" c="dimmed" mb="md">
-        {t.sponsoredDisclaimer}
+        {t.sponsoredDisclaimer}{' '}
+        <Anchor component={Link} to={`/offers/${lang}`} size="xs">
+          {t.offersTitle} →
+        </Anchor>
       </Text>
       <SimpleGrid cols={{ base: 1, sm: visible.length > 1 ? 2 : 1 }}>
         {visible.map((offer) => (

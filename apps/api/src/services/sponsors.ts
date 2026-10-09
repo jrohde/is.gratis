@@ -2,10 +2,10 @@
  * Sponsored offers: advertisers request a spot on a page, an admin approves it, and the offer
  * is shown in the clearly labelled "free here" block for the booked period.
  */
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, lte, or } from 'drizzle-orm';
 import type { Language, Region, SponsorBooking, SponsorRequestStatus } from '@isgratis/types';
 import type { Database } from '../db/client.js';
-import { sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
+import { pages, revisions, sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
 import { notFound } from '../lib/errors.js';
 
 export function toBooking(row: SponsoredOfferRow): SponsorBooking {
@@ -78,4 +78,33 @@ export async function reviewBooking(
     .returning();
   if (!row) throw notFound('Booking not found');
   return toBooking(row);
+}
+
+/** Every running offer in a language with the page it belongs to: the "free right now" overview. */
+export async function activeOffersOverview(db: Database, lang: Language) {
+  const now = new Date();
+  const rows = await db
+    .select({ offer: sponsoredOffers, title: pages.title, content: revisions.content })
+    .from(sponsoredOffers)
+    .innerJoin(pages, and(eq(pages.lang, sponsoredOffers.lang), eq(pages.slug, sponsoredOffers.slug)))
+    .innerJoin(revisions, eq(revisions.id, pages.currentRevisionId))
+    .where(
+      and(
+        eq(sponsoredOffers.lang, lang),
+        eq(sponsoredOffers.status, 'active'),
+        or(isNull(sponsoredOffers.startsAt), lte(sponsoredOffers.startsAt, now)),
+        or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, now)),
+      ),
+    )
+    .orderBy(desc(sponsoredOffers.startsAt), desc(sponsoredOffers.createdAt))
+    .limit(200);
+  return rows.map(({ offer, title, content }) => ({
+    id: offer.id,
+    advertiserName: offer.advertiserName,
+    title: offer.title,
+    description: offer.description,
+    url: offer.url,
+    region: offer.region,
+    page: { lang: offer.lang, slug: offer.slug, title, ...(content.plural ? { plural: true } : {}), ...(content.emoji ? { emoji: content.emoji } : {}) },
+  }));
 }

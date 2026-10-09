@@ -171,6 +171,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               <Anchor component={Link} to={`/regions/${lang}`} size="sm" c="dimmed">
                 {t.regionsLink}
               </Anchor>
+              <Anchor component={Link} to={`/offers/${lang}`} size="sm" c="dimmed">
+                {t.offersTitle}
+              </Anchor>
               <Anchor component={Link} to={`/review?lang=${lang}`} size="sm" c="dimmed">
                 {t.review}
               </Anchor>

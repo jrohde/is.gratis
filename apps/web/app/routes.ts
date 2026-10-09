@@ -14,6 +14,7 @@ export default [
   route('advertise', 'routes/advertise.tsx'),
   route('review', 'routes/review.tsx'),
   route('search/:lang', 'routes/search.tsx'),
+  route('offers/:lang', 'routes/offers.tsx'),
   route('regions/:lang', 'routes/regions.tsx'),
   route('regions/:lang/:code', 'routes/region.tsx'),
   route('admin', 'routes/admin.tsx'),

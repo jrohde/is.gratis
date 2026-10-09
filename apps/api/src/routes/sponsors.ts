@@ -6,8 +6,8 @@ import type { Database } from '../db/client.js';
 import type { CacheInvalidator } from '../lib/cache.js';
 import { httpUrlSchema, languageSchema, regionSchema, slugSchema } from '../lib/content.js';
 import { badRequest } from '../lib/errors.js';
-import { bookingSchema, bookingStatusSchema, errorSchema, sponsorQuoteSchema } from '../schemas.js';
-import { createSponsorRequest, listBookings, reviewBooking } from '../services/sponsors.js';
+import { bookingSchema, bookingStatusSchema, errorSchema, sponsoredOfferSchema, sponsorQuoteSchema } from '../schemas.js';
+import { activeOffersOverview, createSponsorRequest, listBookings, reviewBooking } from '../services/sponsors.js';
 import { quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
 
 const plain = (max: number) =>
@@ -26,6 +26,33 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     const views30 = await viewsLast30Days(db, lang, slug);
     return { views30, priceCents: quotePrice(views30, config.sponsorPricing), currency: 'EUR' as const };
   };
+
+  app.get(
+    '/offers',
+    {
+      schema: {
+        tags: ['sponsors'],
+        summary: 'Every sponsored free offer running now, with the page it belongs to',
+        querystring: z.object({ lang: languageSchema }),
+        response: {
+          200: z.object({
+            offers: z.array(
+              sponsoredOfferSchema.extend({
+                page: z.object({
+                  lang: languageSchema,
+                  slug: z.string(),
+                  title: z.string(),
+                  plural: z.boolean().optional(),
+                  emoji: z.string().optional(),
+                }),
+              }),
+            ),
+          }),
+        },
+      },
+    },
+    async (request) => ({ offers: await activeOffersOverview(db, request.query.lang) }),
+  );
 
   app.get(
     '/sponsors/quote',

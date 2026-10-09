@@ -162,3 +162,27 @@ describe('regions', () => {
     expect((await ctx.app.inject({ url: '/api/regions/XX?lang=nl' })).statusCode).toBe(400);
   });
 });
+
+describe('offers overview', () => {
+  it('lists running offers with their page', async () => {
+    const admin = await register(ctx, 'admin@example.com');
+    await createPage(admin.cookie);
+    const request = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/sponsors/requests',
+      payload: {
+        lang: 'nl', slug: 'parkeren', advertiserName: 'Fietsjes', contactEmail: 'ad@example.com',
+        title: 'Gratis proefrit', description: 'Een dag gratis fietsen.', url: 'https://example.com/fiets',
+      },
+    });
+    expect((await ctx.app.inject({ url: '/api/offers?lang=nl' })).json().offers).toEqual([]);
+    await ctx.app.inject({
+      method: 'POST',
+      url: `/api/admin/sponsors/${request.json().id}/review`,
+      headers: { cookie: admin.cookie },
+      payload: { status: 'active' },
+    });
+    const offers = (await ctx.app.inject({ url: '/api/offers?lang=nl' })).json().offers;
+    expect(offers).toEqual([expect.objectContaining({ title: 'Gratis proefrit', page: expect.objectContaining({ slug: 'parkeren' }) })]);
+  });
+});
