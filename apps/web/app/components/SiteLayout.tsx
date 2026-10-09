@@ -1,12 +1,13 @@
-import { ActionIcon, Anchor, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
+import { ActionIcon, Anchor, Badge, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { IconChecklist, IconEye, IconLanguage, IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { LANGUAGES } from '@isgratis/types';
 import { LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
 import { usePreferences } from '~/stores/preferences';
+import { api } from '~/lib/api.client';
 import { Logo, Slogan } from './Logo';
 import { SearchBox } from './SearchBox';
 import { ThemeToggle } from './ThemeToggle';
@@ -17,6 +18,15 @@ function UserMenu() {
   const { user, loaded, logout } = useSession();
   const location = useLocation();
   const next = encodeURIComponent(location.pathname + location.search);
+  const moderator = user?.role === 'moderator' || user?.role === 'admin';
+  // What waits for moderators: drafts to check and open reports.
+  const [waiting, setWaiting] = useState(0);
+  useEffect(() => {
+    if (!moderator) return;
+    api<{ drafts: number; reports: number }>('GET', '/moderation/summary')
+      .then((summary) => setWaiting(summary.drafts + summary.reports))
+      .catch(() => setWaiting(0));
+  }, [moderator, location.pathname]);
 
   if (!loaded) return <Box w={90} />;
   if (!user) {
@@ -39,6 +49,11 @@ function UserMenu() {
           <Group gap={6} wrap="nowrap">
             <IconUser size={16} aria-hidden />
             {user.displayName}
+            {waiting > 0 && (
+              <Badge size="xs" color="orange" circle aria-label={t.review}>
+                {waiting}
+              </Badge>
+            )}
           </Group>
         </UnstyledButton>
       </Menu.Target>
@@ -46,7 +61,12 @@ function UserMenu() {
         <Menu.Item component={Link} to={`/account/watchlist?lang=${lang}`} leftSection={<IconEye size={16} />}>
           {t.watchlist}
         </Menu.Item>
-        <Menu.Item component={Link} to={`/review?lang=${lang}`} leftSection={<IconChecklist size={16} />}>
+        <Menu.Item
+          component={Link}
+          to={`/review?lang=${lang}`}
+          leftSection={<IconChecklist size={16} />}
+          rightSection={waiting > 0 ? <Badge size="xs" color="orange" circle>{waiting}</Badge> : null}
+        >
           {t.review}
         </Menu.Item>
         {user.role === 'admin' && (

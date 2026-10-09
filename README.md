@@ -137,6 +137,13 @@ Zoeken werkt zoals op Wikipedia, helemaal in de eigen database:
 - **Gevraagd:** de nakijkpagina toont de meest gevraagde onderwerpen zonder pagina, als takenlijst voor schrijvers. Ook via `GET /api/wanted`.
 - De MCP-tool `search` zoekt in de volledige tekst.
 
+### Insluiten, beveiligen en koppelen
+
+- **Insluiten:** elke nagekeken pagina heeft een knop "Insluiten" met een kleine antwoordkaart ("Parkeren is gratis\* \*deels") als SVG en de HTML om op een andere site te plakken. De kaart blijft actueel en linkt terug. Adres: `/api/og/embed/<taal>/<pagina>.svg`, gecachet zoals de deelkaarten.
+- **Beveiligen:** moderators kunnen een pagina beveiligen; dan kunnen alleen moderators haar bewerken of terugzetten. Anderen zien een slotje en worden naar de overlegpagina verwezen.
+- **Vertalingen koppelen:** moderators kunnen een pagina koppelen aan een bestaande pagina in een andere taal, als iemand die los heeft geschreven.
+- **Teller:** moderators zien in het menu hoeveel concepten en meldingen er wachten.
+
 ### Per land
 
 `/regions/<taal>` toont een wereldkaart: hoe donkerder het groen, hoe meer onderwerpen een antwoord voor dat land hebben. `/regions/<taal>/<land>` zet alles op een rij wat in één land gratis is en wat niet. Elke pagina heeft ook een kaart, gekleurd naar het oordeel per land. Klik op een land en het schuift bovenaan. De kaart is getekend uit Natural Earth (publiek domein) en zit in de site zelf, zonder kaartdienst of tegels. Opnieuw maken: `node scripts/generate-map-data.mjs`.
@@ -286,7 +293,6 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 - **Licentie voor bijdragen.** Kies onder welke licentie bewerkers hun tekst bijdragen en vermeld dat bij het registreren.
 - **Startinhoud nalopen.** De twaalf startpagina's zijn zorgvuldig geformuleerd, ook de achtergrondteksten, kerncijfers en weetjes, maar niet tegen bronnen gecontroleerd. Loop ze na voor livegang. Tijdprijzen zijn bewust leeg gelaten: die vragen een prijs en een uurloon met gecontroleerde bron.
 - **Beeldmodel kiezen.** Beeldgeneratie staat standaard uit. Voor alles in eigen beheer is een zelf gehost model achter een OpenAI-compatibele server nodig, zoals LocalAI. Dat vraagt een GPU-node.
-- **Moderatie.** Iedereen met een account kan bewerken en terugzetten. Moderators kunnen concepten verwijderen en overlegberichten verbergen. Bij vandalisme is pagina-vergrendeling de volgende stap. Moderators benoem je nu nog in de database (`update users set role = 'moderator' ...`).
+- **Moderators benoemen** gaat nog via de database (`update users set role = 'moderator' ...`). Een beheerscherm voor rollen is de volgende stap.
 - **Meldingen.** De volglijst toont wijzigingen op de site zelf. Mail bij een wijziging vraagt een mailserver.
-- **Hand-gemaakte vertalingen koppelen.** Vertalingen door het taalmodel worden automatisch aan hetzelfde onderwerp gekoppeld. Twee pagina's die mensen los van elkaar in verschillende talen maakten, kun je nog niet aan elkaar koppelen.
 - **Rate limits** voor inloggen en bewerken gelden per pod. Het dure deel, conceptgeneratie, wordt wel centraal in Postgres begrensd.

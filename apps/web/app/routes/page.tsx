@@ -42,6 +42,7 @@ import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { Asterisk, Footnote } from '~/components/Logo';
 import { EmbedButton } from '~/components/EmbedButton';
+import { ProtectButton } from '~/components/ProtectButton';
 import { ReportButton } from '~/components/ReportButton';
 import { TranslateButtons } from '~/components/TranslateButtons';
 import { WatchButton } from '~/components/WatchButton';
@@ -402,6 +403,7 @@ function PageView({ page, origin }: { page: Page; origin: string }) {
                 {t.history}
               </Group>
             </Anchor>
+            <ProtectButton page={page} />
             <EmbedButton page={page} origin={origin} />
             <ReportButton lang={page.lang} slug={page.slug} />
             <WatchButton lang={page.lang} slug={page.slug} />

@@ -278,6 +278,10 @@ const nl = {
   copied: 'Gekopieerd',
   linkTranslation: 'Of koppel aan een bestaande pagina:',
   link: 'Koppelen',
+  protectedLabel: 'Beveiligd',
+  protectedHelp: 'Alleen moderators kunnen deze pagina bewerken. Stel een wijziging voor op de overlegpagina.',
+  protect: 'Beveiligen',
+  unprotect: 'Beveiliging opheffen',
 };
 
 export type Messages = typeof nl;
@@ -553,6 +557,10 @@ const en: Messages = {
   copied: 'Copied',
   linkTranslation: 'Or link to an existing page:',
   link: 'Link',
+  protectedLabel: 'Protected',
+  protectedHelp: 'Only moderators can edit this page. Suggest a change on the talk page.',
+  protect: 'Protect',
+  unprotect: 'Remove protection',
 };
 
 const de: Messages = {
@@ -720,6 +728,8 @@ const de: Messages = {
   embedHelp: 'Füge diesen Code in deine Website ein. Die Antwort bleibt aktuell und verlinkt auf diese Seite.',
   copy: 'Kopieren',
   copied: 'Kopiert',
+  protectedLabel: 'Geschützt',
+  protectedHelp: 'Nur Moderatoren können diese Seite bearbeiten. Schlage eine Änderung auf der Diskussionsseite vor.',
 };
 
 const es: Messages = {
@@ -888,6 +898,8 @@ const es: Messages = {
   embedHelp: 'Pega este código en tu web. La respuesta se mantiene al día y enlaza a esta página.',
   copy: 'Copiar',
   copied: 'Copiado',
+  protectedLabel: 'Protegida',
+  protectedHelp: 'Solo los moderadores pueden editar esta página. Propón un cambio en la página de discusión.',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };
