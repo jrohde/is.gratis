@@ -1,0 +1,58 @@
+/** Reports from readers about a page, handled by moderators. */
+import { and, count, desc, eq, gt } from 'drizzle-orm';
+import type { Language, Report, ReportReason } from '@isgratis/types';
+import type { Database } from '../db/client.js';
+import { pages, reports } from '../db/schema.js';
+import { notFound, tooManyRequests } from '../lib/errors.js';
+
+export async function createReport(
+  db: Database,
+  input: { lang: Language; slug: string; reason: ReportReason; message?: string; ipHash: string; userId: string | null },
+  perHour: number,
+): Promise<string> {
+  const [page] = await db
+    .select({ id: pages.id })
+    .from(pages)
+    .where(and(eq(pages.lang, input.lang), eq(pages.slug, input.slug)))
+    .limit(1);
+  if (!page) throw notFound('This page does not exist');
+  const [recent] = await db
+    .select({ n: count() })
+    .from(reports)
+    .where(and(eq(reports.ipHash, input.ipHash), gt(reports.createdAt, new Date(Date.now() - 60 * 60 * 1000))));
+  if ((recent?.n ?? 0) >= perHour) throw tooManyRequests('You sent several reports already. Try again in an hour.');
+  const [row] = await db
+    .insert(reports)
+    .values({ pageId: page.id, reason: input.reason, message: input.message?.trim() || null, ipHash: input.ipHash, userId: input.userId })
+    .returning({ id: reports.id });
+  return row!.id;
+}
+
+export async function listReports(db: Database, status: 'open' | 'resolved'): Promise<Report[]> {
+  const rows = await db
+    .select({ report: reports, lang: pages.lang, slug: pages.slug, title: pages.title })
+    .from(reports)
+    .innerJoin(pages, eq(pages.id, reports.pageId))
+    .where(eq(reports.status, status))
+    .orderBy(desc(reports.createdAt))
+    .limit(200);
+  return rows.map(({ report, lang, slug, title }) => ({
+    id: report.id,
+    lang,
+    slug,
+    title,
+    reason: report.reason,
+    message: report.message,
+    status: report.status,
+    createdAt: report.createdAt.toISOString(),
+  }));
+}
+
+export async function resolveReport(db: Database, id: string, userId: string): Promise<void> {
+  const [row] = await db
+    .update(reports)
+    .set({ status: 'resolved', resolvedBy: userId, resolvedAt: new Date() })
+    .where(eq(reports.id, id))
+    .returning({ id: reports.id });
+  if (!row) throw notFound('Report not found');
+}

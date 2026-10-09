@@ -130,3 +130,23 @@ describe('watchlist and talk pages', () => {
     expect((await ctx.app.inject({ url: '/api/pages/nl/parkeren' })).json().commentCount).toBe(0);
   });
 });
+
+describe('reports', () => {
+  it('lets anyone report a page and moderators handle it', async () => {
+    const anna = await register(ctx, 'reporter@example.com', 'Anna');
+    await createPage(anna.cookie);
+    const sent = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/pages/nl/parkeren/reports',
+      payload: { reason: 'outdated', message: 'De tarieven zijn veranderd.' },
+    });
+    expect(sent.statusCode).toBe(201);
+    expect((await ctx.app.inject({ url: '/api/reports', headers: { cookie: anna.cookie } })).statusCode).toBe(403);
+    await makeRole(anna.user.id, 'moderator');
+    const list = (await ctx.app.inject({ url: '/api/reports', headers: { cookie: anna.cookie } })).json().reports;
+    expect(list).toEqual([expect.objectContaining({ slug: 'parkeren', reason: 'outdated', message: 'De tarieven zijn veranderd.' })]);
+    const resolved = await ctx.app.inject({ method: 'POST', url: `/api/reports/${list[0].id}/resolve`, headers: { cookie: anna.cookie } });
+    expect(resolved.statusCode).toBe(204);
+    expect((await ctx.app.inject({ url: '/api/reports', headers: { cookie: anna.cookie } })).json().reports).toEqual([]);
+  });
+});

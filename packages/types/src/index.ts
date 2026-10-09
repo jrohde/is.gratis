@@ -278,6 +278,20 @@ export interface PageListItem {
   updatedAt: string;
 }
 
+export const REPORT_REASONS = ['wrong', 'outdated', 'unsourced', 'spam', 'offensive', 'copyright', 'other'] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+export interface Report {
+  id: string;
+  lang: Language;
+  slug: string;
+  title: string;
+  reason: ReportReason;
+  message: string | null;
+  status: 'open' | 'resolved';
+  createdAt: string;
+}
+
 /** Markers around the matched words in a search snippet; the web app turns them into <mark>. */
 export const SNIPPET_START = '\u0002';
 export const SNIPPET_END = '\u0003';

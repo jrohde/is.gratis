@@ -29,6 +29,7 @@ import type {
   PageContent,
   PageStatus,
   Region,
+  ReportReason,
   RevisionSource,
   SponsorRequestStatus,
   UserRole,
@@ -274,6 +275,27 @@ export const relatedSubjects = pgTable(
     createdAt: createdAt(),
   },
   (table) => [primaryKey({ columns: [table.lang, table.query] }), index('related_subjects_created_idx').on(table.createdAt)],
+);
+
+/** Reports from readers: something on a page is wrong, outdated, spam or offensive. */
+export const reports = pgTable(
+  'reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    pageId: uuid('page_id')
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    reason: text('reason').$type<ReportReason>().notNull(),
+    message: text('message'),
+    /** Salted hash of the reporter's IP, for rate limiting only. */
+    ipHash: text('ip_hash').notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    status: text('status').$type<'open' | 'resolved'>().notNull().default('open'),
+    resolvedBy: uuid('resolved_by').references(() => users.id, { onDelete: 'set null' }),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (table) => [index('reports_status_idx').on(table.status, table.createdAt), index('reports_ip_idx').on(table.ipHash, table.createdAt)],
 );
 
 export type UserRow = typeof users.$inferSelect;
