@@ -1,5 +1,5 @@
 /**
- * The is.gratis brand: a price tag without a price, filled with sky.
+ * The is.gratis brand: a price tag without a price, filled with sky, hanging from the earth.
  *
  * The eyelet of the tag is a window on the real sky. In the daytime it holds the sun; at night it
  * holds the moon in today's actual phase, mirrored for the southern hemisphere. Every visitor
@@ -125,15 +125,38 @@ export function logoSvg(state: SkyState, options: { size?: number; idPrefix?: st
       `<circle cx="${r2(hx)}" cy="${r2(hy)}" r="${disc - 1.4}" fill="${sun}"/>`;
   }
   const thread = state.sky === 'day' ? '#1971c2' : '#ffd43b';
-  const string = `<path d="M${r2(hx - ring * Math.SQRT1_2)} ${r2(hy - ring * Math.SQRT1_2)} C ${r2(hx - 12)} ${r2(hy - 9)}, 9 13, 4.2 5" fill="none" stroke="${thread}" stroke-width="1.7" stroke-linecap="round"/>`;
+  // The tag hangs from the earth: a small globe in the top-left corner, the tag scaled to make room.
+  const scale = 0.8;
+  const shift = 64 * (1 - scale);
+  const outer = (v: number) => r2(shift + v * scale);
+  const earth = { x: 9.2, y: 9.2, r: 7.6 };
+  const fromX = outer(hx - ring * Math.SQRT1_2);
+  const fromY = outer(hy - ring * Math.SQRT1_2);
+  const toX = r2(earth.x + earth.r * 0.72);
+  const toY = r2(earth.y + earth.r * 0.72);
+  const string = `<path d="M${fromX} ${fromY} C ${r2(fromX - 4)} ${r2(fromY - 1)}, ${r2(toX + 2)} ${r2(toY + 5)}, ${toX} ${toY}" fill="none" stroke="${thread}" stroke-width="1.6" stroke-linecap="round"/>`;
+  const globe = `<g>
+<clipPath id="${id}-earth"><circle cx="${earth.x}" cy="${earth.y}" r="${earth.r}"/></clipPath>
+<circle cx="${earth.x}" cy="${earth.y}" r="${earth.r}" fill="#1c7ed6"/>
+<g clip-path="url(#${id}-earth)" fill="#51cf66">
+<path d="M6.2 2.6 c2 -0.8 4.4 -0.2 5.2 1.2 c0.6 1.1 -0.4 1.9 0.3 3 c0.8 1.2 2.3 1.4 2.4 3 c0.1 1.7 -1.2 3.3 -2.1 4.8 c-0.6 1.1 -0.9 2.6 -2 2.9 c-0.9 -1.3 -0.6 -3 -1.6 -4.2 c-0.8 -1 -2.4 -1 -2.9 -2.3 c-0.5 -1.3 0.8 -2.2 0.7 -3.5 c-0.1 -1 -1.2 -1.6 -0.9 -2.7 c0.2 -0.8 1 -1.6 1.8 -2.2z"/>
+<path d="M14.4 3.8 c1.4 0.4 2.6 1.6 2.6 3 c-1 0 -1.8 -0.6 -2.4 -1.4 c-0.4 -0.5 -0.6 -1 -0.2 -1.6z"/>
+<path d="M1.6 10.8 c1 -0.2 1.8 0.6 2 1.6 c0.2 1 -0.4 2 -1.2 2.4 c-0.6 -1 -1 -2.4 -0.8 -4z"/>
+</g>
+<circle cx="${earth.x}" cy="${earth.y}" r="${earth.r}" fill="none" stroke="#a5d8ff" stroke-width="1" stroke-opacity="0.9"/>
+<path d="M${r2(earth.x - earth.r * 0.6)} ${r2(earth.y - earth.r * 0.45)} a${earth.r} ${earth.r} 0 0 1 ${r2(earth.r * 0.75)} ${r2(-earth.r * 0.35)}" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1" stroke-linecap="round"/>
+</g>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" role="img" aria-label="${options.title ?? 'is.gratis'}">
 <defs>
 <linearGradient id="${id}-sky" gradientUnits="userSpaceOnUse" x1="0" y1="8" x2="0" y2="64"><stop offset="0" stop-color="${skyTop}"/><stop offset="1" stop-color="${skyBottom}"/></linearGradient>
 <clipPath id="${id}-clip"><path d="${tag}" transform="rotate(45 32 32)"/></clipPath>
 </defs>
-<path d="${tag}" transform="rotate(45 32 32)" fill="url(#${id}-sky)" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1"/>
+${string}${globe}
+<g transform="translate(${r2(shift)} ${r2(shift)}) scale(${scale})">
+<path d="${tag}" transform="rotate(45 32 32)" fill="url(#${id}-sky)" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1.2"/>
 <g clip-path="url(#${id}-clip)">${decorations}</g>
-${string}<path d="M3.5 0.6 L4.3 2.7 L6.4 3.5 L4.3 4.3 L3.5 6.4 L2.7 4.3 L0.6 3.5 L2.7 2.7 Z" fill="${thread}"/><circle cx="${r2(hx)}" cy="${r2(hy)}" r="${ring}" fill="#ffffff"/>${celestial}
+<circle cx="${r2(hx)}" cy="${r2(hy)}" r="${ring}" fill="#ffffff"/>${celestial}
+</g>
 </svg>`;
 }
 

@@ -75,7 +75,7 @@ const nl: Methodology = {
   ].join('\n'),
   logoTitle: 'Het logo',
   logo: [
-    'Het logo is een prijskaartje zonder prijs, gevuld met de hemel. Door het oogje kijk je naar de echte lucht van dit moment: overdag de zon, \'s avonds de schemering en \'s nachts de maan in de stand van vandaag. Op het zuidelijk halfrond staat de maan gespiegeld, zoals hij daar ook aan de hemel staat.',
+    'Het logo is een prijskaartje zonder prijs, gevuld met de hemel, dat aan de aarde hangt. Door het oogje kijk je naar de echte lucht van dit moment: overdag de zon, \'s avonds de schemering en \'s nachts de maan in de stand van vandaag. Op het zuidelijk halfrond staat de maan gespiegeld, zoals hij daar ook aan de hemel staat.',
     '',
     'Daardoor ziet iedere bezoeker een ander logo, en het ziet er morgen weer anders uit dan vandaag. Het laat zien waar is.gratis over gaat: de mooiste dingen hebben geen prijs.',
   ].join('\n'),
@@ -131,7 +131,7 @@ const en: Methodology = {
   ].join('\n'),
   logoTitle: 'The logo',
   logo: [
-    'The logo is a price tag without a price, filled with sky. Through its eyelet you look at the real sky of this moment: the sun by day, dusk in the evening and the moon in tonight\'s phase at night. In the southern hemisphere the moon is mirrored, just as it appears in the sky there.',
+    'The logo is a price tag without a price, filled with sky, hanging from the earth. Through its eyelet you look at the real sky of this moment: the sun by day, dusk in the evening and the moon in tonight\'s phase at night. In the southern hemisphere the moon is mirrored, just as it appears in the sky there.',
     '',
     'So every visitor sees a different logo, and tomorrow it looks different again. It shows what is.gratis is about: the best things in life have no price.',
   ].join('\n'),

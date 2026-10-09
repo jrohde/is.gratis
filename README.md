@@ -109,7 +109,7 @@ Net als op Wikipedia moet elke bewering te controleren zijn:
 
 ### Logo en slogan
 
-Het logo is een **prijskaartje zonder prijs, gevuld met de hemel**. Door het oogje van het kaartje kijk je naar de echte lucht van dat moment:
+Het logo is een **prijskaartje zonder prijs, gevuld met de hemel, dat aan de aarde hangt**. Door het oogje van het kaartje kijk je naar de echte lucht van dat moment:
 
 - **Overdag** zit de zon in het oogje, tussen wolkjes.
 - **'s Avonds en 's ochtends** kleurt het kaartje naar schemering.
