@@ -15,6 +15,7 @@ export default [
   route('review', 'routes/review.tsx'),
   route('search/:lang', 'routes/search.tsx'),
   route('offers/:lang', 'routes/offers.tsx'),
+  route('quiz/:lang', 'routes/quiz.tsx'),
   route('regions/:lang', 'routes/regions.tsx'),
   route('regions/:lang/:code', 'routes/region.tsx'),
   route('admin', 'routes/admin.tsx'),

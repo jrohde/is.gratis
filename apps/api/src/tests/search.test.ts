@@ -109,3 +109,13 @@ describe('free thing of the day', () => {
     expect((await ctx.app.inject({ url: '/api/daily?lang=nl' })).json()).toEqual(first);
   });
 });
+
+describe('quiz', () => {
+  it('asks about pages that have a free scale', async () => {
+    await create('lucht', 'lucht', sampleContent({ scale: { type: 'free_good', region: 'WORLD' } }));
+    await create('thee', 'thee');
+    const { questions } = (await ctx.app.inject({ url: '/api/quiz?lang=nl' })).json();
+    expect(questions.map((q: { slug: string }) => q.slug)).toEqual(['lucht']);
+    expect(questions[0].scale).toEqual({ type: 'free_good', region: 'WORLD' });
+  });
+});

@@ -290,6 +290,18 @@ const nl = {
   offersTitle: 'Nu gratis te krijgen',
   offersIntro: 'Echt gratis aanbod van adverteerders, door ons nagekeken: geen verzendkosten, geen verborgen abonnement.',
   offersEmpty: 'Er loopt nu geen aanbod.',
+  quizTitle: 'Is het gratis? De quiz',
+  quizIntro: 'Raad hoe gratis het echt is. Precies goed: 2 punten. Eén stap ernaast: 1 punt.',
+  quizEmpty: 'Er zijn nog te weinig pagina’s voor een quiz.',
+  quizScore: (n: number) => `${n} punten`,
+  quizWhy: 'Lees waarom →',
+  quizResult: 'Uitslag',
+  quizGreat: 'Je weet echt wat gratis is!',
+  quizGood: 'Niet slecht. Gratis is lastiger dan je denkt.',
+  quizTryAgain: 'Gratis bestaat… soms. Probeer het nog eens.',
+  quizShare: (score: number, max: number) => `Ik scoorde ${score}/${max} op de is.gratis*-quiz. Weet jij wat echt gratis is?`,
+  quizShareButton: 'Deel je score',
+  quizAgain: 'Nog een keer',
 };
 
 export type Messages = typeof nl;
@@ -577,6 +589,18 @@ const en: Messages = {
   offersTitle: 'Free right now',
   offersIntro: 'Genuinely free offers from advertisers, checked by us: no shipping costs, no hidden subscription.',
   offersEmpty: 'No offers running right now.',
+  quizTitle: 'Is it free? The quiz',
+  quizIntro: 'Guess how free it really is. Exactly right: 2 points. One step off: 1 point.',
+  quizEmpty: 'Not enough pages for a quiz yet.',
+  quizScore: (n) => `${n} points`,
+  quizWhy: 'Read why →',
+  quizResult: 'Result',
+  quizGreat: 'You really know what is free!',
+  quizGood: 'Not bad. Free is trickier than you think.',
+  quizTryAgain: 'Free exists… sometimes. Try again.',
+  quizShare: (score, max) => `I scored ${score}/${max} in the is.gratis* quiz. Do you know what is really free?`,
+  quizShareButton: 'Share your score',
+  quizAgain: 'Play again',
 };
 
 const de: Messages = {
@@ -751,6 +775,14 @@ const de: Messages = {
   offersTitle: 'Jetzt gratis',
   offersIntro: 'Wirklich kostenlose Angebote von Werbekunden, von uns geprüft: keine Versandkosten, kein verstecktes Abo.',
   offersEmpty: 'Gerade laufen keine Angebote.',
+  quizTitle: 'Ist es gratis? Das Quiz',
+  quizIntro: 'Rate, wie gratis es wirklich ist. Genau richtig: 2 Punkte. Eine Stufe daneben: 1 Punkt.',
+  quizScore: (n) => `${n} Punkte`,
+  quizWhy: 'Warum? →',
+  quizResult: 'Ergebnis',
+  quizShare: (score, max) => `Ich habe ${score}/${max} im is.gratis*-Quiz. Weißt du, was wirklich gratis ist?`,
+  quizShareButton: 'Ergebnis teilen',
+  quizAgain: 'Noch einmal',
 };
 
 const es: Messages = {
@@ -926,6 +958,14 @@ const es: Messages = {
   offersTitle: 'Gratis ahora',
   offersIntro: 'Ofertas de verdad gratis de anunciantes, revisadas por nosotros: sin gastos de envío ni suscripciones ocultas.',
   offersEmpty: 'No hay ofertas en este momento.',
+  quizTitle: '¿Es gratis? El quiz',
+  quizIntro: 'Adivina cuán gratis es de verdad. Exacto: 2 puntos. Un paso de diferencia: 1 punto.',
+  quizScore: (n) => `${n} puntos`,
+  quizWhy: '¿Por qué? →',
+  quizResult: 'Resultado',
+  quizShare: (score, max) => `He sacado ${score}/${max} en el quiz de is.gratis*. ¿Sabes qué es gratis de verdad?`,
+  quizShareButton: 'Comparte tu puntuación',
+  quizAgain: 'Otra vez',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

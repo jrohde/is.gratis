@@ -4,7 +4,7 @@ import type { Database } from '../db/client.js';
 import { languageSchema, regionSchema } from '../lib/content.js';
 import { regionEntrySchema } from '../schemas.js';
 import { regionCounts, regionEntries } from '../services/regions.js';
-import { dailyPick } from '../services/daily.js';
+import { dailyPick, quizQuestions } from '../services/daily.js';
 import { pageListItemSchema } from '../schemas.js';
 
 export const regionRoutes: FastifyPluginAsyncZod<{ db: Database }> = async (app, { db }) => {
@@ -51,6 +51,22 @@ export const regionRoutes: FastifyPluginAsyncZod<{ db: Database }> = async (app,
     async (request) => {
       const day = new Date().toISOString().slice(0, 10);
       return { day, page: await dailyPick(db, request.query.lang, day) };
+    },
+  );
+
+  app.get(
+    '/quiz',
+    {
+      schema: {
+        tags: ['pages'],
+        summary: 'Random subjects with a free scale, for the "is it free?" quiz',
+        querystring: z.object({ lang: languageSchema, count: z.coerce.number().int().min(1).max(20).default(10) }),
+        response: { 200: z.object({ questions: z.array(pageListItemSchema) }) },
+      },
+    },
+    async (request, reply) => {
+      reply.header('cache-control', 'no-store');
+      return { questions: await quizQuestions(db, request.query.lang, request.query.count) };
     },
   );
 };

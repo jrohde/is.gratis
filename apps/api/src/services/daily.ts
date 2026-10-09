@@ -29,3 +29,20 @@ export async function dailyPick(db: Database, lang: Language, day = new Date().t
     normalizeContent(row.content),
   );
 }
+
+/** Random published pages with a free scale, for the quiz: the scale is what players guess. */
+export async function quizQuestions(db: Database, lang: Language, count: number): Promise<PageListItem[]> {
+  const result = await db.execute<Row>(sql`
+    select p.lang, p.slug, p.title, p.status, p.updated_at, r.content, false as free
+    from pages p join revisions r on r.id = p.current_revision_id
+    where p.lang = ${lang} and p.status = 'published' and r.content ? 'scale'
+    order by random()
+    limit ${count}
+  `);
+  return result.rows.map((row) =>
+    toListItem(
+      { lang: row.lang, slug: row.slug, title: row.title, status: row.status, updatedAt: new Date(row.updated_at) },
+      normalizeContent(row.content),
+    ),
+  );
+}

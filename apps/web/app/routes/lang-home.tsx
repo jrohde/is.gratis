@@ -1,6 +1,6 @@
-import { Card, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
+import { Button, Card, Group, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
 import { motion } from 'motion/react';
-import { data } from 'react-router';
+import { data, Link } from 'react-router';
 import { LANGUAGES, SLOGAN, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/lang-home';
 import { Slogan, Wordmark } from '~/components/Logo';
@@ -94,6 +94,15 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
             </Text>
           </Card>
         )}
+
+        <Group justify="center" gap="sm">
+          <Button component={Link} to={`/quiz/${lang}`} variant="light">
+            {t.quizTitle} →
+          </Button>
+          <Button component={Link} to={`/offers/${lang}`} variant="subtle">
+            {t.offersTitle} →
+          </Button>
+        </Group>
 
         <Stack gap="md">
           <Title order={2} size="h3">

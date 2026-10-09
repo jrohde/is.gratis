@@ -145,6 +145,12 @@ Zoeken werkt zoals op Wikipedia, helemaal in de eigen database:
 - **Teller:** moderators zien in het menu hoeveel concepten en meldingen er wachten.
 - **Rollen:** admins maken in het beheer (tabblad Gebruikers) iemand moderator of admin. Je eigen rol kun je niet veranderen, zodat je jezelf niet per ongeluk buitensluit.
 
+### Voor bezoekers: gratis van de dag, aanbod en quiz
+
+- **Gratis van de dag** op de homepage: elke dag een ander onderwerp dat (bijna) voor iedereen gratis is, voor iedereen hetzelfde. Een hash van de datum kiest; er is geen tabel of cronjob voor nodig.
+- **Nu gratis te krijgen** (`/offers/<taal>`): alle goedgekeurde gesponsorde aanbiedingen op één plek, gemarkeerd als gesponsord en met het keurmerk. Meer zichtbaarheid voor adverteerders, dus meer waarde per plek.
+- **Quiz** (`/quiz/<taal>`): je ziet een bewering ("Onderwijs is gratis\*") en raadt de voetnoot op de gratis-schaal. Precies goed is 2 punten, één stap ernaast 1. Na tien vragen kun je je score delen.
+
 ### Per land
 
 `/regions/<taal>` toont een wereldkaart: hoe donkerder het groen, hoe meer onderwerpen een antwoord voor dat land hebben. `/regions/<taal>/<land>` zet alles op een rij wat in één land gratis is en wat niet. Elke pagina heeft ook een kaart, gekleurd naar het oordeel per land. Klik op een land en het schuift bovenaan. De kaart is getekend uit Natural Earth (publiek domein) en zit in de site zelf, zonder kaartdienst of tegels. Opnieuw maken: `node scripts/generate-map-data.mjs`.
