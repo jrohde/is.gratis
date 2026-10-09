@@ -260,6 +260,12 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 ## Nog open
 
 - **Zoekmachine, zoals op Wikipedia.** Nu is er alleen automatisch aanvullen op titel en kort antwoord. Plan: een resultatenpagina `/<taal>/zoeken?q=` met Postgres full-text search (een `tsvector` per taal met de woordenboeken voor Nederlands, Engels, Duits en Spaans) over alle tekst van een pagina, gerangschikt en met gemarkeerde fragmenten (`ts_headline`). Daarbij "bedoelde je…?" via `pg_trgm`, filters op oordeel en land, en onderaan "Maak de pagina …" als er geen exacte treffer is. Alles in de eigen database, zonder externe zoekdienst.
+  - **Suggesties, ook voor onderwerpen die nog niet bestaan.** Tijdens het typen eerst bestaande pagina's, daarna onderwerpen zonder pagina, gemarkeerd als "Zonnebrandcreme is gratis\* \*nog geen antwoord". Klikken laat een eerste versie schrijven. Bronnen, van goedkoop naar duur:
+    1. **Rode links:** onderwerpen waar andere pagina's al naar linken maar die nog niet bestaan, zoals Wikipedia's "gevraagde pagina's". Hoe vaker gelinkt, hoe hoger.
+    2. **Andere talen:** een onderwerp dat in het Engels bestaat maar nog niet in het Duits.
+    3. **Zoekopdrachten zonder resultaat:** anoniem geteld per dag, zonder IP-adres. Wat vaak gezocht en niet gevonden wordt, wordt een suggestie.
+    4. **De startlijst** per taal uit het beheer.
+    5. **Het taalmodel:** verwante onderwerpen bij een zoekopdracht, één keer per zoekterm gevraagd en daarna uit de database. Begrensd per uur. Onderwerpen die het model eerder als onzin afwees, komen nooit terug.
 - **E-mailverificatie en wachtwoordherstel.** Daarvoor is een mailserver nodig; die is nu bewust weggelaten.
 - **Betalingen.** Sponsorplekken worden nu met de hand gefactureerd.
 - **Licentie voor bijdragen.** Kies onder welke licentie bewerkers hun tekst bijdragen en vermeld dat bij het registreren.
