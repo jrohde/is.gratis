@@ -36,6 +36,9 @@ data:
   # The worker checks source links between drafts. It needs outbound HTTP(S) to the internet,
   # and refuses private and cluster-internal addresses by itself.
   SOURCE_CHECKS: 'true'
+  # The search page asks the LLM for related subjects, once per query, at most this many per hour.
+  SEARCH_RELATED: 'true'
+  SEARCH_RELATED_PER_HOUR: '120'
   SOURCE_CHECK_INTERVAL_DAYS: '7'
 ---
 # Create the real secret yourself; this file only documents its keys:

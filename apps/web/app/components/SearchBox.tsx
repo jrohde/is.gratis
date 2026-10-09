@@ -1,48 +1,118 @@
-import { Autocomplete, Button, Group } from '@mantine/core';
+import { Autocomplete, Button, Group, Text } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { toSlug, type Language, type PageListItem } from '@isgratis/types';
+import { claimFor, footnoteFor, toSlug, type Language, type Suggestions } from '@isgratis/types';
 import { api } from '~/lib/api.client';
 import { messages } from '~/lib/i18n';
+import { Asterisk, Footnote } from './Logo';
+
+const EMPTY: Suggestions = { pages: [], missing: [] };
 
 /**
- * Search with suggestions from existing pages. Enter on free text goes to that page; if it does
- * not exist yet, the visitor can have a first version written there.
+ * Search with suggestions while typing: existing pages first, then subjects that have no page
+ * yet (choosing one offers to have it written). Enter opens the page when it exists exactly,
+ * otherwise the search results.
  */
-export function SearchBox({ lang, size = 'md' }: { lang: Language; size?: 'md' | 'lg' }) {
+export function SearchBox({
+  lang,
+  size = 'md',
+  initial = '',
+  compact = false,
+}: {
+  lang: Language;
+  size?: 'sm' | 'md' | 'lg';
+  initial?: string;
+  /** For the page header: no button, Enter searches. */
+  compact?: boolean;
+}) {
   const t = messages(lang);
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<PageListItem[]>([]);
+  const [query, setQuery] = useState(initial);
+  const [suggestions, setSuggestions] = useState<Suggestions>(EMPTY);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const slug = toSlug(query);
+  const q = query.trim();
+  const slug = toSlug(q);
 
   useEffect(() => {
     clearTimeout(timer.current);
-    if (query.trim().length < 2) {
-      setResults([]);
+    if (q.length < 2 || q === initial.trim()) {
+      setSuggestions(EMPTY);
       return;
     }
     timer.current = setTimeout(() => {
-      api<{ pages: PageListItem[] }>('GET', `/search?lang=${lang}&q=${encodeURIComponent(query.trim())}&limit=6`)
-        .then(({ pages }) => setResults(pages))
-        .catch(() => setResults([]));
-    }, 150);
+      api<Suggestions>('GET', `/suggest?lang=${lang}&q=${encodeURIComponent(q)}`)
+        .then(setSuggestions)
+        .catch(() => setSuggestions(EMPTY));
+    }, 120);
     return () => clearTimeout(timer.current);
-  }, [query, lang]);
+  }, [q, lang, initial]);
 
-  const options = results.map((page) => ({
-    value: page.slug,
-    label: `${page.emoji ? `${page.emoji} ` : ''}${t.question(page.title)}`,
-  }));
+  const byValue = useMemo(() => {
+    const map = new Map<string, { kind: 'page' | 'missing'; slug: string; title: string; render: React.ReactNode }>();
+    for (const page of suggestions.pages) {
+      const note = footnoteFor(lang, page);
+      map.set(`page:${page.slug}`, {
+        kind: 'page',
+        slug: page.slug,
+        title: page.title,
+        render: (
+          <Group justify="space-between" wrap="nowrap" gap="xs" w="100%">
+            <Text span fw={600}>
+              {page.emoji ? `${page.emoji} ` : ''}
+              {claimFor(lang, page.title, page.plural)}
+              <Asterisk />
+            </Text>
+            <Text span size="sm" fw={800}>
+              <Footnote text={note.text} color={note.color} />
+            </Text>
+          </Group>
+        ),
+      });
+    }
+    for (const subject of suggestions.missing) {
+      map.set(`missing:${subject.slug}`, {
+        kind: 'missing',
+        slug: subject.slug,
+        title: subject.title,
+        render: (
+          <Group justify="space-between" wrap="nowrap" gap="xs" w="100%">
+            <Text span fw={600} c="dimmed">
+              {claimFor(lang, subject.title)}
+              <Asterisk />
+            </Text>
+            <Text span size="sm" c="dimmed">
+              <Footnote text={t.noAnswerYet} />
+            </Text>
+          </Group>
+        ),
+      });
+    }
+    return map;
+  }, [suggestions, lang, t.noAnswerYet]);
+
+  const data = [
+    ...(suggestions.pages.length
+      ? [{ group: t.suggestPages, items: suggestions.pages.map((page) => ({ value: `page:${page.slug}`, label: page.title })) }]
+      : []),
+    ...(suggestions.missing.length
+      ? [{ group: t.suggestMissing, items: suggestions.missing.map((m) => ({ value: `missing:${m.slug}`, label: m.title })) }]
+      : []),
+  ];
+
+  function submit() {
+    if (!slug) return;
+    // Like Wikipedia's "Go": straight to the page when it exists, otherwise the results.
+    if (suggestions.pages.some((page) => page.slug === slug)) navigate(`/${lang}/${slug}`);
+    else navigate(`/search/${lang}?q=${encodeURIComponent(q)}`);
+  }
 
   return (
     <form
       role="search"
       onSubmit={(event) => {
         event.preventDefault();
-        if (slug) navigate(`/${lang}/${slug}`);
+        submit();
       }}
     >
       <Group gap="xs" wrap="nowrap">
@@ -50,19 +120,29 @@ export function SearchBox({ lang, size = 'md' }: { lang: Language; size?: 'md' |
           aria-label={t.searchButton}
           placeholder={t.searchPlaceholder}
           value={query}
-          onChange={setQuery}
-          data={options}
-          filter={({ options: all }) => all}
-          onOptionSubmit={(value) => navigate(`/${lang}/${value}`)}
+          // Choosing an option navigates; it should not put "page:water" in the box.
+          onChange={(value) => {
+            if (!byValue.has(value)) setQuery(value);
+          }}
+          data={data}
+          filter={({ options }) => options}
+          renderOption={({ option }) => byValue.get(option.value)?.render ?? option.value}
+          onOptionSubmit={(value) => {
+            const item = byValue.get(value);
+            if (item) navigate(`/${lang}/${item.slug}`);
+          }}
           leftSection={<IconSearch size={18} />}
           size={size}
           style={{ flex: 1 }}
-          maxLength={64}
-          comboboxProps={{ withinPortal: true }}
+          maxLength={80}
+          comboboxProps={{ withinPortal: true, width: compact ? 420 : undefined, position: 'bottom-end' }}
+          maxDropdownHeight={420}
         />
-        <Button type="submit" size={size} disabled={!slug}>
-          {t.searchButton}
-        </Button>
+        {!compact && (
+          <Button type="submit" size={size} disabled={!slug}>
+            {t.searchButton}
+          </Button>
+        )}
       </Group>
     </form>
   );

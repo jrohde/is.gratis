@@ -166,3 +166,48 @@ export async function writeDraft(config: LlmConfig, lang: Language, slug: string
   const { image: _image, timePrice: _timePrice, ...content } = parsed.data.content;
   return { ok: true, topicKey: parsed.data.topicKey, title: parsed.data.title, content: normalizeContent(content) };
 }
+
+const relatedSchema = z.object({ subjects: z.array(z.string().trim().min(1).max(60)).max(12) });
+
+/**
+ * Subjects related to a search query that people might ask "is it free?" about, written the way
+ * page titles are: as they appear in the middle of a sentence.
+ */
+export async function suggestRelated(config: LlmConfig, lang: Language, query: string): Promise<string[]> {
+  const system = `You suggest subjects for is.gratis, an encyclopedia that answers one question per subject: is it free?
+Given a search query, list up to 8 concrete subjects closely related to it that people would ask that question about.
+Write them in ${LANGUAGE_NAMES[lang]}, each as it would appear in the middle of a sentence: lowercase unless it is a name,
+with an article only where the language needs one (e.g. "de huisarts", "openbaar vervoer", "museums").
+Include the subject of the query itself first when it is a real subject.
+Never suggest brands as recommendations, private persons, or anything hateful or sexual.
+Answer with one JSON object and nothing else: {"subjects": ["...", "..."]}`;
+  let response: Response;
+  try {
+    response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(config.apiKey ? { authorization: `Bearer ${config.apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: `Search query: "${query.replace(/"/g, "'")}"` },
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+      }),
+      signal: AbortSignal.timeout(Math.min(config.timeoutMs, 30_000)),
+    });
+  } catch (error) {
+    throw new LlmError(`LLM request failed: ${(error as Error).message}`);
+  }
+  if (!response.ok) throw new LlmError(`LLM returned HTTP ${response.status}`);
+  const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string | null } }> };
+  const text = payload.choices?.[0]?.message?.content;
+  if (!text) throw new LlmError('LLM answer has no content');
+  const parsed = relatedSchema.safeParse(extractJson(text));
+  if (!parsed.success) throw new LlmError('LLM answer does not list subjects');
+  return parsed.data.subjects.slice(0, 8);
+}

@@ -24,7 +24,7 @@ import type { Route } from './+types/admin';
 import { api, ClientApiError } from '~/lib/api.client';
 import { CACHE } from '~/lib/cache';
 import { formatDate, formatNumber, formatPrice, LANGUAGE_NAMES, messages } from '~/lib/i18n';
-import { STARTER_TOPICS } from '~/lib/starter-topics';
+import { STARTER_TOPICS } from '@isgratis/types';
 import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
 

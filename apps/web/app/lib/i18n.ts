@@ -231,6 +231,22 @@ const nl = {
   quoteMissing: 'Deze pagina bestaat nog niet of heeft nog geen bezoekers: je betaalt de basisprijs.',
   plural: 'Meervoud',
   stampTitle: 'Nagekeken door is.gratis: echt gratis, zonder kleine lettertjes.',
+  searchTitle: 'Zoeken',
+  searchResults: (n: number, q: string) => (n === 1 ? `1 pagina over ‘${q}’` : `${n} pagina’s over ‘${q}’`),
+  searchNone: (q: string) => `Geen pagina’s gevonden met ‘${q}’.`,
+  searchHelp: 'Tip: zet woorden tussen "aanhalingstekens" voor een vaste woordgroep, of zet een min voor een woord om het uit te sluiten.',
+  didYouMean: 'Bedoelde je',
+  exactPage: 'Er is een pagina met precies dit onderwerp',
+  noAnswerYet: 'nog geen antwoord',
+  writeFirst: 'Laat een eerste versie schrijven',
+  relatedTitle: 'Misschien zoek je ook',
+  suggestPages: 'Pagina’s',
+  suggestMissing: 'Nog zonder pagina',
+  wantedTitle: 'Gevraagd',
+  wantedIntro: 'Onderwerpen zonder pagina waar andere pagina’s naar linken, die vaak gezocht worden of die in een andere taal al bestaan.',
+  reasons: { wanted: 'gelinkt', searched: 'gezocht', translation: 'andere taal', starter: 'startlijst', related: 'verwant', typed: 'getypt' } as Record<string, string>,
+  previous: 'Vorige',
+  next: 'Volgende',
 };
 
 export type Messages = typeof nl;
@@ -459,6 +475,22 @@ const en: Messages = {
   quoteMissing: 'This page does not exist yet or has no visitors yet: you pay the base price.',
   plural: 'Plural',
   stampTitle: 'Checked by is.gratis: really free, no small print.',
+  searchTitle: 'Search',
+  searchResults: (n, q) => (n === 1 ? `1 page about ‘${q}’` : `${n} pages about ‘${q}’`),
+  searchNone: (q) => `No pages found for ‘${q}’.`,
+  searchHelp: 'Tip: put words in "quotes" for an exact phrase, or put a minus before a word to leave it out.',
+  didYouMean: 'Did you mean',
+  exactPage: 'There is a page on exactly this subject',
+  noAnswerYet: 'no answer yet',
+  writeFirst: 'Have a first version written',
+  relatedTitle: 'You might also look for',
+  suggestPages: 'Pages',
+  suggestMissing: 'No page yet',
+  wantedTitle: 'Wanted',
+  wantedIntro: 'Subjects without a page that other pages link to, that people search for, or that exist in another language.',
+  reasons: { wanted: 'linked', searched: 'searched', translation: 'other language', starter: 'starter list', related: 'related', typed: 'typed' },
+  previous: 'Previous',
+  next: 'Next',
 };
 
 const de: Messages = {
@@ -594,6 +626,17 @@ const de: Messages = {
   quoteMissing: 'Diese Seite gibt es noch nicht oder sie hat noch keine Besucher: Du zahlst den Grundpreis.',
   plural: 'Plural',
   stampTitle: 'Geprüft von is.gratis: wirklich gratis, ohne Kleingedrucktes.',
+  searchTitle: 'Suche',
+  searchResults: (n, q) => (n === 1 ? `1 Seite zu „${q}“` : `${n} Seiten zu „${q}“`),
+  searchNone: (q) => `Keine Seiten zu „${q}“ gefunden.`,
+  searchHelp: 'Tipp: Setze Wörter in "Anführungszeichen" für eine feste Wortgruppe, oder ein Minus vor ein Wort, um es auszuschließen.',
+  didYouMean: 'Meintest du',
+  exactPage: 'Es gibt eine Seite genau zu diesem Thema',
+  noAnswerYet: 'noch keine Antwort',
+  writeFirst: 'Erste Fassung schreiben lassen',
+  relatedTitle: 'Vielleicht suchst du auch',
+  suggestPages: 'Seiten',
+  suggestMissing: 'Noch ohne Seite',
 };
 
 const es: Messages = {
@@ -730,6 +773,17 @@ const es: Messages = {
   quoteMissing: 'Esta página aún no existe o todavía no tiene visitas: pagas el precio base.',
   plural: 'Plural',
   stampTitle: 'Verificado por is.gratis: gratis de verdad, sin letra pequeña.',
+  searchTitle: 'Buscar',
+  searchResults: (n, q) => (n === 1 ? `1 página sobre «${q}»` : `${n} páginas sobre «${q}»`),
+  searchNone: (q) => `No hay páginas sobre «${q}».`,
+  searchHelp: 'Consejo: pon palabras entre "comillas" para una frase exacta, o un signo menos delante de una palabra para excluirla.',
+  didYouMean: '¿Quisiste decir',
+  exactPage: 'Hay una página justo sobre este tema',
+  noAnswerYet: 'aún sin respuesta',
+  writeFirst: 'Que se escriba una primera versión',
+  relatedTitle: 'Quizá también buscas',
+  suggestPages: 'Páginas',
+  suggestMissing: 'Aún sin página',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

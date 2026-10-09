@@ -1,5 +1,5 @@
-import { Anchor, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
-import { IconChecklist, IconEye, IconLanguage, IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
+import { ActionIcon, Anchor, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
+import { IconChecklist, IconEye, IconLanguage, IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { LANGUAGES } from '@isgratis/types';
@@ -8,6 +8,7 @@ import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
 import { usePreferences } from '~/stores/preferences';
 import { Logo, Slogan } from './Logo';
+import { SearchBox } from './SearchBox';
 import { ThemeToggle } from './ThemeToggle';
 
 function UserMenu() {
@@ -95,13 +96,26 @@ function LanguageMenu() {
 export function SiteLayout({ children }: { children: ReactNode }) {
   const lang = useUiLang();
   const t = messages(lang);
+  const { pathname } = useLocation();
+  // The home page and the search page have their own big search box.
+  const headerSearch = pathname !== `/${lang}` && pathname !== '/' && !pathname.startsWith('/search/');
   return (
     <Box style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Box component="header" py="md" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
         <Container size="md">
           <Group justify="space-between">
             <Logo href={`/${lang}`} />
+            {headerSearch && (
+              <Box visibleFrom="md" style={{ flex: 1, maxWidth: 300, marginLeft: 'auto' }}>
+                <SearchBox lang={lang} size="sm" compact />
+              </Box>
+            )}
             <Group gap="sm">
+              {headerSearch && (
+                <ActionIcon component={Link} to={`/search/${lang}`} variant="subtle" color="gray" hiddenFrom="md" aria-label={t.searchTitle}>
+                  <IconSearch size={18} />
+                </ActionIcon>
+              )}
               <Anchor component={Link} to={`/a-z/${lang}`} size="sm" fw={600} c="dimmed" visibleFrom="xs">
                 {t.indexLink}
               </Anchor>

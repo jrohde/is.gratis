@@ -25,6 +25,7 @@ import type { Database } from '../db/client.js';
 import { HttpError } from '../lib/errors.js';
 import { getPage, listPages, searchPages } from '../services/pages.js';
 import { regionEntries } from '../services/regions.js';
+import { searchFull } from '../services/search.js';
 
 const INSTRUCTIONS = `is.gratis answers one question per subject: is it free? Each page has a verdict (yes, no, usually, it depends),
 when it is and is not free, differences per country, and a 0 to 5 free scale based on who pays and when.
@@ -116,7 +117,7 @@ export function buildMcpServer(db: Database, origin: string): McpServer {
     'search',
     {
       title: 'Search is.gratis',
-      description: 'Finds pages by subject. Returns titles, verdicts, short answers and URLs.',
+      description: 'Finds pages by any word in their text, in that language (stemmed). Returns titles, verdicts, short answers and URLs.',
       inputSchema: {
         query: z.string().trim().min(1).max(80),
         lang: langSchema,
@@ -125,7 +126,9 @@ export function buildMcpServer(db: Database, origin: string): McpServer {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ query, lang, limit }) => {
-      const results = await searchPages(db, lang, query, limit);
+      // Full text with stemming first; the title search catches half-typed words.
+      const full = await searchFull(db, lang, query, { limit, offset: 0 });
+      const results = full.results.length ? full.results : await searchPages(db, lang, query, limit);
       if (results.length === 0) return text(`No pages match "${query}" in ${lang}.`);
       return text(
         results

@@ -1,10 +1,10 @@
 import { Alert, Anchor, Badge, Button, Card, Container, Group, Progress, SegmentedControl, Stack, Text, Title } from '@mantine/core';
 import { IconCheck, IconPencil, IconTrash } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useRevalidator } from 'react-router';
-import { isLanguage, LANGUAGES, type ReviewItem } from '@isgratis/types';
+import { isLanguage, LANGUAGES, type Language, type MissingSubject, type ReviewItem } from '@isgratis/types';
 import type { Route } from './+types/review';
-import { ClaimRow } from '~/components/Claim';
+import { ClaimRow, MissingRow } from '~/components/Claim';
 import { api, ClientApiError } from '~/lib/api.client';
 import { apiGet } from '~/lib/api.server';
 import { CACHE } from '~/lib/cache';
@@ -102,6 +102,42 @@ function DraftCard({ draft }: { draft: ReviewItem }) {
   );
 }
 
+/** Subjects without a page that are linked, searched or exist elsewhere: what to write next. */
+function Wanted({ lang }: { lang: Language }) {
+  const t = messages(lang);
+  const [subjects, setSubjects] = useState<Array<MissingSubject & { weight: number }> | null>(null);
+  useEffect(() => {
+    api<{ subjects: Array<MissingSubject & { weight: number }> }>('GET', `/wanted?lang=${lang}&limit=30`)
+      .then((result) => setSubjects(result.subjects))
+      .catch(() => setSubjects([]));
+  }, [lang]);
+  if (!subjects?.length) return null;
+  return (
+    <Stack gap="xs">
+      <Title order={2} size="h3">
+        {t.wantedTitle}
+      </Title>
+      <Text c="dimmed" size="sm">
+        {t.wantedIntro}
+      </Text>
+      <Card withBorder padding="md">
+        <Stack gap={10}>
+          {subjects.map((subject) => (
+            <Group key={subject.slug} gap="xs" wrap="nowrap" align="baseline">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <MissingRow lang={lang} slug={subject.slug} title={subject.title} />
+              </div>
+              <Badge variant="light" color="gray" size="sm">
+                {t.reasons[subject.reason] ?? subject.reason}
+              </Badge>
+            </Group>
+          ))}
+        </Stack>
+      </Card>
+    </Stack>
+  );
+}
+
 export default function Review({ loaderData }: Route.ComponentProps) {
   const lang = useUiLang();
   const t = messages(lang);
@@ -131,6 +167,7 @@ export default function Review({ loaderData }: Route.ComponentProps) {
         ) : (
           drafts.map((draft) => <DraftCard key={`${draft.lang}/${draft.slug}`} draft={draft} />)
         )}
+        <Wanted lang={only ?? lang} />
       </Stack>
     </Container>
   );

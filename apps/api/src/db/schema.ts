@@ -40,6 +40,11 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   dataType: () => 'bytea',
 });
 
+/** Full-text search document; filled by a trigger (see migration 0003), never by the app. */
+const tsvector = customType<{ data: string }>({
+  dataType: () => 'tsvector',
+});
+
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
@@ -82,10 +87,12 @@ export const pages = pgTable(
     title: text('title').notNull(),
     status: text('status').$type<PageStatus>().notNull().default('draft'),
     currentRevisionId: uuid('current_revision_id').references((): AnyPgColumn => revisions.id),
+    searchDoc: tsvector('search_doc'),
     createdAt: createdAt(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    index('pages_search_idx').using('gin', table.searchDoc),
     uniqueIndex('pages_lang_slug_idx').on(table.lang, table.slug),
     uniqueIndex('pages_topic_lang_idx').on(table.topicId, table.lang),
     index('pages_lang_updated_idx').on(table.lang, table.updatedAt),
@@ -240,6 +247,33 @@ export const comments = pgTable(
     createdAt: createdAt(),
   },
   (table) => [index('comments_page_idx').on(table.pageId, table.createdAt)],
+);
+
+/**
+ * Searches that found nothing, counted per day without anything about the searcher. Often
+ * searched and never found means: this page should exist.
+ */
+export const searchMisses = pgTable(
+  'search_misses',
+  {
+    lang: text('lang').$type<Language>().notNull(),
+    query: text('query').notNull(),
+    day: date('day').notNull(),
+    count: integer('count').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.lang, table.query, table.day] })],
+);
+
+/** Subjects related to a search, asked from the language model once per query. */
+export const relatedSubjects = pgTable(
+  'related_subjects',
+  {
+    lang: text('lang').$type<Language>().notNull(),
+    query: text('query').notNull(),
+    subjects: jsonb('subjects').$type<string[]>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [primaryKey({ columns: [table.lang, table.query] }), index('related_subjects_created_idx').on(table.createdAt)],
 );
 
 export type UserRow = typeof users.$inferSelect;

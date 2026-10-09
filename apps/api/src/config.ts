@@ -94,6 +94,12 @@ export interface Config {
     baseCents: number;
     perThousandCents: number;
   };
+  search: {
+    /** Ask the language model for related subjects on the search page. */
+    relatedEnabled: boolean;
+    /** At most this many new questions to the model per hour, across all replicas. */
+    relatedPerHour: number;
+  };
   /** The worker checks source URLs between jobs. */
   sourceChecks: {
     enabled: boolean;
@@ -154,6 +160,10 @@ export function loadConfig(): Config {
     sponsorPricing: {
       baseCents: int('SPONSOR_BASE_PRICE_CENTS', 2500),
       perThousandCents: int('SPONSOR_PRICE_PER_1000_VIEWS_CENTS', 400),
+    },
+    search: {
+      relatedEnabled: bool('SEARCH_RELATED', true),
+      relatedPerHour: int('SEARCH_RELATED_PER_HOUR', 120),
     },
     sourceChecks: {
       enabled: bool('SOURCE_CHECKS', true),

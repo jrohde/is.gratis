@@ -5,6 +5,8 @@ export function loader() {
     'User-agent: *',
     'Disallow: /account/',
     'Disallow: /admin',
+    'Disallow: /search/',
+    'Disallow: /review',
     'Disallow: /api/',
     'Allow: /api/media/',
     'Allow: /api/og/',

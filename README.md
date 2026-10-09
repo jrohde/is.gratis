@@ -115,6 +115,24 @@ Net als op Wikipedia moet elke bewering te controleren zijn:
 - **Volglijst.** Met "Volgen" onderaan een pagina zie je op `/account/watchlist` welke pagina's sinds je laatste bezoek zijn gewijzigd.
 - **Overlegpagina** (`/<taal>/<pagina>/talk`). Discussie over de pagina zelf, los van de tekst, net als op Wikipedia. Berichten zijn platte tekst. Moderators kunnen berichten verbergen.
 
+### Zoeken
+
+Zoeken werkt zoals op Wikipedia, helemaal in de eigen database:
+
+- **Volledige tekst** van elke pagina, met de woordenboeken van Postgres voor Nederlands, Engels, Duits en Spaans: "musea" vindt ook "museum". Titels wegen het zwaarst, dan het korte antwoord, dan de rest. Resultaten tonen fragmenten met de gevonden woorden gemarkeerd. "Aanhalingstekens" zoeken een woordgroep, een min sluit een woord uit. Postgres houdt de zoekindex zelf bij met een trigger, dus ook bij terugzetten en startinhoud.
+- **"Bedoelde je…?"** bij tikfouten, via `pg_trgm`. Dat is een standaardextensie van Postgres die de eigenaar van de database zelf mag aanzetten; bij CloudNativePG is dat de app-gebruiker, dus de migratie regelt het.
+- **Enter** gaat direct naar de pagina als die precies bestaat, anders naar `/search/<taal>?q=`. Elke pagina heeft een zoekvak in de kop.
+- **Suggesties tijdens het typen:** eerst bestaande pagina's, daarna onderwerpen zonder pagina ("Zonnebrandcreme is gratis\* \*nog geen antwoord"). Kiezen laat een eerste versie schrijven. Die onderwerpen komen uit:
+  1. rode links: onderwerpen waar andere pagina's naar linken;
+  2. andere talen (voor Engels: onderwerpen die alleen in een andere taal bestaan);
+  3. zoekopdrachten die minstens twee keer niets vonden, anoniem per dag geteld;
+  4. de startlijst per taal;
+  5. op de resultatenpagina het taalmodel: verwante onderwerpen, één keer per zoekterm gevraagd en daarna uit de database, met een limiet per uur over alle replica's (`SEARCH_RELATED_PER_HOUR`).
+
+  Onderwerpen die het model ooit als onzin afwees, worden nooit voorgesteld.
+- **Gevraagd:** de nakijkpagina toont de meest gevraagde onderwerpen zonder pagina, als takenlijst voor schrijvers. Ook via `GET /api/wanted`.
+- De MCP-tool `search` zoekt in de volledige tekst.
+
 ### Per land
 
 `/regions/<taal>` toont een wereldkaart: hoe donkerder het groen, hoe meer onderwerpen een antwoord voor dat land hebben. `/regions/<taal>/<land>` zet alles op een rij wat in één land gratis is en wat niet. Elke pagina heeft ook een kaart, gekleurd naar het oordeel per land. Klik op een land en het schuift bovenaan. De kaart is getekend uit Natural Earth (publiek domein) en zit in de site zelf, zonder kaartdienst of tegels. Opnieuw maken: `node scripts/generate-map-data.mjs`.
@@ -259,13 +277,6 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 
 ## Nog open
 
-- **Zoekmachine, zoals op Wikipedia.** Nu is er alleen automatisch aanvullen op titel en kort antwoord. Plan: een resultatenpagina `/<taal>/zoeken?q=` met Postgres full-text search (een `tsvector` per taal met de woordenboeken voor Nederlands, Engels, Duits en Spaans) over alle tekst van een pagina, gerangschikt en met gemarkeerde fragmenten (`ts_headline`). Daarbij "bedoelde je…?" via `pg_trgm`, filters op oordeel en land, en onderaan "Maak de pagina …" als er geen exacte treffer is. Alles in de eigen database, zonder externe zoekdienst.
-  - **Suggesties, ook voor onderwerpen die nog niet bestaan.** Tijdens het typen eerst bestaande pagina's, daarna onderwerpen zonder pagina, gemarkeerd als "Zonnebrandcreme is gratis\* \*nog geen antwoord". Klikken laat een eerste versie schrijven. Bronnen, van goedkoop naar duur:
-    1. **Rode links:** onderwerpen waar andere pagina's al naar linken maar die nog niet bestaan, zoals Wikipedia's "gevraagde pagina's". Hoe vaker gelinkt, hoe hoger.
-    2. **Andere talen:** een onderwerp dat in het Engels bestaat maar nog niet in het Duits.
-    3. **Zoekopdrachten zonder resultaat:** anoniem geteld per dag, zonder IP-adres. Wat vaak gezocht en niet gevonden wordt, wordt een suggestie.
-    4. **De startlijst** per taal uit het beheer.
-    5. **Het taalmodel:** verwante onderwerpen bij een zoekopdracht, één keer per zoekterm gevraagd en daarna uit de database. Begrensd per uur. Onderwerpen die het model eerder als onzin afwees, komen nooit terug.
 - **E-mailverificatie en wachtwoordherstel.** Daarvoor is een mailserver nodig; die is nu bewust weggelaten.
 - **Betalingen.** Sponsorplekken worden nu met de hand gefactureerd.
 - **Licentie voor bijdragen.** Kies onder welke licentie bewerkers hun tekst bijdragen en vermeld dat bij het registreren.

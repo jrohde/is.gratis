@@ -20,6 +20,7 @@ import { draftJobs, pages, revisions, sponsoredOffers, topics, users, type Revis
 import { conflict, forbidden, notFound } from '../lib/errors.js';
 import { commentCount } from './community.js';
 import { clearLinkCache, pageLinks } from './links.js';
+import { clearSuggestionCache } from './search.js';
 import { sourceChecksFor } from './sources.js';
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
@@ -59,6 +60,25 @@ export async function activeOffers(db: Database, lang: Language, slug: string): 
     url: row.url,
     region: row.region,
   }));
+}
+
+/** A page as a line in a list: enough for its claim, footnote and short answer. */
+export function toListItem(
+  page: { lang: Language; slug: string; title: string; status: PageStatus; updatedAt: Date },
+  content: PageContent,
+): PageListItem {
+  return {
+    lang: page.lang,
+    slug: page.slug,
+    title: page.title,
+    ...(content.emoji ? { emoji: content.emoji } : {}),
+    ...(content.plural ? { plural: true } : {}),
+    verdict: content.verdict,
+    ...(content.scale ? { scale: content.scale } : {}),
+    status: page.status,
+    summary: content.summary,
+    updatedAt: page.updatedAt.toISOString(),
+  };
 }
 
 export async function getPage(db: Database, lang: Language, slug: string): Promise<Page> {
@@ -120,18 +140,7 @@ export async function listPages(
     .orderBy(options.sort === 'title' ? asc(pages.title) : desc(pages.updatedAt))
     .limit(options.limit)
     .offset(options.offset);
-  return rows.map(({ page, content }) => ({
-    lang: page.lang,
-    slug: page.slug,
-    title: page.title,
-    ...(content.emoji ? { emoji: content.emoji } : {}),
-    ...(content.plural ? { plural: true } : {}),
-    verdict: content.verdict,
-    ...(content.scale ? { scale: content.scale } : {}),
-    status: page.status,
-    summary: content.summary,
-    updatedAt: page.updatedAt.toISOString(),
-  }));
+  return rows.map(({ page, content }) => toListItem(page, content));
 }
 
 /** Drafts waiting for a person, oldest first, with how well each is sourced. */
@@ -194,6 +203,7 @@ export async function deletePage(
     );
   });
   clearLinkCache();
+  clearSuggestionCache();
 }
 
 /** Published pages with their translations, for the sitemap. */
@@ -282,6 +292,7 @@ export async function saveRevision(db: Database, input: SaveRevisionInput): Prom
         .returning();
       await tx.update(pages).set({ currentRevisionId: revision!.id }).where(eq(pages.id, createdPage.id));
       clearLinkCache();
+      clearSuggestionCache();
       return { created: true };
     }
 
@@ -418,16 +429,5 @@ export async function searchPages(db: Database, lang: Language, query: string, l
       asc(pages.title),
     )
     .limit(limit);
-  return rows.map(({ page, content }) => ({
-    lang: page.lang,
-    slug: page.slug,
-    title: page.title,
-    ...(content.emoji ? { emoji: content.emoji } : {}),
-    ...(content.plural ? { plural: true } : {}),
-    verdict: content.verdict,
-    ...(content.scale ? { scale: content.scale } : {}),
-    status: page.status,
-    summary: content.summary,
-    updatedAt: page.updatedAt.toISOString(),
-  }));
+  return rows.map(({ page, content }) => toListItem(page, content));
 }

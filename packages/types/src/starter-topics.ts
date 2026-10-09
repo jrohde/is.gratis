@@ -1,4 +1,4 @@
-import type { Language } from '@isgratis/types';
+import type { Language } from './index.js';
 
 /** Subjects people often wonder about, to fill a new language quickly. Drafts are reviewed by hand. */
 export const STARTER_TOPICS: Record<Language, string[]> = {

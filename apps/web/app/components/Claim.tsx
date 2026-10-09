@@ -1,6 +1,7 @@
 import { Anchor, Group, Text } from '@mantine/core';
 import { Link } from 'react-router';
 import { claimFor, footnoteFor, type FreeScale, type Language, type Verdict } from '@isgratis/types';
+import { messages } from '~/lib/i18n';
 import { Asterisk, Footnote } from './Logo';
 
 /** A page in a list: "💧 Water is gratis*", linking to the page. */
@@ -54,6 +55,21 @@ export function ClaimRow(props: {
     <Group justify="space-between" wrap="nowrap" gap="xs" align="baseline">
       <ClaimLink {...props} />
       <ListFootnote lang={props.lang} verdict={props.verdict} scale={props.scale} />
+    </Group>
+  );
+}
+
+/** A subject without a page: "Zonnebrandcreme is gratis*" with "*nog geen antwoord". Opening it offers a first version. */
+export function MissingRow({ lang, slug, title }: { lang: Language; slug: string; title: string }) {
+  return (
+    <Group justify="space-between" wrap="nowrap" gap="xs" align="baseline">
+      <Anchor component={Link} to={`/${lang}/${slug}`} fw={700} c="dimmed">
+        {claimFor(lang, title)}
+        <Asterisk />
+      </Anchor>
+      <Text span fw={700} size="sm" c="dimmed" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <Footnote text={messages(lang).noAnswerYet} />
+      </Text>
     </Group>
   );
 }

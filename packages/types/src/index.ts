@@ -278,6 +278,41 @@ export interface PageListItem {
   updatedAt: string;
 }
 
+/** Markers around the matched words in a search snippet; the web app turns them into <mark>. */
+export const SNIPPET_START = '\u0002';
+export const SNIPPET_END = '\u0003';
+
+export interface SearchResult extends PageListItem {
+  /** Plain text fragments around the matches, with SNIPPET_START/SNIPPET_END markers. */
+  snippet: string;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: SearchResult[];
+  total: number;
+  /** A page whose title looks like the query, when there are few results. */
+  didYouMean: PageListItem | null;
+  /** Slug of a page that matches the query exactly, if any. */
+  exact: string | null;
+}
+
+/** Why a subject without a page is suggested. */
+export type SuggestionReason = 'wanted' | 'searched' | 'translation' | 'starter' | 'related' | 'typed';
+
+/** A subject that has no page yet; opening its address offers to have one written. */
+export interface MissingSubject {
+  slug: string;
+  title: string;
+  reason: SuggestionReason;
+}
+
+/** Suggestions for a query: existing pages first, then subjects without a page. */
+export interface Suggestions {
+  pages: PageListItem[];
+  missing: MissingSubject[];
+}
+
 export interface PageWriteBody {
   title: string;
   content: PageContent;
@@ -409,4 +444,5 @@ export * from './markdown.js';
 export * from './wikilinks.js';
 export * from './brand.js';
 export * from './citations.js';
+export * from './starter-topics.js';
 import { withSourceIds } from './citations.js';
