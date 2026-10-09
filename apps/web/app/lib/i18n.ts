@@ -276,6 +276,8 @@ const nl = {
   embedHelp: 'Plak deze code in je website. Het antwoord blijft actueel en linkt naar deze pagina.',
   copy: 'Kopiëren',
   copied: 'Gekopieerd',
+  linkTranslation: 'Of koppel aan een bestaande pagina:',
+  link: 'Koppelen',
 };
 
 export type Messages = typeof nl;
@@ -549,6 +551,8 @@ const en: Messages = {
   embedHelp: 'Paste this code into your website. The answer stays up to date and links to this page.',
   copy: 'Copy',
   copied: 'Copied',
+  linkTranslation: 'Or link to an existing page:',
+  link: 'Link',
 };
 
 const de: Messages = {

@@ -77,3 +77,37 @@ export async function untranslated(db: Database, from: Language, to: Language, l
   return rows.rows.map((row) => row.slug);
 }
 
+
+/**
+ * Links two pages written separately in different languages as the same subject: the page moves
+ * into the other page's topic. Returns every page whose list of translations changed.
+ */
+export async function linkTranslation(
+  db: Database,
+  page: { lang: Language; slug: string },
+  other: { lang: Language; slug: string },
+): Promise<Array<{ lang: Language; slug: string }>> {
+  if (page.lang === other.lang) throw conflict('same_language', 'Pick a page in another language');
+  return db.transaction(async (tx) => {
+    const find = (p: { lang: Language; slug: string }) =>
+      tx.select().from(pages).where(and(eq(pages.lang, p.lang), eq(pages.slug, p.slug))).for('update').limit(1);
+    const [[source], [target]] = await Promise.all([find(page), find(other)]);
+    if (!source || !target) throw notFound('One of the pages does not exist');
+    if (source.topicId === target.topicId) return [];
+    const [taken] = await tx
+      .select({ id: pages.id })
+      .from(pages)
+      .where(and(eq(pages.topicId, target.topicId), eq(pages.lang, source.lang)))
+      .limit(1);
+    if (taken) throw conflict('page_exists', 'That subject already has a page in this language');
+    const affected = await tx
+      .select({ lang: pages.lang, slug: pages.slug })
+      .from(pages)
+      .where(sql`${pages.topicId} in (${source.topicId}, ${target.topicId})`);
+    await tx.update(pages).set({ topicId: target.topicId }).where(eq(pages.id, source.id));
+    await tx.execute(
+      sql`delete from topics t where t.id = ${source.topicId} and not exists (select 1 from pages p where p.topic_id = t.id)`,
+    );
+    return affected;
+  });
+}

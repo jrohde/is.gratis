@@ -7,11 +7,35 @@ import { languageSchema, slugSchema } from '../lib/content.js';
 import { HttpError } from '../lib/errors.js';
 import { hashIp } from '../lib/hash.js';
 import { draftJobSchema, errorSchema } from '../schemas.js';
-import { enqueueTranslation, untranslated } from '../services/translations.js';
+import { enqueueTranslation, linkTranslation, untranslated } from '../services/translations.js';
+import type { CacheInvalidator } from '../lib/cache.js';
 
 const UNLIMITED = { perIpPerHour: Number.POSITIVE_INFINITY, globalPerHour: Number.POSITIVE_INFINITY };
 
-export const translationRoutes: FastifyPluginAsyncZod<{ db: Database; config: Config }> = async (app, { db, config }) => {
+export const translationRoutes: FastifyPluginAsyncZod<{ db: Database; config: Config; cache: CacheInvalidator }> = async (
+  app,
+  { db, config, cache },
+) => {
+  app.post(
+    '/pages/:lang/:slug/link',
+    {
+      schema: {
+        tags: ['pages'],
+        summary: 'Link this page to the same subject in another language (moderator)',
+        params: z.object({ lang: languageSchema, slug: slugSchema }),
+        body: z.object({ lang: languageSchema, slug: slugSchema }),
+        response: { 204: z.null(), 401: errorSchema, 403: errorSchema, 404: errorSchema, 409: errorSchema },
+      },
+    },
+    async (request, reply) => {
+      const user = requireRole(request, 'moderator');
+      const affected = await linkTranslation(db, request.params, request.body);
+      request.log.info({ page: request.params, other: request.body, userId: user.id }, 'translation linked');
+      await Promise.all(affected.map((p) => cache.purgePage(p.lang, p.slug)));
+      return reply.code(204).send(null);
+    },
+  );
+
   app.post(
     '/pages/:lang/:slug/translate',
     {

@@ -62,3 +62,20 @@ describe('translations', () => {
     expect(response.json()).toEqual({ queued: 1, skipped: 0 });
   });
 });
+
+describe('linking translations', () => {
+  it('lets moderators link pages written separately as one subject', async () => {
+    const mod = await register(ctx, 'admin@example.com');
+    await ctx.app.inject({
+      method: 'PUT',
+      url: '/api/pages/en/parking',
+      headers: { cookie },
+      payload: { title: 'parking', content: sampleContent(), baseRevisionId: null },
+    });
+    expect((await ctx.app.inject({ method: 'POST', url: '/api/pages/en/parking/link', headers: { cookie }, payload: { lang: 'nl', slug: 'parkeren' } })).statusCode).toBe(403);
+    const linked = await ctx.app.inject({ method: 'POST', url: '/api/pages/en/parking/link', headers: { cookie: mod.cookie }, payload: { lang: 'nl', slug: 'parkeren' } });
+    expect(linked.statusCode).toBe(204);
+    expect((await ctx.app.inject({ url: '/api/pages/nl/parkeren' })).json().translations).toEqual([{ lang: 'en', slug: 'parking', title: 'parking' }]);
+    expect(ctx.purged).toEqual(expect.arrayContaining(['en/parking', 'nl/parkeren']));
+  });
+});

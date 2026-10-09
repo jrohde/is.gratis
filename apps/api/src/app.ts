@@ -137,7 +137,7 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
       await api.register(regionRoutes, { db });
       await api.register(searchRoutes, { db, config });
       await api.register(reportRoutes, { db, config });
-      await api.register(translationRoutes, { db, config });
+      await api.register(translationRoutes, { db, config, cache });
       await api.register(communityRoutes, { db, cache });
       await api.register(assetRoutes, { db, config });
       await api.register(ogRoutes, { db });
