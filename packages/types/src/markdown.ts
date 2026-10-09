@@ -142,6 +142,7 @@ function quote(text: string): string {
 export function pageToSource(title: string, content: PageContent, lang: Language): string {
   const front: string[] = [`title: ${title}`, `verdict: ${content.verdict}`];
   if (content.emoji) front.push(`emoji: ${content.emoji}`);
+  if (content.plural) front.push('plural: true');
   if (content.scale) front.push(`scale: ${content.scale.type}`, `scale-region: ${content.scale.region}`);
   if (content.timePrice) {
     const tp = content.timePrice;
@@ -228,6 +229,7 @@ const FRONT_KEYS = [
   'title',
   'verdict',
   'emoji',
+  'plural',
   'scale',
   'scale-region',
   'time-price-unit',
@@ -448,12 +450,14 @@ export function parseSource(source: string, lang: Language): ParseResult {
 
   if (errors.length || !verdict) return { ok: false, errors };
   const emoji = field('emoji')?.value;
+  const plural = ['true', 'yes', 'ja', '1'].includes(field('plural')?.value.toLowerCase() ?? '');
   return {
     ok: true,
     title,
     content: {
       verdict,
       ...(emoji ? { emoji } : {}),
+      ...(plural ? { plural } : {}),
       summary,
       whenFree: text('whenFree'),
       whenNotFree: text('whenNotFree'),

@@ -1,61 +1,62 @@
-import { Anchor, Group, Text } from '@mantine/core';
-import { useId } from 'react';
+import { Anchor, Text, type MantineStyleProp } from '@mantine/core';
 import { Link } from 'react-router';
-import { logoSvg, skyDotSvg, type Language, type SkyState } from '@isgratis/types';
-import { messages } from '~/lib/i18n';
-import { useSky } from '~/stores/sky';
+import { asteriskSvg, SLOGAN, type Language } from '@isgratis/types';
 
-/** "nieuwe maan", "wassende maansikkel", … or the sun, in the reader's language. */
-export function skyDescription(state: SkyState, lang: Language): string {
-  const t = messages(lang);
-  if (state.sky === 'day') return t.sunUp;
-  if (state.sky === 'twilight') return t.sunLow;
-  return t.moonPhases[Math.floor(((state.phase + 1 / 16) % 1) * 8)] ?? t.moonPhases[0]!;
-}
+const ASTERISK = asteriskSvg();
 
 /**
- * The live mark: a price tag without a price, filled with the sky above the visitor. Its eyelet
- * holds the sun by day and the moon in today's phase by night.
+ * The brand asterisk, sized in em so it follows the surrounding text. After a word it sits like a
+ * superscript; before a footnote it sits a little lower, like a footnote mark.
  */
-export function LiveMark({ size, lang }: { size: number; lang: Language }) {
-  const state = useSky((store) => store.state);
-  const id = `m${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  const title = `is.gratis · ${messages(lang).skyNow}: ${skyDescription(state, lang)}`;
-  return (
-    <span
-      title={title}
-      style={{ display: 'inline-flex', width: size, height: size, flexShrink: 0 }}
-      dangerouslySetInnerHTML={{ __html: logoSvg(state, { size, idPrefix: id, title }) }}
-    />
-  );
-}
-
-/** The dot of "is.gratis": the same sun or moon, at the size of a full stop. */
-function SkyDot({ size }: { size: number }) {
-  const state = useSky((store) => store.state);
+export function Asterisk({ position = 'after', color }: { position?: 'after' | 'before'; color?: string }) {
+  const after = position === 'after';
+  const style: MantineStyleProp = {
+    display: 'inline-block',
+    width: after ? '0.44em' : '0.62em',
+    height: after ? '0.44em' : '0.62em',
+    verticalAlign: after ? '0.34em' : '0.08em',
+    margin: after ? '0 0 0 0.03em' : '0 0.1em 0 0',
+    flexShrink: 0,
+  };
   return (
     <span
       aria-hidden
-      style={{ display: 'inline-flex', width: size, height: size, margin: `0 ${size * 0.12}px`, verticalAlign: 'baseline' }}
-      dangerouslySetInnerHTML={{ __html: skyDotSvg(state, size) }}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: color ? asteriskSvg({ color }) : ASTERISK }}
     />
   );
 }
 
-export function Logo({ href, size = 30, lang }: { href: string; size?: number; lang: Language }) {
-  const font = Math.round(size * 0.8);
+/** "is.gratis*": the name in the text colour, the asterisk in green. */
+export function Wordmark({ size }: { size: number | string }) {
   return (
-    <Anchor component={Link} to={href} underline="never" c="inherit" aria-label="is.gratis">
-      <Group gap={8} wrap="nowrap" align="center">
-        <LiveMark size={size} lang={lang} />
-        <Text fw={900} fz={font} lh={1} span style={{ display: 'inline-flex', alignItems: 'baseline', letterSpacing: -0.5 }}>
-          is
-          <SkyDot size={Math.round(font * 0.32)} />
-          <Text span inherit c="green.7">
-            gratis
-          </Text>
-        </Text>
-      </Group>
+    <Text component="span" fw={800} fz={size} lh={1} style={{ letterSpacing: '-0.03em', whiteSpace: 'nowrap' }}>
+      is.gratis
+      <Asterisk />
+    </Text>
+  );
+}
+
+/** "*Is het?" — the slogan, set as a footnote. */
+export function Slogan({ lang }: { lang: Language }) {
+  return <Footnote text={SLOGAN[lang]} />;
+}
+
+/** A footnote mark followed by its text: "*deels". */
+export function Footnote({ text, color }: { text: string; color?: string }) {
+  return (
+    <span style={{ whiteSpace: 'nowrap', color }}>
+      <Asterisk position="before" />
+      {text}
+    </span>
+  );
+}
+
+export function Logo({ href, size = 26 }: { href: string; size?: number }) {
+  return (
+    <Anchor component={Link} to={href} underline="never" c="inherit" aria-label="is.gratis" style={{ display: 'inline-flex' }}>
+      <Wordmark size={size} />
     </Anchor>
   );
 }
+

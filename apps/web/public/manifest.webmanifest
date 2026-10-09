@@ -4,8 +4,8 @@
   "description": "The encyclopedia that answers one question: is it free?",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b1d3a",
-  "theme_color": "#0b1d3a",
+  "background_color": "#ffffff",
+  "theme_color": "#2f9e44",
   "icons": [
     {
       "src": "/icon-192.png",

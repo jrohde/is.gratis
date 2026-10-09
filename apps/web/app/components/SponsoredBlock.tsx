@@ -1,6 +1,6 @@
 import { Anchor, Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { Link } from 'react-router';
-import type { Language, Region, SponsoredOffer } from '@isgratis/types';
+import { stampSvg, type Language, type Region, type SponsoredOffer } from '@isgratis/types';
 import { messages } from '~/lib/i18n';
 
 /**
@@ -47,8 +47,14 @@ export function SponsoredBlock({
       </Text>
       <SimpleGrid cols={{ base: 1, sm: visible.length > 1 ? 2 : 1 }}>
         {visible.map((offer) => (
-          <Card key={offer.id} withBorder padding="md">
-            <Stack gap={6}>
+          <Card key={offer.id} withBorder padding="md" pos="relative">
+            {/* Only reviewed offers are shown, so each carries the stamp. */}
+            <span
+              title={t.stampTitle}
+              style={{ position: 'absolute', top: 8, right: 10, width: 88, height: 88 }}
+              dangerouslySetInnerHTML={{ __html: stampSvg(lang, { size: 88, idPrefix: `stamp-${offer.id}` }) }}
+            />
+            <Stack gap={6} pr={96} mih={88}>
               <Text fw={700}>{offer.title}</Text>
               <Text size="sm">{offer.description}</Text>
               <Group justify="space-between" mt="xs">

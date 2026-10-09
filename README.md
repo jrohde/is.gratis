@@ -123,19 +123,26 @@ Net als op Wikipedia moet elke bewering te controleren zijn:
 
 De browser telt elke paginaweergave met één anoniem verzoek, zonder cookies of IP-adres. Bots die geen JavaScript draaien tellen niet mee. De prijs van een sponsorplek is een vaste basisprijs plus een bedrag per duizend weergaven in de laatste 30 dagen (`SPONSOR_BASE_PRICE_CENTS`, `SPONSOR_PRICE_PER_1000_VIEWS_CENTS`). Een adverteerder ziet de prijs meteen bij het kiezen van een pagina, en die prijs wordt bij de aanvraag vastgelegd. Admins zien in het beheer de best bekeken pagina's met hun prijs.
 
-### Logo en slogan
+### Merk: het sterretje
 
-Het logo is een **prijskaartje zonder prijs, gevuld met de hemel, dat aan de aarde hangt**. Aarde en kaartje zijn ongeveer even groot: wat gratis is, hangt aan de wereld zelf. Door het oogje van het kaartje kijk je naar de echte lucht van dat moment:
+Overal betekent een sterretje achter "gratis": let op, er zit een addertje onder het gras. Bij is.gratis wijst het sterretje naar het eerlijke antwoord.
 
-- **Overdag** zit de zon in het oogje, tussen wolkjes.
-- **'s Avonds en 's ochtends** kleurt het kaartje naar schemering.
-- **'s Nachts** staat de maan in het oogje, in de echte fase van die nacht. Het donkere deel heeft aardschijn, zodat ook een nieuwe maan als maan te herkennen is.
-- **Op het zuidelijk halfrond** is de maan gespiegeld, zoals hij daar ook aan de hemel staat. Het halfrond volgt uit de tijdzone van de bezoeker.
-- **De punt** in "is.gratis" is dezelfde zon of maan. Het favicon in het tabblad beweegt mee.
+- **Naam:** `is.gratis*`, het woord in inkt en alleen het sterretje in groen.
+- **Slogan:** de voetnoot die de naam weer een vraag maakt: `*Is het?` (*Is it?*, *Ist es?*, *¿Lo es?*).
+- **Pagina's** stellen hun onderwerp als bewering, "Water is gratis\*", met het antwoord als voetnoot. Die voetnoot is de trede op de gratis-schaal:
 
-Iedere bezoeker ziet dus een ander logo, en morgen ziet het er weer anders uit. Het merk staat in `packages/types/src/brand.ts`, met tests voor de maanfase tegen gepubliceerde nieuwe en volle manen. Voor vaste plekken, zoals app-iconen en deelkaarten, is er een statische versie met een jonge maan. Die maak je opnieuw met `node scripts/generate-brand-assets.mjs`.
+| Schaal | Voetnoot |
+|---|---|
+| 5 · Vrij goed | \*echt |
+| 4 · Collectief betaald | \*via belasting |
+| 3 · Betaald door een ander | \*door iemand anders |
+| 2 · Deels gratis | \*deels |
+| 1 · Alleen bij uitzondering | \*bij uitzondering |
+| 0 · Altijd betaald | \*echt niet |
 
-De slogan is **"Het antwoord is gratis."** Hij beantwoordt de vraag in de domeinnaam en betekent twee dingen tegelijk: het antwoord kost niets, en het antwoord ís gratis. Hij werkt woord voor woord in elke taal: *The answer is free*, *Die Antwort ist gratis*, *La respuesta es gratis*. Bij het logo hoort de zin **"Het mooiste prijskaartje is leeg."**
+  Pagina's zonder schaal krijgen hun oordeel als voetnoot. Meervoud wordt "Musea zijn gratis\*" (een vinkje in de editor, en `plural: true` in de Markdown-bron). In de paginatitel en voor zoekmachines blijft de vraag staan: "Is water gratis?".
+- **Keurmerk:** goedgekeurd gesponsord aanbod krijgt een ronde stempel met `IS.GRATIS* · NAGEKEKEN`.
+- **Beeldmerk:** het sterretje heeft altijd zes armen, met één arm recht omhoog. Vijf armen zou een ster worden, een beoordeling. Favicon en app-icoon zijn een wit sterretje op een groen vlak. Alles staat in `packages/types/src/brand.ts`; de vaste bestanden maak je opnieuw met `node scripts/generate-brand-assets.mjs`.
 
 ### Index, feeds en deelkaarten
 

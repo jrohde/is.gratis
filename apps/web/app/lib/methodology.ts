@@ -73,11 +73,11 @@ const nl: Methodology = {
     '',
     'Het korte antwoord bovenaan telt niet mee: dat vat de onderbouwde punten eronder samen.',
   ].join('\n'),
-  logoTitle: 'Het logo',
+  logoTitle: 'Het sterretje',
   logo: [
-    'Het logo is een prijskaartje zonder prijs, gevuld met de hemel, dat aan de aarde hangt. Door het oogje kijk je naar de echte lucht van dit moment: overdag de zon, \'s avonds de schemering en \'s nachts de maan in de stand van vandaag. Op het zuidelijk halfrond staat de maan gespiegeld, zoals hij daar ook aan de hemel staat.',
+    'Overal betekent een sterretje achter "gratis": let op, er zit een addertje onder het gras. Bij is.gratis wijst het sterretje naar het eerlijke antwoord. Daarom heet de site **is.gratis\\***, en de slogan is de voetnoot die de naam weer een vraag maakt: **\\*Is het?**',
     '',
-    'Daardoor ziet iedere bezoeker een ander logo, en het ziet er morgen weer anders uit dan vandaag. Het laat zien waar is.gratis over gaat: de mooiste dingen hebben geen prijs.',
+    'Elke pagina stelt haar onderwerp als bewering, zoals *Water is gratis\\**, en geeft het antwoord als voetnoot. Die voetnoot is de trede op de gratis-schaal hierboven:',
   ].join('\n'),
   referencesTitle: 'Literatuur',
 };
@@ -129,11 +129,11 @@ const en: Methodology = {
     '',
     'The short answer at the top does not count: it sums up the sourced points below it.',
   ].join('\n'),
-  logoTitle: 'The logo',
+  logoTitle: 'The asterisk',
   logo: [
-    'The logo is a price tag without a price, filled with sky, hanging from the earth. Through its eyelet you look at the real sky of this moment: the sun by day, dusk in the evening and the moon in tonight\'s phase at night. In the southern hemisphere the moon is mirrored, just as it appears in the sky there.',
+    'Everywhere else, an asterisk after "free" means there is a catch in the small print. On is.gratis the asterisk points to the honest answer. That is why the site is called **is.gratis\\***, and the slogan is the footnote that turns the name back into a question: **\\*Is it?**',
     '',
-    'So every visitor sees a different logo, and tomorrow it looks different again. It shows what is.gratis is about: the best things in life have no price.',
+    'Every page states its subject as a claim, such as *Air is free\\**, and gives the answer as a footnote. That footnote is the step on the free scale above:',
   ].join('\n'),
   referencesTitle: 'References',
 };

@@ -71,6 +71,7 @@ Otherwise answer:
   "content": {
     "verdict": "yes" | "no" | "usually" | "depends",
     "emoji": "<one emoji for the subject>",
+    "plural": <true when the title is a plural noun, e.g. "musea", "museums"; otherwise false>,
     "summary": "<one or two sentences that directly answer the question>",
     "whenFree": "<Markdown: the situations in which it is free>",
     "whenNotFree": "<Markdown: the situations in which it costs money, and roughly what>",

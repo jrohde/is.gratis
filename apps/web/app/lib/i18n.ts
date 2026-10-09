@@ -90,6 +90,7 @@ const nl = {
     'Je aanbod moet echt gratis zijn: geen verplichte verzendkosten of verborgen abonnement.',
     'Het staat in een apart blok met het label “Gesponsord”, los van het antwoord.',
     'We keuren elke aanvraag met de hand goed. Je ontvangt daarna een factuur.',
+    'Goedgekeurd aanbod krijgt ons keurmerk: *nagekeken. Echt gratis, zonder kleine lettertjes.',
   ],
   advertiseSubmitted: 'Bedankt! We nemen contact met je op.',
   pageLanguage: 'Taal van de pagina',
@@ -176,10 +177,6 @@ const nl = {
   howSourcing: 'Hoe werkt dit?',
   sourceId: 'Kenmerk',
   citeHint: 'Verwijs in de tekst naar een bron met [^kenmerk], direct achter de bewering.',
-  skyNow: 'Nu aan de hemel',
-  moonPhases: ['nieuwe maan', 'wassende maansikkel', 'eerste kwartier', 'wassende maan', 'volle maan', 'afnemende maan', 'laatste kwartier', 'afnemende maansikkel'],
-  sunUp: 'de zon',
-  sunLow: 'de zon laag aan de hemel',
   errorGeneric: 'Er ging iets mis.',
   watch: 'Volgen',
   watching: 'Volgend',
@@ -231,6 +228,8 @@ const nl = {
   quoteText: (views: string, price: string) => `${views} weergaven in de afgelopen 30 dagen. Een maand zichtbaar: ${price}.`,
   quoteHow: 'Een vaste basisprijs plus een bedrag per duizend weergaven. Je betaalt de prijs die je hier ziet.',
   quoteMissing: 'Deze pagina bestaat nog niet of heeft nog geen bezoekers: je betaalt de basisprijs.',
+  plural: 'Meervoud',
+  stampTitle: 'Nagekeken door is.gratis: echt gratis, zonder kleine lettertjes.',
 };
 
 export type Messages = typeof nl;
@@ -318,6 +317,7 @@ const en: Messages = {
     'Your offer must be genuinely free: no mandatory shipping costs or hidden subscription.',
     'It appears in a separate block labelled “Sponsored”, apart from the answer.',
     'We review every request by hand. You receive an invoice afterwards.',
+    'Approved offers carry our stamp: *checked. Really free, no small print.',
   ],
   advertiseSubmitted: 'Thank you! We will get in touch.',
   pageLanguage: 'Page language',
@@ -404,10 +404,6 @@ const en: Messages = {
   howSourcing: 'How does this work?',
   sourceId: 'Id',
   citeHint: 'Cite a source in the text with [^id], right after the claim.',
-  skyNow: 'In the sky right now',
-  moonPhases: ['new moon', 'waxing crescent', 'first quarter', 'waxing gibbous', 'full moon', 'waning gibbous', 'last quarter', 'waning crescent'],
-  sunUp: 'the sun',
-  sunLow: 'the sun low in the sky',
   errorGeneric: 'Something went wrong.',
   watch: 'Watch',
   watching: 'Watching',
@@ -459,6 +455,8 @@ const en: Messages = {
   quoteText: (views, price) => `${views} views in the last 30 days. One month on the page: ${price}.`,
   quoteHow: 'A fixed base price plus an amount per thousand views. You pay the price you see here.',
   quoteMissing: 'This page does not exist yet or has no visitors yet: you pay the base price.',
+  plural: 'Plural',
+  stampTitle: 'Checked by is.gratis: really free, no small print.',
 };
 
 const de: Messages = {
@@ -547,10 +545,6 @@ const de: Messages = {
   citationNeeded: 'Quelle?',
   sourcing: 'Belege',
   sourcingText: (cited, claims) => `${cited} von ${claims} Aussagen haben eine Quelle`,
-  skyNow: 'Jetzt am Himmel',
-  moonPhases: ['Neumond', 'zunehmende Sichel', 'erstes Viertel', 'zunehmender Mond', 'Vollmond', 'abnehmender Mond', 'letztes Viertel', 'abnehmende Sichel'],
-  sunUp: 'die Sonne',
-  sunLow: 'die tief stehende Sonne',
   developers: 'Entwickler',
   errorGeneric: 'Etwas ist schiefgelaufen.',
   watch: 'Beobachten',
@@ -596,6 +590,8 @@ const de: Messages = {
   quoteText: (views, price) => `${views} Aufrufe in den letzten 30 Tagen. Ein Monat sichtbar: ${price}.`,
   quoteHow: 'Ein fester Grundpreis plus ein Betrag pro tausend Aufrufe. Du zahlst den Preis, den du hier siehst.',
   quoteMissing: 'Diese Seite gibt es noch nicht oder sie hat noch keine Besucher: Du zahlst den Grundpreis.',
+  plural: 'Plural',
+  stampTitle: 'Geprüft von is.gratis: wirklich gratis, ohne Kleingedrucktes.',
 };
 
 const es: Messages = {
@@ -685,10 +681,6 @@ const es: Messages = {
   citationNeeded: '¿fuente?',
   sourcing: 'Fuentes',
   sourcingText: (cited, claims) => `${cited} de ${claims} afirmaciones tienen fuente`,
-  skyNow: 'Ahora en el cielo',
-  moonPhases: ['luna nueva', 'luna creciente', 'cuarto creciente', 'gibosa creciente', 'luna llena', 'gibosa menguante', 'cuarto menguante', 'luna menguante'],
-  sunUp: 'el sol',
-  sunLow: 'el sol bajo en el cielo',
   developers: 'Desarrolladores',
   errorGeneric: 'Algo ha ido mal.',
   watch: 'Seguir',
@@ -734,6 +726,8 @@ const es: Messages = {
   quoteText: (views, price) => `${views} visitas en los últimos 30 días. Un mes visible: ${price}.`,
   quoteHow: 'Un precio base fijo más un importe por cada mil visitas. Pagas el precio que ves aquí.',
   quoteMissing: 'Esta página aún no existe o todavía no tiene visitas: pagas el precio base.',
+  plural: 'Plural',
+  stampTitle: 'Verificado por is.gratis: gratis de verdad, sin letra pequeña.',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

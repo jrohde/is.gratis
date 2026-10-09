@@ -1,6 +1,6 @@
 import { Anchor, Badge, Card, Container, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { data, Link } from 'react-router';
-import { linkTerm, SLOGAN, type PageListItem } from '@isgratis/types';
+import { linkTerm, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/a-z';
 import { VerdictBadge } from '~/components/VerdictBadge';
 import { apiGet } from '~/lib/api.server';
@@ -54,10 +54,10 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
       origin: loaderData.origin,
       lang: loaderData.lang,
       title: t.indexTitle,
-      description: SLOGAN[loaderData.lang],
+      description: t.tagline,
       url,
       image: siteCard(loaderData.lang),
-      imageAlt: SLOGAN[loaderData.lang],
+      imageAlt: t.tagline,
     }),
   ];
 };

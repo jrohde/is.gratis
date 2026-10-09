@@ -22,8 +22,6 @@ import { useMarkHydrated } from './lib/use-hydrated';
 import { useUiLang } from './lib/use-lang';
 import { usePreferences } from './stores/preferences';
 import { useSession } from './stores/session';
-import { useSky } from './stores/sky';
-import { logoSvg } from '@isgratis/types';
 import { theme } from './theme';
 
 export const links: Route.LinksFunction = () => [
@@ -67,7 +65,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0b1d3a" />
+        <meta name="theme-color" content="#2f9e44" />
         <ColorSchemeScript defaultColorScheme="auto" />
         <Meta />
         <Links />
@@ -83,26 +81,8 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 }
 
-/** The logo and the favicon follow the real sky: refresh it now and every ten minutes. */
-function useLiveSky() {
-  const refresh = useSky((store) => store.refresh);
-  const sky = useSky((store) => store.state);
-  const live = useSky((store) => store.live);
-  useEffect(() => {
-    refresh();
-    const timer = setInterval(refresh, 10 * 60 * 1000);
-    return () => clearInterval(timer);
-  }, [refresh]);
-  useEffect(() => {
-    if (!live) return;
-    const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"][type="image/svg+xml"]');
-    if (icon) icon.href = `data:image/svg+xml,${encodeURIComponent(logoSvg(sky, { idPrefix: 'favicon' }))}`;
-  }, [sky, live]);
-}
-
 function useClientState() {
   useMarkHydrated();
-  useLiveSky();
   const loadSession = useSession((state) => state.load);
   useEffect(() => {
     void usePreferences.persist.rehydrate();

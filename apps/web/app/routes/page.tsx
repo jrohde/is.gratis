@@ -14,7 +14,19 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { data, Link, redirect, useRevalidator } from 'react-router';
-import { citationStats, citeContent, linkContent, SECTION_LABELS, toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
+import {
+  citationStats,
+  citeContent,
+  claimFor,
+  footnoteFor,
+  linkContent,
+  SECTION_LABELS,
+  toSlug,
+  VERDICT_LABELS,
+  type DraftJob,
+  type Page,
+  type Region,
+} from '@isgratis/types';
 import { useMemo } from 'react';
 import type { Route } from './+types/page';
 import { DraftRequest } from '~/components/DraftRequest';
@@ -28,7 +40,7 @@ import { TriviaList } from '~/components/TriviaList';
 import { CitationContext, Markdown, WikiLinkContext } from '~/components/Markdown';
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
-import { VerdictBadge } from '~/components/VerdictBadge';
+import { Asterisk, Footnote } from '~/components/Logo';
 import { WatchButton } from '~/components/WatchButton';
 import { api, ClientApiError } from '~/lib/api.client';
 import { apiGet, apiGetOptional } from '~/lib/api.server';
@@ -38,7 +50,7 @@ import { formatDate, LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { jsonForScript, plainText } from '~/lib/markdown';
 import { pageCard, socialMeta } from '~/lib/social';
 import { parseLang } from '~/lib/params';
-import { DEFAULT_REGION } from '~/lib/regions';
+import { DEFAULT_REGION, regionLabel } from '~/lib/regions';
 import { countView } from '~/lib/views';
 import { usePreferences } from '~/stores/preferences';
 import { useSession } from '~/stores/session';
@@ -202,6 +214,8 @@ function PageView({ page }: { page: Page }) {
   const setRegion = usePreferences((state) => state.setRegion);
   const region = preferred ?? DEFAULT_REGION[page.lang];
   const question = t.question(page.title);
+  const claim = claimFor(page.lang, page.title, page.content.plural);
+  const footnote = footnoteFor(page.lang, page.content);
   const base = `/${page.lang}/${page.slug}`;
   const author =
     page.currentRevision.source === 'llm'
@@ -246,12 +260,21 @@ function PageView({ page }: { page: Page }) {
           <Group gap="lg" wrap="nowrap" align="center">
             {!content.image && <PageHero content={content} lang={page.lang} />}
             <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
-              <Title order={1} fz={{ base: 30, sm: 44 }} lh={1.15}>
-                {question}
+              {/* The claim with its answer as footnote: "Water is gratis*" / "*deels". */}
+              <Title order={1} fz={{ base: 34, sm: 52 }} lh={1.08} style={{ letterSpacing: '-0.02em' }}>
+                {claim}
+                <Asterisk />
               </Title>
-              <div>
-                <VerdictBadge verdict={content.verdict} lang={page.lang} size="xl" animate />
-              </div>
+              <Group gap="sm" align="baseline">
+                <Text component="div" fz={{ base: 24, sm: 32 }} fw={800} lh={1.1}>
+                  <Footnote text={footnote.text} color={footnote.color} />
+                </Text>
+                {footnote.region && (
+                  <Text c="dimmed" size="sm">
+                    {regionLabel(footnote.region as Region, page.lang)}
+                  </Text>
+                )}
+              </Group>
             </Stack>
           </Group>
           <Markdown size="lg">{content.summary}</Markdown>

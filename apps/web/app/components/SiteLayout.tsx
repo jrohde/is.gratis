@@ -2,12 +2,12 @@ import { Anchor, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButto
 import { IconChecklist, IconEye, IconLanguage, IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { LANGUAGES, LOGO_LINE, SLOGAN } from '@isgratis/types';
+import { LANGUAGES } from '@isgratis/types';
 import { LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
 import { usePreferences } from '~/stores/preferences';
-import { Logo } from './Logo';
+import { Logo, Slogan } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
 
 function UserMenu() {
@@ -100,7 +100,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       <Box component="header" py="md" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
         <Container size="md">
           <Group justify="space-between">
-            <Logo href={`/${lang}`} lang={lang} />
+            <Logo href={`/${lang}`} />
             <Group gap="sm">
               <Anchor component={Link} to={`/a-z/${lang}`} size="sm" fw={600} c="dimmed" visibleFrom="xs">
                 {t.indexLink}
@@ -122,12 +122,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         <Container size="md">
           <Group justify="space-between" gap="sm" align="start">
             <Stack gap={4}>
-              <Logo href={`/${lang}`} size={22} lang={lang} />
-              <Text size="sm" fw={600}>
-                {SLOGAN[lang]}
-              </Text>
-              <Text size="xs" c="dimmed">
-                {LOGO_LINE[lang]}
+              <Logo href={`/${lang}`} size={22} />
+              <Text size="sm" fw={700} c="dimmed" mt={4}>
+                <Slogan lang={lang} />
               </Text>
               <Text size="xs" c="dimmed">
                 {t.footer}

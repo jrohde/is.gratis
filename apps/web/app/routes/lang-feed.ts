@@ -1,4 +1,4 @@
-import { questionFor, SLOGAN, VERDICT_LABELS, type PageListItem } from '@isgratis/types';
+import { questionFor, VERDICT_LABELS, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/lang-feed';
 import { apiGet } from '~/lib/api.server';
 import { env } from '~/lib/env.server';
@@ -16,7 +16,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     title: messages(lang).recentFeedTitle,
     link: `${origin}/${lang}`,
     self: `${origin}/${lang}/feed.xml`,
-    description: SLOGAN[lang],
+    description: messages(lang).tagline,
     language: lang,
     cacheControl: 'public, max-age=0, s-maxage=600',
     items: pages.map((page) => ({

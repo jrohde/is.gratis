@@ -1,42 +1,41 @@
-// Regenerates the favicon, logo and app icons in apps/web/public from the logo mark in
-// packages/types/src/brand.ts. Run after changing the mark:
+// Regenerates the favicon, wordmark and app icons in apps/web/public from the asterisk in
+// packages/types/src/brand.ts. Run after changing the brand:
 //   npm run build -w @isgratis/types && node scripts/generate-brand-assets.mjs
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { LOGO_MARK_SVG } from '../packages/types/dist/index.js';
+import { asteriskSvg, BRAND_GREEN, BRAND_INK, iconSvg } from '../packages/types/dist/index.js';
 
 const require = createRequire(new URL('../apps/api/package.json', import.meta.url));
 const sharp = require('sharp');
+const satori = require('satori').default;
 const out = new URL('../apps/web/public/', import.meta.url);
-const sized = (size) => LOGO_MARK_SVG.replace('width="64" height="64"', `width="${size}" height="${size}"`);
-const NIGHT = '#0b1d3a';
+const png = (svg, file) => sharp(Buffer.from(svg)).png().toFile(new URL(file, out).pathname);
 
-writeFileSync(new URL('favicon.svg', out), LOGO_MARK_SVG);
+// Favicon and app icons: a white asterisk on a green tile.
+writeFileSync(new URL('favicon.svg', out), `${iconSvg()}\n`);
+await png(iconSvg(48), 'favicon-48.png');
+await png(iconSvg(180, false), 'apple-touch-icon.png');
+await png(iconSvg(192, false), 'icon-192.png');
+await png(iconSvg(512, false), 'icon-512.png');
 
-// Mark plus wordmark. The text uses a common sans-serif; the site itself renders the wordmark in HTML.
-const inner = LOGO_MARK_SVG.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
-writeFileSync(
-  new URL('logo.svg', out),
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" width="300" height="64">
-  <g>${inner}</g>
-  <text x="76" y="45" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="38" font-weight="800" fill="currentColor">is.<tspan fill="#2f9e44">gratis</tspan></text>
-</svg>
-`,
+// The wordmark "is.gratis*" with its letters as paths, so it looks the same without the font.
+const font = readFileSync(require.resolve('@fontsource/inter/files/inter-latin-800-normal.woff'));
+const size = 96;
+const asterisk = `data:image/svg+xml;base64,${Buffer.from(asteriskSvg()).toString('base64')}`;
+const wordmark = await satori(
+  {
+    type: 'div',
+    props: {
+      style: { display: 'flex', alignItems: 'flex-start', fontFamily: 'Inter', fontSize: size, fontWeight: 800, letterSpacing: -size * 0.03, lineHeight: 1, color: BRAND_INK },
+      children: [
+        { type: 'span', props: { children: 'is.gratis' } },
+        { type: 'img', props: { src: asterisk, width: size * 0.44, height: size * 0.44, style: { marginLeft: size * 0.02, marginTop: size * 0.03 } } },
+      ],
+    },
+  },
+  { width: 440, height: 120, fonts: [{ name: 'Inter', data: font, weight: 800, style: 'normal' }] },
 );
-
-async function icon(size, file, background) {
-  const padding = Math.round(size * 0.14);
-  const mark = await sharp(Buffer.from(sized(size - 2 * padding))).png().toBuffer();
-  await sharp({ create: { width: size, height: size, channels: 4, background } })
-    .composite([{ input: mark, left: padding, top: padding }])
-    .png()
-    .toFile(new URL(file, out).pathname);
-}
-
-await icon(180, 'apple-touch-icon.png', NIGHT);
-await icon(192, 'icon-192.png', NIGHT);
-await icon(512, 'icon-512.png', NIGHT);
-await sharp(Buffer.from(sized(48))).png().toFile(new URL('favicon-48.png', out).pathname);
+writeFileSync(new URL('logo.svg', out), `${wordmark}\n`);
 
 writeFileSync(
   new URL('manifest.webmanifest', out),
@@ -47,8 +46,8 @@ writeFileSync(
       description: 'The encyclopedia that answers one question: is it free?',
       start_url: '/',
       display: 'standalone',
-      background_color: NIGHT,
-      theme_color: NIGHT,
+      background_color: '#ffffff',
+      theme_color: BRAND_GREEN,
       icons: [
         { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
         { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },

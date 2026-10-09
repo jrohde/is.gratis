@@ -93,6 +93,7 @@ export const pageContentSchema = z
       .max(16)
       .refine((value) => /^\p{Extended_Pictographic}/u.test(value) && !/[\p{L}\p{N}]/u.test(value), 'One emoji')
       .optional(),
+    plural: z.boolean().optional(),
     summary: markdown(600).min(1),
     whenFree: markdown(5000),
     whenNotFree: markdown(5000),

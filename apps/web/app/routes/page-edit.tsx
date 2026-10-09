@@ -18,6 +18,7 @@ import {
   Textarea,
   TextInput,
   Title,
+  Checkbox,
 } from '@mantine/core';
 import { IconForms, IconMarkdown, IconPlus, IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -25,6 +26,7 @@ import { data, Link, useNavigate } from 'react-router';
 import {
   FREE_TYPE_LABELS,
   FREE_TYPE_LEVEL,
+  claimFor,
   FREE_TYPES,
   pageToSource,
   parseSource,
@@ -252,6 +254,12 @@ export default function PageEdit({ loaderData }: Route.ComponentProps) {
                 maw={120}
               />
             </Group>
+            <Checkbox
+              label={t.plural}
+              description={`${claimFor(lang, editor.title.trim() || '…', content.plural)}*`}
+              checked={Boolean(content.plural)}
+              onChange={(event) => editor.setPlural(event.currentTarget.checked)}
+            />
 
             <Stack gap={4}>
               <Text fw={500} size="sm">

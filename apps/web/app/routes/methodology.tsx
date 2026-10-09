@@ -5,7 +5,9 @@ import {
   FREE_TYPE_LABELS,
   FREE_TYPE_LEVEL,
   FREE_TYPES,
-  LOGO_LINE,
+  iconSvg,
+  SCALE_FOOTNOTES,
+  SCALE_TEXT_COLORS,
 } from '@isgratis/types';
 import type { Route } from './+types/methodology';
 import { Markdown } from '~/components/Markdown';
@@ -13,7 +15,7 @@ import { SectionTitle } from '~/components/SectionTitle';
 import { messages } from '~/lib/i18n';
 import { METHODOLOGY, REFERENCES } from '~/lib/methodology';
 import { useUiLang } from '~/lib/use-lang';
-import { LiveMark } from '~/components/Logo';
+import { Footnote } from '~/components/Logo';
 
 export const headers: Route.HeadersFunction = () => ({ 'Cache-Control': 'public, max-age=0, s-maxage=3600' });
 export const meta: Route.MetaFunction = () => [{ title: 'Methode · is.gratis' }];
@@ -101,16 +103,32 @@ export default function Methodology() {
         </Card>
 
         <section id="logo">
-          <Group gap="lg" align="center" wrap="nowrap">
-            <LiveMark size={96} lang={lang} />
+          <Group gap="lg" align="start" wrap="nowrap">
+            <span
+              aria-hidden
+              style={{ display: 'inline-flex', width: 72, height: 72, flexShrink: 0 }}
+              dangerouslySetInnerHTML={{ __html: iconSvg(72) }}
+            />
             <Stack gap="xs">
               <Title order={2} size="h4">
                 {m.logoTitle}
               </Title>
-              <Text fw={600} fs="italic">
-                {LOGO_LINE[lang]}
-              </Text>
               <Markdown>{m.logo}</Markdown>
+              <Table withRowBorders={false} verticalSpacing={4} maw={420}>
+                <Table.Tbody>
+                  {[...FREE_TYPES].map((type) => (
+                    <Table.Tr key={type}>
+                      <Table.Td w={36} c="dimmed" fw={700}>
+                        {FREE_TYPE_LEVEL[type]}
+                      </Table.Td>
+                      <Table.Td>{FREE_TYPE_LABELS[lang][type]}</Table.Td>
+                      <Table.Td fw={800}>
+                        <Footnote text={SCALE_FOOTNOTES[lang][type]} color={SCALE_TEXT_COLORS[FREE_TYPE_LEVEL[type]]} />
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
             </Stack>
           </Group>
         </section>

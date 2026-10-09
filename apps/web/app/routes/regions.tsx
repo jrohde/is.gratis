@@ -1,6 +1,6 @@
 import { Anchor, Badge, Card, Container, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { data, Link, useNavigate } from 'react-router';
-import { REGIONS, SLOGAN, type Region } from '@isgratis/types';
+import { REGIONS, type Region } from '@isgratis/types';
 import type { Route } from './+types/regions';
 import { WorldMap } from '~/components/WorldMap';
 import { apiGet } from '~/lib/api.server';
@@ -36,7 +36,7 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
       description: t.regionsIntro,
       url,
       image: siteCard(loaderData.lang),
-      imageAlt: SLOGAN[loaderData.lang],
+      imageAlt: t.tagline,
     }),
   ];
 };

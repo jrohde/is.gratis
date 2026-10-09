@@ -3,9 +3,8 @@ import { motion } from 'motion/react';
 import { data, Link } from 'react-router';
 import { LANGUAGES, SLOGAN, type Language, type PageListItem } from '@isgratis/types';
 import type { Route } from './+types/lang-home';
-import { LiveMark, skyDescription } from '~/components/Logo';
+import { Slogan, Wordmark } from '~/components/Logo';
 import { SearchBox } from '~/components/SearchBox';
-import { useSky } from '~/stores/sky';
 import { VerdictBadge } from '~/components/VerdictBadge';
 import { apiGet } from '~/lib/api.server';
 import { CACHE } from '~/lib/cache';
@@ -32,16 +31,16 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   const t = messages(lang);
   const url = `${origin}/${lang}`;
   return [
-    { title: `is.gratis · ${SLOGAN[lang]}` },
+    { title: `is.gratis* · ${t.tagline}` },
     { name: 'description', content: `${t.tagline} ${t.howText}` },
     ...socialMeta({
       origin,
       lang,
-      title: `is.gratis · ${t.tagline}`,
-      description: SLOGAN[lang],
+      title: `is.gratis* · ${t.tagline}`,
+      description: `*${SLOGAN[lang]} ${t.howText}`,
       url,
       image: siteCard(lang),
-      imageAlt: SLOGAN[lang],
+      imageAlt: `is.gratis* *${SLOGAN[lang]}`,
     }),
     { tagName: 'link', rel: 'canonical', href: url },
     { tagName: 'link', rel: 'alternate', type: 'application/rss+xml', title: t.recentFeedTitle, href: `${url}/feed.xml` },
@@ -55,17 +54,6 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   ];
 };
 
-/** "Nu aan de hemel: wassende maansikkel", shown once the browser knows the visitor's sky. */
-function SkyCaption({ lang }: { lang: Language }) {
-  const { state, live } = useSky();
-  const t = messages(lang);
-  return (
-    <Text size="xs" c="dimmed" mt={-8} style={{ visibility: live ? 'visible' : 'hidden' }}>
-      {t.skyNow}: {skyDescription(state, lang)}
-    </Text>
-  );
-}
-
 export default function LangHome({ loaderData }: Route.ComponentProps) {
   const { lang, pages } = loaderData;
   const t = messages(lang);
@@ -74,15 +62,13 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
     <Container size="md">
       <Stack gap={48}>
         <Stack gap="md" align="center" ta="center" py="xl">
-          <LiveMark size={144} lang={lang} />
-          <SkyCaption lang={lang} />
           <MotionDiv initial={play ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <Title order={1} fz={{ base: 40, sm: 56 }} lh={1.1}>
-              {t.searchButton}
+            <Title order={1} lh={1}>
+              <Wordmark size="clamp(56px, 13vw, 112px)" />
             </Title>
           </MotionDiv>
-          <Text size="xl" fw={600} maw={620}>
-            {SLOGAN[lang]}
+          <Text fz={{ base: 26, sm: 34 }} fw={800} c="dimmed" mt={4}>
+            <Slogan lang={lang} />
           </Text>
           <Text size="md" c="dimmed" maw={560}>
             {t.tagline}

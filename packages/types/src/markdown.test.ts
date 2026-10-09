@@ -53,6 +53,15 @@ describe('Markdown source', () => {
     expect(parsed).toEqual({ ok: true, title: 'lucht', content: minimal });
   });
 
+  it('keeps a plural subject', () => {
+    const plural = { ...content, plural: true };
+    const source = pageToSource('musea', plural, 'nl');
+    expect(source).toContain('plural: true');
+    const parsed = parseSource(source, 'nl');
+    expect(parsed.ok && parsed.content.plural).toBe(true);
+    expect(parseSource(pageToSource('water', content, 'nl'), 'nl')).toMatchObject({ ok: true });
+  });
+
   it('writes readable source with localised headings', () => {
     const source = pageToSource('water', content, 'nl');
     expect(source).toContain('## Wanneer wel gratis');

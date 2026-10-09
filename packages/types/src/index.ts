@@ -109,6 +109,8 @@ export interface PageContent {
   verdict: Verdict;
   /** One emoji that stands for the subject. */
   emoji?: string;
+  /** The subject is plural ("musea"), so its claim reads "Musea zijn gratis". */
+  plural?: boolean;
   /** One or two sentences, the direct answer. Markdown. */
   summary: string;
   /** When it is free. Markdown. */

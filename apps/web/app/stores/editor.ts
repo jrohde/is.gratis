@@ -25,6 +25,7 @@ interface EditorState {
   setTitle: (title: string) => void;
   setVerdict: (verdict: Verdict) => void;
   setEmoji: (emoji: string) => void;
+  setPlural: (plural: boolean) => void;
   setText: (field: TextField, value: string) => void;
   setScale: (scale: FreeScale | undefined) => void;
   setTimePrice: (timePrice: TimePrice | undefined) => void;
@@ -74,6 +75,7 @@ export const useEditor = create<EditorState>((set) => {
     setTitle: (title) => set({ title, dirty: true }),
     setVerdict: (verdict) => patchContent((c) => ({ ...c, verdict })),
     setEmoji: (emoji) => patchContent((c) => (emoji ? { ...c, emoji } : (without(c, 'emoji') as PageContent))),
+    setPlural: (plural) => patchContent((c) => (plural ? { ...c, plural } : (without(c, 'plural') as PageContent))),
     setText: (field, value) => patchContent((c) => ({ ...c, [field]: value })),
     setScale: (scale) => patchContent((c) => (scale ? { ...c, scale } : (without(c, 'scale') as PageContent))),
     setTimePrice: (timePrice) =>
