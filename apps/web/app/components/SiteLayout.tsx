@@ -2,7 +2,7 @@ import { Anchor, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButto
 import { IconLanguage, IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { LANGUAGES, SLOGAN } from '@isgratis/types';
+import { LANGUAGES, LOGO_LINE, SLOGAN } from '@isgratis/types';
 import { LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
@@ -114,8 +114,11 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <Group justify="space-between" gap="sm" align="start">
             <Stack gap={4}>
               <Logo href={`/${lang}`} size={22} lang={lang} />
-              <Text size="sm" c="dimmed">
+              <Text size="sm" fw={600}>
                 {SLOGAN[lang]}
+              </Text>
+              <Text size="xs" c="dimmed">
+                {LOGO_LINE[lang]}
               </Text>
               <Text size="xs" c="dimmed">
                 {t.footer}

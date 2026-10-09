@@ -126,10 +126,12 @@ export function logoSvg(state: SkyState, options: { size?: number; idPrefix?: st
   }
   const thread = state.sky === 'day' ? '#1971c2' : '#ffd43b';
   // The tag hangs from the earth: a small globe in the top-left corner, the tag scaled to make room.
-  const scale = 0.8;
+  const scale = 0.7;
   const shift = 64 * (1 - scale);
   const outer = (v: number) => r2(shift + v * scale);
-  const earth = { x: 9.2, y: 9.2, r: 7.6 };
+  const earth = { x: 13, y: 13, r: 11.5 };
+  // Continents are drawn for a globe of radius 7.6; keep them a bit smaller than the globe so the oceans show.
+  const land = (earth.r / 7.6) * 0.8;
   const fromX = outer(hx - ring * Math.SQRT1_2);
   const fromY = outer(hy - ring * Math.SQRT1_2);
   const toX = r2(earth.x + earth.r * 0.72);
@@ -138,12 +140,12 @@ export function logoSvg(state: SkyState, options: { size?: number; idPrefix?: st
   const globe = `<g>
 <clipPath id="${id}-earth"><circle cx="${earth.x}" cy="${earth.y}" r="${earth.r}"/></clipPath>
 <circle cx="${earth.x}" cy="${earth.y}" r="${earth.r}" fill="#1c7ed6"/>
-<g clip-path="url(#${id}-earth)" fill="#51cf66">
+<g clip-path="url(#${id}-earth)"><g fill="#51cf66" transform="translate(${r2(earth.x - 9.2 * land)} ${r2(earth.y - 9.2 * land)}) scale(${r2(land)})">
 <path d="M6.2 2.6 c2 -0.8 4.4 -0.2 5.2 1.2 c0.6 1.1 -0.4 1.9 0.3 3 c0.8 1.2 2.3 1.4 2.4 3 c0.1 1.7 -1.2 3.3 -2.1 4.8 c-0.6 1.1 -0.9 2.6 -2 2.9 c-0.9 -1.3 -0.6 -3 -1.6 -4.2 c-0.8 -1 -2.4 -1 -2.9 -2.3 c-0.5 -1.3 0.8 -2.2 0.7 -3.5 c-0.1 -1 -1.2 -1.6 -0.9 -2.7 c0.2 -0.8 1 -1.6 1.8 -2.2z"/>
 <path d="M14.4 3.8 c1.4 0.4 2.6 1.6 2.6 3 c-1 0 -1.8 -0.6 -2.4 -1.4 c-0.4 -0.5 -0.6 -1 -0.2 -1.6z"/>
 <path d="M1.6 10.8 c1 -0.2 1.8 0.6 2 1.6 c0.2 1 -0.4 2 -1.2 2.4 c-0.6 -1 -1 -2.4 -0.8 -4z"/>
-</g>
-<circle cx="${earth.x}" cy="${earth.y}" r="${earth.r}" fill="none" stroke="#a5d8ff" stroke-width="1" stroke-opacity="0.9"/>
+</g></g>
+<circle cx="${earth.x}" cy="${earth.y}" r="${earth.r}" fill="none" stroke="#a5d8ff" stroke-width="1.3" stroke-opacity="0.9"/>
 <path d="M${r2(earth.x - earth.r * 0.6)} ${r2(earth.y - earth.r * 0.45)} a${earth.r} ${earth.r} 0 0 1 ${r2(earth.r * 0.75)} ${r2(-earth.r * 0.35)}" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1" stroke-linecap="round"/>
 </g>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" role="img" aria-label="${options.title ?? 'is.gratis'}">
@@ -166,12 +168,23 @@ export const LOGO_MARK_SVG = logoSvg({ phase: 0.2, sky: 'night', southern: false
 /** Wordmark colours: "is." in the text colour, "gratis" in green. */
 export const BRAND_GREEN = '#2f9e44';
 
-/** The slogan: free things come first, then the fact checking. */
+/**
+ * The slogan. It answers the question in the domain name and means two things at once: the answer
+ * costs nothing, and the answer is "free". It works word for word in every language.
+ */
 export const SLOGAN: Record<Language, string> = {
-  nl: 'Zon, maan en sterren zijn gratis. De rest zoeken wij uit.',
-  en: 'The sun, the moon and the stars are free. We check the rest.',
-  de: 'Sonne, Mond und Sterne sind gratis. Den Rest prüfen wir.',
-  es: 'El sol, la luna y las estrellas son gratis. Lo demás lo comprobamos nosotros.',
+  nl: 'Het antwoord is gratis.',
+  en: 'The answer is free.',
+  de: 'Die Antwort ist gratis.',
+  es: 'La respuesta es gratis.',
+};
+
+/** The line that goes with the logo: an empty price tag hanging from the earth. */
+export const LOGO_LINE: Record<Language, string> = {
+  nl: 'Het mooiste prijskaartje is leeg.',
+  en: 'The best price tag is an empty one.',
+  de: 'Das schönste Preisschild ist leer.',
+  es: 'La mejor etiqueta de precio es la que está vacía.',
 };
 
 /** The dot of "is.gratis": the same sun or moon as in the logo, small enough to sit in a word. */

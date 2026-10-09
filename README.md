@@ -109,7 +109,7 @@ Net als op Wikipedia moet elke bewering te controleren zijn:
 
 ### Logo en slogan
 
-Het logo is een **prijskaartje zonder prijs, gevuld met de hemel, dat aan de aarde hangt**. Door het oogje van het kaartje kijk je naar de echte lucht van dat moment:
+Het logo is een **prijskaartje zonder prijs, gevuld met de hemel, dat aan de aarde hangt**. Aarde en kaartje zijn ongeveer even groot: wat gratis is, hangt aan de wereld zelf. Door het oogje van het kaartje kijk je naar de echte lucht van dat moment:
 
 - **Overdag** zit de zon in het oogje, tussen wolkjes.
 - **'s Avonds en 's ochtends** kleurt het kaartje naar schemering.
@@ -119,7 +119,7 @@ Het logo is een **prijskaartje zonder prijs, gevuld met de hemel, dat aan de aar
 
 Iedere bezoeker ziet dus een ander logo, en morgen ziet het er weer anders uit. Het merk staat in `packages/types/src/brand.ts`, met tests voor de maanfase tegen gepubliceerde nieuwe en volle manen. Voor vaste plekken, zoals app-iconen en deelkaarten, is er een statische versie met een jonge maan. Die maak je opnieuw met `node scripts/generate-brand-assets.mjs`.
 
-De slogan staat in elke taal: *"Zon, maan en sterren zijn gratis. De rest zoeken wij uit."*
+De slogan is **"Het antwoord is gratis."** Hij beantwoordt de vraag in de domeinnaam en betekent twee dingen tegelijk: het antwoord kost niets, en het antwoord ís gratis. Hij werkt woord voor woord in elke taal: *The answer is free*, *Die Antwort ist gratis*, *La respuesta es gratis*. Bij het logo hoort de zin **"Het mooiste prijskaartje is leeg."**
 
 ### Index, feeds en deelkaarten
 

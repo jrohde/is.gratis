@@ -5,6 +5,7 @@ import {
   FREE_TYPE_LABELS,
   FREE_TYPE_LEVEL,
   FREE_TYPES,
+  LOGO_LINE,
 } from '@isgratis/types';
 import type { Route } from './+types/methodology';
 import { Markdown } from '~/components/Markdown';
@@ -106,6 +107,9 @@ export default function Methodology() {
               <Title order={2} size="h4">
                 {m.logoTitle}
               </Title>
+              <Text fw={600} fs="italic">
+                {LOGO_LINE[lang]}
+              </Text>
               <Markdown>{m.logo}</Markdown>
             </Stack>
           </Group>
