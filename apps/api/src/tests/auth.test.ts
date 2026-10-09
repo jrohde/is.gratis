@@ -81,3 +81,17 @@ describe('auth', () => {
     expect(subdomain.statusCode).toBe(401);
   });
 });
+
+describe('roles', () => {
+  it('lets admins make someone a moderator, but not change their own role', async () => {
+    const admin = await register(ctx, 'admin@example.com');
+    const anna = await register(ctx, 'anna-role@example.com', 'Anna');
+    const list = await ctx.app.inject({ url: '/api/admin/users?q=anna', headers: { cookie: admin.cookie } });
+    expect(list.json().users).toEqual([expect.objectContaining({ email: 'anna-role@example.com', role: 'user' })]);
+    const changed = await ctx.app.inject({ method: 'POST', url: `/api/admin/users/${anna.user.id}/role`, headers: { cookie: admin.cookie }, payload: { role: 'moderator' } });
+    expect(changed.json()).toEqual({ role: 'moderator' });
+    const self = await ctx.app.inject({ method: 'POST', url: `/api/admin/users/${admin.user.id}/role`, headers: { cookie: admin.cookie }, payload: { role: 'user' } });
+    expect(self.statusCode).toBe(400);
+    expect((await ctx.app.inject({ url: '/api/admin/users', headers: { cookie: anna.cookie } })).statusCode).toBe(403);
+  });
+});

@@ -143,6 +143,7 @@ Zoeken werkt zoals op Wikipedia, helemaal in de eigen database:
 - **Beveiligen:** moderators kunnen een pagina beveiligen; dan kunnen alleen moderators haar bewerken of terugzetten. Anderen zien een slotje en worden naar de overlegpagina verwezen.
 - **Vertalingen koppelen:** moderators kunnen een pagina koppelen aan een bestaande pagina in een andere taal, als iemand die los heeft geschreven.
 - **Teller:** moderators zien in het menu hoeveel concepten en meldingen er wachten.
+- **Rollen:** admins maken in het beheer (tabblad Gebruikers) iemand moderator of admin. Je eigen rol kun je niet veranderen, zodat je jezelf niet per ongeluk buitensluit.
 
 ### Per land
 
@@ -293,6 +294,5 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 - **Licentie voor bijdragen.** Kies onder welke licentie bewerkers hun tekst bijdragen en vermeld dat bij het registreren.
 - **Startinhoud nalopen.** De twaalf startpagina's zijn zorgvuldig geformuleerd, ook de achtergrondteksten, kerncijfers en weetjes, maar niet tegen bronnen gecontroleerd. Loop ze na voor livegang. Tijdprijzen zijn bewust leeg gelaten: die vragen een prijs en een uurloon met gecontroleerde bron.
 - **Beeldmodel kiezen.** Beeldgeneratie staat standaard uit. Voor alles in eigen beheer is een zelf gehost model achter een OpenAI-compatibele server nodig, zoals LocalAI. Dat vraagt een GPU-node.
-- **Moderators benoemen** gaat nog via de database (`update users set role = 'moderator' ...`). Een beheerscherm voor rollen is de volgende stap.
 - **Meldingen.** De volglijst toont wijzigingen op de site zelf. Mail bij een wijziging vraagt een mailserver.
 - **Rate limits** voor inloggen en bewerken gelden per pod. Het dure deel, conceptgeneratie, wordt wel centraal in Postgres begrensd.

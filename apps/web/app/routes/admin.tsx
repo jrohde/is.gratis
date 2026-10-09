@@ -234,6 +234,64 @@ function BulkTranslate() {
   );
 }
 
+interface AdminUser {
+  id: string;
+  email: string;
+  displayName: string;
+  role: 'user' | 'moderator' | 'admin';
+  createdAt: string;
+}
+
+function Users() {
+  const lang = useUiLang();
+  const t = messages(lang);
+  const me = useSession((state) => state.user);
+  const [q, setQ] = useState('');
+  const [users, setUsers] = useState<AdminUser[] | null>(null);
+  const load = useCallback(async () => {
+    const result = await api<{ users: AdminUser[] }>('GET', `/admin/users?q=${encodeURIComponent(q.trim())}`);
+    setUsers(result.users);
+  }, [q]);
+  useEffect(() => {
+    const timer = setTimeout(() => void load(), 200);
+    return () => clearTimeout(timer);
+  }, [load]);
+  return (
+    <Stack gap="sm">
+      <TextInput placeholder={t.usersSearch} value={q} onChange={(e) => setQ(e.currentTarget.value)} maw={360} />
+      {users === null ? (
+        <Loader />
+      ) : (
+        <Table striped>
+          <Table.Tbody>
+            {users.map((user) => (
+              <Table.Tr key={user.id}>
+                <Table.Td fw={600}>{user.displayName}</Table.Td>
+                <Table.Td c="dimmed">{user.email}</Table.Td>
+                <Table.Td c="dimmed">{formatDate(user.createdAt, lang)}</Table.Td>
+                <Table.Td w={170}>
+                  <Select
+                    size="xs"
+                    value={user.role}
+                    allowDeselect={false}
+                    disabled={user.id === me?.id}
+                    data={[
+                      { value: 'user', label: t.roles.user },
+                      { value: 'moderator', label: t.roles.moderator },
+                      { value: 'admin', label: t.roles.admin },
+                    ]}
+                    onChange={(role) => role && void api('POST', `/admin/users/${user.id}/role`, { role }).then(load)}
+                  />
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      )}
+    </Stack>
+  );
+}
+
 interface ViewRow {
   lang: Language;
   slug: string;
@@ -314,6 +372,7 @@ export default function Admin() {
             <Tabs.Tab value="sponsors">{t.advertiseTitle}</Tabs.Tab>
             <Tabs.Tab value="drafts">{t.bulkTitle}</Tabs.Tab>
             <Tabs.Tab value="views">{t.viewsTitle}</Tabs.Tab>
+            <Tabs.Tab value="users">{t.usersTitle}</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="sponsors">
             <Stack gap="md">
@@ -332,6 +391,9 @@ export default function Admin() {
           </Tabs.Panel>
           <Tabs.Panel value="views">
             <ViewStats />
+          </Tabs.Panel>
+          <Tabs.Panel value="users">
+            <Users />
           </Tabs.Panel>
         </Tabs>
       </Stack>

@@ -1,8 +1,8 @@
-import { and, eq, gt, lt } from 'drizzle-orm';
-import type { User } from '@isgratis/types';
+import { and, desc, eq, gt, lt, sql } from 'drizzle-orm';
+import type { User, UserRole } from '@isgratis/types';
 import type { Database } from '../db/client.js';
 import { sessions, users, type UserRow } from '../db/schema.js';
-import { conflict, HttpError } from '../lib/errors.js';
+import { conflict, HttpError, notFound } from '../lib/errors.js';
 import { newToken, sha256 } from '../lib/hash.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 
@@ -62,4 +62,22 @@ export async function userForSession(db: Database, token: string): Promise<User 
 
 export async function deleteSession(db: Database, token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.id, sha256(token)));
+}
+
+/** Users for the admin screen, optionally filtered by name or email. */
+export async function listUsers(db: Database, query: string | undefined, limit: number) {
+  const q = query?.trim().toLowerCase();
+  const like = q ? `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : null;
+  const rows = await db
+    .select({ id: users.id, email: users.email, displayName: users.displayName, role: users.role, createdAt: users.createdAt })
+    .from(users)
+    .where(like ? sql`lower(${users.email}) like ${like} or lower(${users.displayName}) like ${like}` : undefined)
+    .orderBy(desc(users.createdAt))
+    .limit(limit);
+  return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+}
+
+export async function setRole(db: Database, id: string, role: UserRole): Promise<void> {
+  const rows = await db.update(users).set({ role }).where(eq(users.id, id)).returning({ id: users.id });
+  if (rows.length === 0) throw notFound('User not found');
 }

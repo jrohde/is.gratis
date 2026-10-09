@@ -282,6 +282,9 @@ const nl = {
   protectedHelp: 'Alleen moderators kunnen deze pagina bewerken. Stel een wijziging voor op de overlegpagina.',
   protect: 'Beveiligen',
   unprotect: 'Beveiliging opheffen',
+  usersTitle: 'Gebruikers',
+  usersSearch: 'Zoek op naam of e-mailadres',
+  roles: { user: 'Gebruiker', moderator: 'Moderator', admin: 'Beheerder' },
 };
 
 export type Messages = typeof nl;
@@ -561,6 +564,9 @@ const en: Messages = {
   protectedHelp: 'Only moderators can edit this page. Suggest a change on the talk page.',
   protect: 'Protect',
   unprotect: 'Remove protection',
+  usersTitle: 'Users',
+  usersSearch: 'Search by name or email',
+  roles: { user: 'User', moderator: 'Moderator', admin: 'Admin' },
 };
 
 const de: Messages = {
