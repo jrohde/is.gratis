@@ -2,7 +2,7 @@ import { Alert, Anchor, Badge, Button, Card, Container, Group, Progress, Segment
 import { IconCheck, IconPencil, IconTrash } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useRevalidator } from 'react-router';
-import { isLanguage, LANGUAGES, type Language, type MissingSubject, type ReviewItem } from '@isgratis/types';
+import { isLanguage, LANGUAGES, type Language, type MissingSubject, type Report, type ReviewItem } from '@isgratis/types';
 import type { Route } from './+types/review';
 import { ClaimRow, MissingRow } from '~/components/Claim';
 import { api, ClientApiError } from '~/lib/api.client';
@@ -102,6 +102,65 @@ function DraftCard({ draft }: { draft: ReviewItem }) {
   );
 }
 
+/** Open reports from readers, for moderators. */
+function Reports() {
+  const lang = useUiLang();
+  const t = messages(lang);
+  const [reports, setReports] = useState<Report[] | null>(null);
+  const load = () =>
+    api<{ reports: Report[] }>('GET', '/reports')
+      .then((result) => setReports(result.reports))
+      .catch(() => setReports([]));
+  useEffect(() => {
+    void load();
+  }, []);
+  if (reports === null) return null;
+  return (
+    <Stack gap="xs">
+      <Title order={2} size="h3">
+        {t.reportsTitle}
+      </Title>
+      {reports.length === 0 ? (
+        <Text c="dimmed" size="sm">
+          {t.reportsEmpty}
+        </Text>
+      ) : (
+        reports.map((report) => (
+          <Card key={report.id} withBorder padding="sm">
+            <Group justify="space-between" wrap="nowrap" align="start">
+              <Stack gap={4} style={{ minWidth: 0 }}>
+                <Group gap="xs">
+                  <Badge color="red" variant="light">
+                    {t.reportReasons[report.reason] ?? report.reason}
+                  </Badge>
+                  <Anchor component={Link} to={`/${report.lang}/${report.slug}`} fw={700}>
+                    /{report.lang}/{report.slug}
+                  </Anchor>
+                  <Text size="xs" c="dimmed">
+                    {formatDate(report.createdAt, lang)}
+                  </Text>
+                </Group>
+                {report.message && (
+                  <Text size="sm" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                    {report.message}
+                  </Text>
+                )}
+              </Stack>
+              <Button
+                size="xs"
+                variant="light"
+                onClick={() => void api('POST', `/reports/${report.id}/resolve`).then(load)}
+              >
+                {t.resolve}
+              </Button>
+            </Group>
+          </Card>
+        ))
+      )}
+    </Stack>
+  );
+}
+
 /** Subjects without a page that are linked, searched or exist elsewhere: what to write next. */
 function Wanted({ lang }: { lang: Language }) {
   const t = messages(lang);
@@ -167,6 +226,7 @@ export default function Review({ loaderData }: Route.ComponentProps) {
         ) : (
           drafts.map((draft) => <DraftCard key={`${draft.lang}/${draft.slug}`} draft={draft} />)
         )}
+        {(user?.role === 'moderator' || user?.role === 'admin') && <Reports />}
         <Wanted lang={only ?? lang} />
       </Stack>
     </Container>

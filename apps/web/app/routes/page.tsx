@@ -41,6 +41,7 @@ import { CitationContext, Markdown, WikiLinkContext } from '~/components/Markdow
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { Asterisk, Footnote } from '~/components/Logo';
+import { ReportButton } from '~/components/ReportButton';
 import { WatchButton } from '~/components/WatchButton';
 import { api, ClientApiError } from '~/lib/api.client';
 import { apiGet, apiGetOptional } from '~/lib/api.server';
@@ -398,6 +399,7 @@ function PageView({ page }: { page: Page }) {
                 {t.history}
               </Group>
             </Anchor>
+            <ReportButton lang={page.lang} slug={page.slug} />
             <WatchButton lang={page.lang} slug={page.slug} />
             <Button component={Link} to={`${base}/edit`} size="xs" variant="light" leftSection={<IconPencil size={14} />}>
               {t.edit}

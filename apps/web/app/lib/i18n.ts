@@ -247,6 +247,23 @@ const nl = {
   reasons: { wanted: 'gelinkt', searched: 'gezocht', translation: 'andere taal', starter: 'startlijst', related: 'verwant', typed: 'getypt' } as Record<string, string>,
   previous: 'Vorige',
   next: 'Volgende',
+  report: 'Melden',
+  reportTitle: 'Iets mis met deze pagina?',
+  reportMessage: 'Toelichting (optioneel)',
+  reportSend: 'Versturen',
+  reportThanks: 'Bedankt! Een moderator kijkt ernaar.',
+  reportReasons: {
+    wrong: 'Het klopt niet',
+    outdated: 'Het is verouderd',
+    unsourced: 'Er ontbreekt een bron',
+    spam: 'Spam of reclame',
+    offensive: 'Kwetsend of ongepast',
+    copyright: 'Schending van auteursrecht',
+    other: 'Iets anders',
+  } as Record<string, string>,
+  reportsTitle: 'Meldingen',
+  reportsEmpty: 'Geen open meldingen.',
+  resolve: 'Afgehandeld',
 };
 
 export type Messages = typeof nl;
@@ -491,6 +508,23 @@ const en: Messages = {
   reasons: { wanted: 'linked', searched: 'searched', translation: 'other language', starter: 'starter list', related: 'related', typed: 'typed' },
   previous: 'Previous',
   next: 'Next',
+  report: 'Report',
+  reportTitle: 'Something wrong with this page?',
+  reportMessage: 'Details (optional)',
+  reportSend: 'Send',
+  reportThanks: 'Thank you! A moderator will look at it.',
+  reportReasons: {
+    wrong: 'It is wrong',
+    outdated: 'It is outdated',
+    unsourced: 'A source is missing',
+    spam: 'Spam or advertising',
+    offensive: 'Offensive or inappropriate',
+    copyright: 'Copyright infringement',
+    other: 'Something else',
+  },
+  reportsTitle: 'Reports',
+  reportsEmpty: 'No open reports.',
+  resolve: 'Handled',
 };
 
 const de: Messages = {
@@ -637,6 +671,20 @@ const de: Messages = {
   relatedTitle: 'Vielleicht suchst du auch',
   suggestPages: 'Seiten',
   suggestMissing: 'Noch ohne Seite',
+  report: 'Melden',
+  reportTitle: 'Stimmt etwas mit dieser Seite nicht?',
+  reportMessage: 'Erläuterung (optional)',
+  reportSend: 'Senden',
+  reportThanks: 'Danke! Ein Moderator sieht es sich an.',
+  reportReasons: {
+    wrong: 'Es stimmt nicht',
+    outdated: 'Es ist veraltet',
+    unsourced: 'Eine Quelle fehlt',
+    spam: 'Spam oder Werbung',
+    offensive: 'Beleidigend oder unangemessen',
+    copyright: 'Urheberrechtsverletzung',
+    other: 'Etwas anderes',
+  },
 };
 
 const es: Messages = {
@@ -784,6 +832,20 @@ const es: Messages = {
   relatedTitle: 'Quizá también buscas',
   suggestPages: 'Páginas',
   suggestMissing: 'Aún sin página',
+  report: 'Denunciar',
+  reportTitle: '¿Algo mal en esta página?',
+  reportMessage: 'Detalles (opcional)',
+  reportSend: 'Enviar',
+  reportThanks: '¡Gracias! Un moderador lo revisará.',
+  reportReasons: {
+    wrong: 'No es correcto',
+    outdated: 'Está desactualizado',
+    unsourced: 'Falta una fuente',
+    spam: 'Spam o publicidad',
+    offensive: 'Ofensivo o inapropiado',
+    copyright: 'Infracción de derechos de autor',
+    other: 'Otra cosa',
+  },
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };
