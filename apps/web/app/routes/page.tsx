@@ -41,6 +41,7 @@ import { CitationContext, Markdown, WikiLinkContext } from '~/components/Markdow
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { Asterisk, Footnote } from '~/components/Logo';
+import { EmbedButton } from '~/components/EmbedButton';
 import { ReportButton } from '~/components/ReportButton';
 import { TranslateButtons } from '~/components/TranslateButtons';
 import { WatchButton } from '~/components/WatchButton';
@@ -210,7 +211,7 @@ function SourceCheckMark({ check, lang }: { check: Page['sourceChecks'][string] 
   );
 }
 
-function PageView({ page }: { page: Page }) {
+function PageView({ page, origin }: { page: Page; origin: string }) {
   const t = messages(page.lang);
   const preferred = usePreferences((state) => state.region);
   const setRegion = usePreferences((state) => state.setRegion);
@@ -401,6 +402,7 @@ function PageView({ page }: { page: Page }) {
                 {t.history}
               </Group>
             </Anchor>
+            <EmbedButton page={page} origin={origin} />
             <ReportButton lang={page.lang} slug={page.slug} />
             <WatchButton lang={page.lang} slug={page.slug} />
             <Button component={Link} to={`${base}/edit`} size="xs" variant="light" leftSection={<IconPencil size={14} />}>
@@ -429,5 +431,5 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
       </Container>
     );
   }
-  return <PageView page={loaderData.page} />;
+  return <PageView page={loaderData.page} origin={loaderData.origin} />;
 }

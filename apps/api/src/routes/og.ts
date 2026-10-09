@@ -2,7 +2,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { Database } from '../db/client.js';
 import { languageSchema } from '../lib/content.js';
-import { renderPageCard, renderSiteCard } from '../lib/og.js';
+import { renderEmbedCard, renderPageCard, renderSiteCard } from '../lib/og.js';
 import { getPage } from '../services/pages.js';
 import { HttpError } from '../lib/errors.js';
 
@@ -47,6 +47,28 @@ export const ogRoutes: FastifyPluginAsyncZod<{ db: Database }> = async (app, { d
         png = await renderSiteCard(lang);
       }
       return reply.header('content-type', 'image/png').header('cache-control', CACHE).send(png);
+    },
+  );
+
+  // Under /og so the cache in front of the API keeps it; answers change rarely.
+  app.get(
+    '/og/embed/:lang/:file',
+    {
+      schema: {
+        tags: ['assets'],
+        summary: 'Answer card to embed on other sites (SVG): the claim with its footnote',
+        description: 'Embed it as an image inside a link to the page; see /developers.',
+        params: z.object({ lang: languageSchema, file: z.string().regex(/^[a-z0-9-]{1,64}\.svg$/) }),
+      },
+    },
+    async (request, reply) => {
+      const page = await getPage(db, request.params.lang, request.params.file.slice(0, -4));
+      const svg = await renderEmbedCard(page);
+      return reply
+        .header('content-type', 'image/svg+xml; charset=utf-8')
+        .header('cache-control', 'public, max-age=3600, s-maxage=86400')
+        .header('access-control-allow-origin', '*')
+        .send(svg);
     },
   );
 };

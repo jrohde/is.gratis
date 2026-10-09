@@ -167,3 +167,49 @@ export async function renderSiteCard(lang: Language): Promise<Buffer> {
     ),
   );
 }
+
+const EMBED_WIDTH = 440;
+const EMBED_HEIGHT = 124;
+
+/**
+ * A small answer card other sites can embed: "Water is gratis*" with its footnote. An SVG with
+ * the text as paths, so it looks the same everywhere without fonts.
+ */
+export async function renderEmbedCard(page: Page): Promise<string> {
+  const lang = page.lang;
+  const text = claimFor(lang, page.title, page.content.plural);
+  const note = footnoteFor(lang, page.content);
+  const size = text.length > 26 ? 22 : 26;
+  const node = h(
+    'div',
+    {
+      width: EMBED_WIDTH,
+      height: EMBED_HEIGHT,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      backgroundColor: '#ffffff',
+      border: '1px solid #dee2e6',
+      borderRadius: 14,
+      padding: '16px 20px',
+      boxSizing: 'border-box',
+      fontFamily: 'Inter',
+      color: BRAND_INK,
+    },
+    h(
+      'div',
+      { display: 'flex', flexDirection: 'column' },
+      claim(truncate(text, 40), size),
+      h(
+        'div',
+        { display: 'flex', alignItems: 'flex-end', marginTop: 6 },
+        footnote(note.text, 20, note.color),
+        note.region
+          ? h('div', { display: 'flex', fontSize: 13, color: MUTED, marginLeft: 8, marginBottom: 3 }, regionName(note.region as Region, lang))
+          : h('div', {}, ''),
+      ),
+    ),
+    h('div', { display: 'flex', justifyContent: 'flex-end', width: EMBED_WIDTH - 42 }, claim('is.gratis', 15)),
+  );
+  return satori(node as never, { width: EMBED_WIDTH, height: EMBED_HEIGHT, fonts: loadFonts() });
+}

@@ -271,6 +271,11 @@ const nl = {
   bulkTranslateResult: (queued: number, skipped: number) => `${queued} vertalingen in de wachtrij, ${skipped} overgeslagen.`,
   from: 'Van',
   to: 'Naar',
+  embed: 'Insluiten',
+  embedTitle: 'Dit antwoord op je eigen site',
+  embedHelp: 'Plak deze code in je website. Het antwoord blijft actueel en linkt naar deze pagina.',
+  copy: 'Kopiëren',
+  copied: 'Gekopieerd',
 };
 
 export type Messages = typeof nl;
@@ -539,6 +544,11 @@ const en: Messages = {
   bulkTranslateResult: (queued, skipped) => `${queued} translations queued, ${skipped} skipped.`,
   from: 'From',
   to: 'To',
+  embed: 'Embed',
+  embedTitle: 'This answer on your own site',
+  embedHelp: 'Paste this code into your website. The answer stays up to date and links to this page.',
+  copy: 'Copy',
+  copied: 'Copied',
 };
 
 const de: Messages = {
@@ -701,6 +711,11 @@ const de: Messages = {
   },
   translateTo: 'Übersetzen lassen ins',
   translationQueued: 'in der Warteschlange, erscheint als Entwurf',
+  embed: 'Einbetten',
+  embedTitle: 'Diese Antwort auf deiner Website',
+  embedHelp: 'Füge diesen Code in deine Website ein. Die Antwort bleibt aktuell und verlinkt auf diese Seite.',
+  copy: 'Kopieren',
+  copied: 'Kopiert',
 };
 
 const es: Messages = {
@@ -864,6 +879,11 @@ const es: Messages = {
   },
   translateTo: 'Traducir al',
   translationQueued: 'en cola, aparecerá como borrador',
+  embed: 'Insertar',
+  embedTitle: 'Esta respuesta en tu web',
+  embedHelp: 'Pega este código en tu web. La respuesta se mantiene al día y enlaza a esta página.',
+  copy: 'Copiar',
+  copied: 'Copiado',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };
