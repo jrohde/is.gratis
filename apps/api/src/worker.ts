@@ -8,6 +8,8 @@ import { createDatabase } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
 import { createCacheInvalidator } from './lib/cache.js';
 import { processNextJob } from './drafts/process.js';
+import { checkLink } from './lib/link-check.js';
+import { runSourceChecks } from './services/sources.js';
 
 const config = loadConfig();
 const logger = pino({ level: config.logLevel, name: 'draft-worker' });
@@ -23,10 +25,22 @@ async function main() {
     logger.warn('LLM_API_KEY is empty; drafts will fail until it is set');
   }
   logger.info({ model: config.llm.model, baseUrl: config.llm.baseUrl }, 'worker started');
+  let nextSourceCheck = 0;
   while (!stopping) {
     try {
       const worked = await processNextJob({ db, config, cache, logger });
-      if (!worked) await sleep(config.drafts.pollIntervalMs);
+      if (worked) continue;
+      // Idle: check a few source URLs. Drafts always go first.
+      if (config.sourceChecks.enabled && Date.now() >= nextSourceCheck) {
+        const checked = await runSourceChecks(
+          { db, cache, logger, check: (url) => checkLink(url, config.sourceChecks.timeoutMs) },
+          config.sourceChecks,
+        );
+        // Nothing due: look again in ten minutes instead of every poll.
+        if (checked === 0) nextSourceCheck = Date.now() + 10 * 60 * 1000;
+        if (checked > 0) continue;
+      }
+      await sleep(config.drafts.pollIntervalMs);
     } catch (error) {
       logger.error({ err: error }, 'worker loop error');
       await sleep(config.drafts.pollIntervalMs * 2);

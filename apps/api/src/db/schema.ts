@@ -11,10 +11,12 @@ import {
   type AnyPgColumn,
   boolean,
   customType,
+  date,
   index,
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -172,11 +174,72 @@ export const sponsoredOffers = pgTable(
     status: text('status').$type<SponsorRequestStatus>().notNull().default('pending'),
     startsAt: timestamp('starts_at', { withTimezone: true }),
     endsAt: timestamp('ends_at', { withTimezone: true }),
+    /** Monthly price quoted to the advertiser when they asked, in cents. */
+    priceCents: integer('price_cents'),
     reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (table) => [index('sponsored_offers_page_idx').on(table.lang, table.slug, table.status)],
+);
+
+/**
+ * Page views per day, counted by a beacon from the browser: no cookies, no IP addresses, and
+ * bots that do not run JavaScript are left out. Basis for sponsor prices.
+ */
+export const pageViews = pgTable(
+  'page_views',
+  {
+    pageId: uuid('page_id')
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    day: date('day').notNull(),
+    count: integer('count').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.pageId, table.day] })],
+);
+
+/** The last check of a source URL by the worker. */
+export const sourceChecks = pgTable('source_checks', {
+  url: text('url').primaryKey(),
+  ok: boolean('ok').notNull(),
+  status: integer('status'),
+  error: text('error'),
+  checkedAt: timestamp('checked_at', { withTimezone: true }).notNull(),
+});
+
+/** Pages a user follows, with the revision they last saw. */
+export const watches = pgTable(
+  'watches',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    pageId: uuid('page_id')
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    seenRevision: integer('seen_revision').notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.pageId] })],
+);
+
+/** The talk page of a subject: discussion about the page, separate from the page itself. */
+export const comments = pgTable(
+  'comments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    pageId: uuid('page_id')
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    body: text('body').notNull(),
+    hidden: boolean('hidden').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (table) => [index('comments_page_idx').on(table.pageId, table.createdAt)],
 );
 
 export type UserRow = typeof users.$inferSelect;

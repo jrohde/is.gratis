@@ -1,5 +1,5 @@
 import { Anchor, Box, Button, Container, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
-import { IconLanguage, IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
+import { IconChecklist, IconEye, IconLanguage, IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { LANGUAGES, LOGO_LINE, SLOGAN } from '@isgratis/types';
@@ -42,6 +42,12 @@ function UserMenu() {
         </UnstyledButton>
       </Menu.Target>
       <Menu.Dropdown>
+        <Menu.Item component={Link} to={`/account/watchlist?lang=${lang}`} leftSection={<IconEye size={16} />}>
+          {t.watchlist}
+        </Menu.Item>
+        <Menu.Item component={Link} to={`/review?lang=${lang}`} leftSection={<IconChecklist size={16} />}>
+          {t.review}
+        </Menu.Item>
         {user.role === 'admin' && (
           <Menu.Item component={Link} to={`/admin?lang=${lang}`} leftSection={<IconSettings size={16} />}>
             Admin
@@ -99,6 +105,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               <Anchor component={Link} to={`/a-z/${lang}`} size="sm" fw={600} c="dimmed" visibleFrom="xs">
                 {t.indexLink}
               </Anchor>
+              <Anchor component={Link} to={`/regions/${lang}`} size="sm" fw={600} c="dimmed" visibleFrom="sm">
+                {t.regionsLink}
+              </Anchor>
               <LanguageMenu />
               <ThemeToggle />
               <UserMenu />
@@ -127,6 +136,12 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <Group gap="md">
               <Anchor component={Link} to={`/a-z/${lang}`} size="sm" c="dimmed">
                 {t.indexLink}
+              </Anchor>
+              <Anchor component={Link} to={`/regions/${lang}`} size="sm" c="dimmed">
+                {t.regionsLink}
+              </Anchor>
+              <Anchor component={Link} to={`/review?lang=${lang}`} size="sm" c="dimmed">
+                {t.review}
               </Anchor>
               <Anchor component={Link} to={`/methodology?lang=${lang}`} size="sm" c="dimmed">
                 {t.methodologyLink}

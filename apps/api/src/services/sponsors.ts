@@ -21,6 +21,7 @@ export function toBooking(row: SponsoredOfferRow): SponsorBooking {
     url: row.url,
     message: row.message,
     status: row.status,
+    priceCents: row.priceCents,
     startsAt: row.startsAt?.toISOString() ?? null,
     endsAt: row.endsAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
@@ -39,6 +40,7 @@ export async function createSponsorRequest(
     description: string;
     url: string;
     message?: string;
+    priceCents: number;
   },
 ): Promise<SponsorBooking> {
   const [row] = await db

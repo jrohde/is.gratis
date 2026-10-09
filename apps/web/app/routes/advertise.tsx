@@ -1,11 +1,11 @@
 import { Alert, Button, Card, Container, Group, List, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { isLanguage, LANGUAGES, REGIONS, toSlug, type Language, type Region } from '@isgratis/types';
+import { isLanguage, LANGUAGES, REGIONS, toSlug, type Language, type Region, type SponsorQuote } from '@isgratis/types';
 import type { Route } from './+types/advertise';
 import { api, ClientApiError } from '~/lib/api.client';
 import { CACHE } from '~/lib/cache';
-import { LANGUAGE_NAMES, messages } from '~/lib/i18n';
+import { formatNumber, formatPrice, LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { regionFlag, regionLabel } from '~/lib/regions';
 import { useUiLang } from '~/lib/use-lang';
 
@@ -30,6 +30,21 @@ export default function Advertise() {
   });
   const [status, setStatus] = useState<'idle' | 'busy' | 'done'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [quote, setQuote] = useState<SponsorQuote | null>(null);
+  const slug = toSlug(form.slug);
+  // The price follows the page's views; it is fixed when the request is sent.
+  useEffect(() => {
+    if (!slug) {
+      setQuote(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      api<SponsorQuote>('GET', `/sponsors/quote?lang=${form.lang}&slug=${slug}`)
+        .then(setQuote)
+        .catch(() => setQuote(null));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [form.lang, slug]);
   const text = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [field]: event.currentTarget.value });
 
@@ -76,6 +91,16 @@ export default function Advertise() {
                   />
                   <TextInput label={t.pageSlug} required value={form.slug} onChange={text('slug')} maxLength={64} />
                 </Group>
+                {quote && (
+                  <Alert color="green" variant="light" title={t.quoteTitle}>
+                    <Text size="sm" fw={600}>
+                      {t.quoteText(formatNumber(quote.views30, uiLang), formatPrice(quote.priceCents, uiLang))}
+                    </Text>
+                    <Text size="xs" c="dimmed" mt={4}>
+                      {quote.views30 === 0 ? t.quoteMissing : t.quoteHow}
+                    </Text>
+                  </Alert>
+                )}
                 <Select
                   label={t.regionOptional}
                   clearable

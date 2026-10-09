@@ -19,7 +19,7 @@ export function loader() {
     '',
     '## Tools for AI agents',
     '',
-    `- [MCP server](${origin}/api/mcp): Model Context Protocol over Streamable HTTP, no key, read-only. Tools: is_it_free, search, get_page, recent_changes`,
+    `- [MCP server](${origin}/api/mcp): Model Context Protocol over Streamable HTTP, no key, read-only. Tools: is_it_free, free_in_country, search, get_page, recent_changes`,
     `- [Developer overview](${origin}/developers?lang=en): MCP setup, REST API, llms.txt and RSS feeds`,
     '',
     '## Method',

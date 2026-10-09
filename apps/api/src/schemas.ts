@@ -53,6 +53,11 @@ export const pageSchema = z.object({
   content: pageContentSchema,
   currentRevision: revisionSummarySchema,
   sponsoredOffers: z.array(sponsoredOfferSchema),
+  sourceChecks: z.record(
+    z.string(),
+    z.object({ ok: z.boolean(), status: z.number().int().nullable(), checkedAt: z.string() }),
+  ),
+  commentCount: z.number().int(),
   links: z.object({
     missing: z.array(z.string()),
     resolved: z.record(z.string(), z.string()),
@@ -72,6 +77,46 @@ export const pageListItemSchema = z.object({
   status: z.enum(['draft', 'published']),
   summary: z.string(),
   updatedAt: z.string(),
+});
+
+export const reviewItemSchema = pageListItemSchema.extend({
+  createdAt: z.string(),
+  claims: z.number().int(),
+  cited: z.number().int(),
+  sources: z.number().int(),
+});
+
+export const commentSchema = z.object({
+  id: z.string(),
+  authorName: z.string(),
+  body: z.string(),
+  hidden: z.boolean(),
+  createdAt: z.string(),
+});
+
+export const watchItemSchema = z.object({
+  lang: languageEnum,
+  slug: z.string(),
+  title: z.string(),
+  emoji: z.string().optional(),
+  revision: z.number().int(),
+  seenRevision: z.number().int(),
+  updatedAt: z.string(),
+});
+
+export const regionEntrySchema = z.object({
+  lang: languageEnum,
+  slug: z.string(),
+  title: z.string(),
+  emoji: z.string().optional(),
+  verdict: verdictSchema,
+  text: z.string(),
+});
+
+export const sponsorQuoteSchema = z.object({
+  views30: z.number().int(),
+  priceCents: z.number().int(),
+  currency: z.literal('EUR'),
 });
 
 export const assetSchema = z.object({
@@ -101,6 +146,7 @@ export const bookingSchema = sponsoredOfferSchema.extend({
   contactEmail: z.string(),
   message: z.string().nullable(),
   status: bookingStatusSchema,
+  priceCents: z.number().int().nullable(),
   startsAt: z.string().nullable(),
   endsAt: z.string().nullable(),
   createdAt: z.string(),

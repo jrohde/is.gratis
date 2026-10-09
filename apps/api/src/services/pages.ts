@@ -3,7 +3,7 @@
  * place, so history, diffs and reverts are trivial and nothing is ever lost.
  */
 import { and, asc, desc, eq, gt, isNull, lte, max, ne, or, sql } from 'drizzle-orm';
-import { normalizeContent } from '@isgratis/types';
+import { citationStats, normalizeContent } from '@isgratis/types';
 import type {
   Language,
   Page,
@@ -16,9 +16,11 @@ import type {
   SponsoredOffer,
 } from '@isgratis/types';
 import type { Database } from '../db/client.js';
-import { pages, revisions, sponsoredOffers, topics, users, type RevisionRow } from '../db/schema.js';
-import { conflict, notFound } from '../lib/errors.js';
+import { draftJobs, pages, revisions, sponsoredOffers, topics, users, type RevisionRow } from '../db/schema.js';
+import { conflict, forbidden, notFound } from '../lib/errors.js';
+import { commentCount } from './community.js';
 import { clearLinkCache, pageLinks } from './links.js';
+import { sourceChecksFor } from './sources.js';
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
 
@@ -70,16 +72,19 @@ export async function getPage(db: Database, lang: Language, slug: string): Promi
     .limit(1);
   if (!row) throw notFound('This page does not exist yet');
 
-  const [translations, offers] = await Promise.all([
+  const content = normalizeContent(row.revision.content);
+  const urls = [...content.sources.map((source) => source.url), ...content.facts.flatMap((fact) => fact.sourceUrl ?? [])];
+  const [translations, offers, checks, comments] = await Promise.all([
     db
       .select({ lang: pages.lang, slug: pages.slug, title: pages.title })
       .from(pages)
       .where(and(eq(pages.topicId, row.page.topicId), ne(pages.id, row.page.id)))
       .orderBy(asc(pages.lang)),
     activeOffers(db, lang, slug),
+    sourceChecksFor(db, urls),
+    commentCount(db, row.page.id),
   ]);
 
-  const content = normalizeContent(row.revision.content);
   return {
     id: row.page.id,
     topicKey: row.topicKey,
@@ -91,6 +96,8 @@ export async function getPage(db: Database, lang: Language, slug: string): Promi
     links: await pageLinks(db, lang, slug, content),
     currentRevision: toRevisionSummary(row.revision, row.authorName),
     sponsoredOffers: offers,
+    sourceChecks: checks,
+    commentCount: comments,
     translations,
     createdAt: row.page.createdAt.toISOString(),
     updatedAt: row.page.updatedAt.toISOString(),
@@ -123,6 +130,66 @@ export async function listPages(
     summary: content.summary,
     updatedAt: page.updatedAt.toISOString(),
   }));
+}
+
+/** Drafts waiting for a person, oldest first, with how well each is sourced. */
+export async function reviewQueue(db: Database, lang: Language | undefined, limit: number) {
+  const rows = await db
+    .select({ page: pages, content: revisions.content })
+    .from(pages)
+    .innerJoin(revisions, eq(revisions.id, pages.currentRevisionId))
+    .where(and(eq(pages.status, 'draft'), lang ? eq(pages.lang, lang) : undefined))
+    .orderBy(asc(pages.createdAt))
+    .limit(limit);
+  return rows.map(({ page, content }) => {
+    const normalized = normalizeContent(content);
+    const stats = citationStats(normalized);
+    return {
+      lang: page.lang,
+      slug: page.slug,
+      title: page.title,
+      ...(normalized.emoji ? { emoji: normalized.emoji } : {}),
+      verdict: normalized.verdict,
+      status: page.status,
+      summary: normalized.summary,
+      updatedAt: page.updatedAt.toISOString(),
+      createdAt: page.createdAt.toISOString(),
+      claims: stats.claims,
+      cited: stats.cited,
+      sources: normalized.sources.length,
+    };
+  });
+}
+
+/**
+ * Deletes a page with its history, talk page and views. Moderators may only delete drafts:
+ * a bad LLM draft should not need an admin. The topic goes too when no language uses it.
+ */
+export async function deletePage(
+  db: Database,
+  lang: Language,
+  slug: string,
+  options: { allowPublished: boolean },
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [page] = await tx
+      .select()
+      .from(pages)
+      .where(and(eq(pages.lang, lang), eq(pages.slug, slug)))
+      .for('update')
+      .limit(1);
+    if (!page) throw notFound('This page does not exist');
+    if (page.status === 'published' && !options.allowPublished) {
+      throw forbidden();
+    }
+    await tx.update(pages).set({ currentRevisionId: null }).where(eq(pages.id, page.id));
+    await tx.update(draftJobs).set({ pageId: null }).where(eq(draftJobs.pageId, page.id));
+    await tx.delete(pages).where(eq(pages.id, page.id));
+    await tx.execute(
+      sql`delete from topics t where t.id = ${page.topicId} and not exists (select 1 from pages p where p.topic_id = t.id)`,
+    );
+  });
+  clearLinkCache();
 }
 
 /** Published pages with their translations, for the sitemap. */

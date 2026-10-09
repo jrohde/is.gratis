@@ -5,11 +5,14 @@ import {
   IconCircleX,
   IconFileText,
   IconFlask,
+  IconAlertTriangle,
+  IconCircleCheckFilled,
   IconHistory,
+  IconMessages,
   IconPencil,
   IconWorld,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { data, Link, redirect, useRevalidator } from 'react-router';
 import { citationStats, citeContent, linkContent, SECTION_LABELS, toSlug, VERDICT_LABELS, type DraftJob, type Page } from '@isgratis/types';
 import { useMemo } from 'react';
@@ -26,6 +29,7 @@ import { CitationContext, Markdown, WikiLinkContext } from '~/components/Markdow
 import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { VerdictBadge } from '~/components/VerdictBadge';
+import { WatchButton } from '~/components/WatchButton';
 import { api, ClientApiError } from '~/lib/api.client';
 import { apiGet, apiGetOptional } from '~/lib/api.server';
 import { CACHE } from '~/lib/cache';
@@ -35,6 +39,7 @@ import { jsonForScript, plainText } from '~/lib/markdown';
 import { pageCard, socialMeta } from '~/lib/social';
 import { parseLang } from '~/lib/params';
 import { DEFAULT_REGION } from '~/lib/regions';
+import { countView } from '~/lib/views';
 import { usePreferences } from '~/stores/preferences';
 import { useSession } from '~/stores/session';
 
@@ -171,6 +176,26 @@ function DraftBanner({ page }: { page: Page }) {
   );
 }
 
+/** The result of the worker's last check of a source link. */
+function SourceCheckMark({ check, lang }: { check: Page['sourceChecks'][string] | undefined; lang: Page['lang'] }) {
+  if (!check) return null;
+  const t = messages(lang);
+  if (!check.ok) {
+    return (
+      <Text span size="xs" c="orange.7" title={t.sourceBroken} style={{ whiteSpace: 'nowrap' }}>
+        <IconAlertTriangle size={12} aria-hidden style={{ verticalAlign: -1 }} /> {t.sourceBroken}
+        {check.status ? ` (${check.status})` : ''}
+      </Text>
+    );
+  }
+  const label = t.sourceChecked(formatDate(check.checkedAt, lang));
+  return (
+    <Text span title={label} aria-label={label} role="img">
+      <IconCircleCheckFilled size={12} color="var(--mantine-color-green-6)" aria-hidden style={{ verticalAlign: -1 }} />
+    </Text>
+  );
+}
+
 function PageView({ page }: { page: Page }) {
   const t = messages(page.lang);
   const preferred = usePreferences((state) => state.region);
@@ -191,6 +216,9 @@ function PageView({ page }: { page: Page }) {
   const content = useMemo(() => citeContent(linkContent(page.content, page.lang, page.links)), [page]);
   const stats = useMemo(() => citationStats(page.content), [page.content]);
   const highlight = usePreferences((state) => state.highlightUnsourced);
+  useEffect(() => {
+    if (page.status === 'published') countView(page.lang, page.slug);
+  }, [page.lang, page.slug, page.status]);
   const linkInfo = useMemo(
     () => ({ missing: new Set(page.links.missing), missingTitle: t.missingLink }),
     [page.links.missing, t.missingLink],
@@ -300,6 +328,7 @@ function PageView({ page }: { page: Page }) {
                     <Anchor href={source.url} rel="nofollow ugc noopener" target="_blank">
                       {source.title}
                     </Anchor>{' '}
+                    <SourceCheckMark check={page.sourceChecks[source.url]} lang={page.lang} />
                     <Text span size="xs" c="dimmed">
                       {(() => {
                         try {
@@ -333,12 +362,20 @@ function PageView({ page }: { page: Page }) {
                 llms.txt
               </Group>
             </Anchor>
+            <Anchor component={Link} to={`${base}/talk`} size="sm">
+              <Group gap={4} wrap="nowrap" component="span">
+                <IconMessages size={14} aria-hidden />
+                {t.talk}
+                {page.commentCount > 0 && ` (${page.commentCount})`}
+              </Group>
+            </Anchor>
             <Anchor component={Link} to={`${base}/history`} size="sm">
               <Group gap={4} wrap="nowrap" component="span">
                 <IconHistory size={14} aria-hidden />
                 {t.history}
               </Group>
             </Anchor>
+            <WatchButton lang={page.lang} slug={page.slug} />
             <Button component={Link} to={`${base}/edit`} size="xs" variant="light" leftSection={<IconPencil size={14} />}>
               {t.edit}
             </Button>

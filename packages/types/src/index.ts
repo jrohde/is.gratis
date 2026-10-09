@@ -182,6 +182,8 @@ export interface SponsorBooking extends SponsoredOffer {
   contactEmail: string;
   message: string | null;
   status: SponsorRequestStatus;
+  /** Monthly price quoted when the request came in, in euro cents. */
+  priceCents: number | null;
   startsAt: string | null;
   endsAt: string | null;
   createdAt: string;
@@ -197,12 +199,65 @@ export interface Page {
   content: PageContent;
   currentRevision: RevisionSummary;
   sponsoredOffers: SponsoredOffer[];
+  /** Result of the last automatic check of each source URL, by URL. */
+  sourceChecks: Record<string, SourceCheck>;
+  /** Number of visible messages on the talk page. */
+  commentCount: number;
   /** Red links and automatic links for the text; see wikilinks.ts. */
   links: import('./wikilinks.js').PageLinks;
   /** Other languages this topic exists in, so the UI can link between them. */
   translations: Array<{ lang: Language; slug: string; title: string }>;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SourceCheck {
+  ok: boolean;
+  status: number | null;
+  checkedAt: string;
+}
+
+export interface Comment {
+  id: string;
+  authorName: string;
+  body: string;
+  hidden: boolean;
+  createdAt: string;
+}
+
+export interface WatchItem {
+  lang: Language;
+  slug: string;
+  title: string;
+  emoji?: string;
+  revision: number;
+  seenRevision: number;
+  updatedAt: string;
+}
+
+/** A page as seen from one region: its verdict and text for that country. */
+export interface RegionEntry {
+  lang: Language;
+  slug: string;
+  title: string;
+  emoji?: string;
+  verdict: Verdict;
+  text: string;
+}
+
+export interface SponsorQuote {
+  views30: number;
+  priceCents: number;
+  currency: 'EUR';
+}
+
+/** A draft in the review queue. */
+export interface ReviewItem extends PageListItem {
+  createdAt: string;
+  /** Claim blocks, and how many of them cite a source. */
+  claims: number;
+  cited: number;
+  sources: number;
 }
 
 export interface PageListItem {

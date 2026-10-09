@@ -1,11 +1,14 @@
-import { Badge, Card, Group, Select, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Anchor, Badge, Card, Group, Select, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Link } from 'react-router';
 import type { ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { REGIONS, type Language, type Region, type RegionBlock } from '@isgratis/types';
+import { REGIONS, VERDICT_LABELS, type Language, type Region, type RegionBlock } from '@isgratis/types';
+import { VERDICT_COLORS } from '~/theme';
 import { messages } from '~/lib/i18n';
 import { regionFlag, regionLabel } from '~/lib/regions';
 import { Markdown } from './Markdown';
 import { VerdictBadge } from './VerdictBadge';
+import { WorldMap } from './WorldMap';
 
 const MotionDiv = motion.div;
 
@@ -28,6 +31,10 @@ export function RegionSection({
 }) {
   const t = messages(lang);
   const ordered = [...blocks].sort((a, b) => Number(b.region === selected) - Number(a.region === selected));
+  const fills = Object.fromEntries(
+    blocks.map((block) => [block.region, `var(--mantine-color-${VERDICT_COLORS[block.verdict]}-6)`]),
+  ) as Partial<Record<Region, string>>;
+  const verdictOf = new Map(blocks.map((block) => [block.region, block.verdict]));
 
   return (
     <Stack gap="sm">
@@ -54,7 +61,21 @@ export function RegionSection({
           onChange={(value) => value && onSelect(value as Region)}
         />
       </Group>
-      {blocks.length === 0 && <Text c="dimmed">{t.noRegions}</Text>}
+      {blocks.length === 0 ? (
+        <Text c="dimmed">{t.noRegions}</Text>
+      ) : (
+        <WorldMap
+          fills={fills}
+          label={t.mapLabel}
+          selected={selected}
+          onSelect={onSelect}
+          focus={blocks.map((block) => block.region)}
+          titleFor={(region) => {
+            const verdict = verdictOf.get(region);
+            return `${regionLabel(region, lang)}${verdict ? `: ${VERDICT_LABELS[lang][verdict]}` : ''}`;
+          }}
+        />
+      )}
       {ordered.map((block) => {
         const mine = block.region === selected;
         return (
@@ -75,6 +96,11 @@ export function RegionSection({
                 <VerdictBadge verdict={block.verdict} lang={lang} size="sm" />
               </Group>
               <Markdown claims>{block.text}</Markdown>
+              {block.region !== 'WORLD' && (
+                <Anchor component={Link} to={`/regions/${lang}/${block.region.toLowerCase()}`} size="xs" mt={6} display="inline-block">
+                  {t.allAboutRegion(regionLabel(block.region, lang))} →
+                </Anchor>
+              )}
             </Card>
           </MotionDiv>
         );

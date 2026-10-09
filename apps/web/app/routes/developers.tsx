@@ -35,6 +35,7 @@ const TEXT: Record<'nl' | 'en', {
     mcp: 'Een openbare server volgens het Model Context Protocol (Streamable HTTP). Zonder sleutel, alleen lezen.',
     mcpTools: [
       'is_it_free: beantwoordt “is X gratis?” met voorwaarden, regio’s en bronnen',
+      'free_in_country: wat in één land gratis is en wat niet',
       'search: zoekt pagina’s op onderwerp',
       'get_page: geeft één pagina als Markdown',
       'recent_changes: de laatst bijgewerkte pagina’s',
@@ -54,6 +55,7 @@ const TEXT: Record<'nl' | 'en', {
     mcp: 'A public server following the Model Context Protocol (Streamable HTTP). No key needed, read-only.',
     mcpTools: [
       'is_it_free: answers “is X free?” with conditions, regions and sources',
+      'free_in_country: what is and is not free in one country',
       'search: finds pages by subject',
       'get_page: returns one page as Markdown',
       'recent_changes: the most recently updated pages',

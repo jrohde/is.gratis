@@ -11,7 +11,9 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import {
   LANGUAGES,
+  REGIONS,
   VERDICT_LABELS,
+  regionName,
   pageToLlmsText,
   questionFor,
   toSlug,
@@ -22,6 +24,7 @@ import type { Config } from '../config.js';
 import type { Database } from '../db/client.js';
 import { HttpError } from '../lib/errors.js';
 import { getPage, listPages, searchPages } from '../services/pages.js';
+import { regionEntries } from '../services/regions.js';
 
 const INSTRUCTIONS = `is.gratis answers one question per subject: is it free? Each page has a verdict (yes, no, usually, it depends),
 when it is and is not free, differences per country, and a 0 to 5 free scale based on who pays and when.
@@ -77,6 +80,34 @@ export function buildMcpServer(db: Database, origin: string): McpServer {
       return text(
         `No page about "${subject}" in ${lang} yet. A first version can be requested at ${origin}/${lang}/${slug}. ` +
           'Try search with other words, or another language.',
+      );
+    },
+  );
+
+  server.registerTool(
+    'free_in_country',
+    {
+      title: 'What is free in a country?',
+      description:
+        'Lists every subject with a specific answer for one country or area (ISO code such as NL, US, DE, or EU and WORLD), with the verdict and the text for that country.',
+      inputSchema: {
+        region: z.enum(REGIONS).describe('ISO 3166-1 alpha-2 code, or EU or WORLD'),
+        lang: langSchema,
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    async ({ region, lang }) => {
+      const entries = await regionEntries(db, region, lang);
+      const name = regionName(region, lang);
+      if (entries.length === 0) return text(`No pages in ${lang} have an answer specific to ${name} yet.`);
+      return text(
+        `# ${name}\n\n${origin}/regions/${lang}/${region.toLowerCase()}\n\n` +
+          entries
+            .map(
+              (entry) =>
+                `## ${questionFor(lang, entry.title)} ${VERDICT_LABELS[lang][entry.verdict]}.\n${origin}/${lang}/${entry.slug}\n\n${entry.text}`,
+            )
+            .join('\n\n'),
       );
     },
   );

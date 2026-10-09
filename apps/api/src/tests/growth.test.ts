@@ -1,0 +1,164 @@
+import { eq, sql } from 'drizzle-orm';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { users } from '../db/schema.js';
+import { isPrivateAddress } from '../lib/link-check.js';
+import { saveRevision } from '../services/pages.js';
+import { runSourceChecks } from '../services/sources.js';
+import { quotePrice } from '../services/views.js';
+import { createTestApp, register, resetDatabase, sampleContent, type TestContext } from './helpers.js';
+
+let ctx: TestContext;
+beforeAll(async () => {
+  ctx = await createTestApp({ sponsorPricing: { baseCents: 2500, perThousandCents: 400 } });
+});
+afterAll(async () => ctx.close());
+beforeEach(async () => {
+  await resetDatabase(ctx);
+  ctx.purged.length = 0;
+});
+
+async function createPage(cookie: string, slug = 'parkeren', content = sampleContent()) {
+  const response = await ctx.app.inject({
+    method: 'PUT',
+    url: `/api/pages/nl/${slug}`,
+    headers: { cookie },
+    payload: { title: slug, content, baseRevisionId: null },
+  });
+  expect(response.statusCode).toBe(201);
+  return response.json();
+}
+
+async function makeRole(userId: string, role: 'moderator' | 'admin') {
+  await ctx.db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
+async function llmDraft(slug: string) {
+  await saveRevision(ctx.db, {
+    lang: 'nl',
+    slug,
+    title: slug,
+    content: sampleContent({ whenFree: '- Soms [^voorbeeld]', whenNotFree: '- Soms niet' }),
+    editSummary: 'Eerste versie',
+    baseRevisionId: null,
+    authorId: null,
+    source: 'llm',
+  });
+}
+
+describe('views and sponsor prices', () => {
+  it('counts views of published pages and prices a spot by them', async () => {
+    const { cookie } = await register(ctx, 'editor@example.com');
+    await createPage(cookie);
+    for (let i = 0; i < 3; i++) {
+      const response = await ctx.app.inject({ method: 'POST', url: '/api/views', payload: { lang: 'nl', slug: 'parkeren' } });
+      expect(response.statusCode).toBe(204);
+    }
+    // Unknown pages are ignored without an error.
+    expect((await ctx.app.inject({ method: 'POST', url: '/api/views', payload: { lang: 'nl', slug: 'bestaat-niet' } })).statusCode).toBe(204);
+
+    const quote = await ctx.app.inject({ url: '/api/sponsors/quote?lang=nl&slug=parkeren' });
+    expect(quote.json()).toEqual({ views30: 3, priceCents: 2600, currency: 'EUR' });
+
+    const request = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/sponsors/requests',
+      payload: {
+        lang: 'nl',
+        slug: 'parkeren',
+        advertiserName: 'Fietsjes',
+        contactEmail: 'ad@example.com',
+        title: 'Gratis proefrit',
+        description: 'Een dag gratis fietsen.',
+        url: 'https://example.com/fiets',
+      },
+    });
+    expect(request.statusCode).toBe(201);
+    expect(request.json().priceCents).toBe(2600);
+  });
+
+  it('rounds prices up to whole euros', () => {
+    expect(quotePrice(0, { baseCents: 2500, perThousandCents: 400 })).toBe(2500);
+    expect(quotePrice(10_000, { baseCents: 2500, perThousandCents: 400 })).toBe(6500);
+    expect(quotePrice(1, { baseCents: 2500, perThousandCents: 400 })).toBe(2600);
+  });
+
+  it('shows view statistics to admins only', async () => {
+    const { cookie } = await register(ctx, 'editor@example.com');
+    expect((await ctx.app.inject({ url: '/api/admin/views', headers: { cookie } })).statusCode).toBe(403);
+    const admin = await register(ctx, 'admin@example.com');
+    await createPage(admin.cookie);
+    await ctx.app.inject({ method: 'POST', url: '/api/views', payload: { lang: 'nl', slug: 'parkeren' } });
+    const stats = await ctx.app.inject({ url: '/api/admin/views', headers: { cookie: admin.cookie } });
+    expect(stats.json().pages).toEqual([
+      { lang: 'nl', slug: 'parkeren', title: 'parkeren', views30: 1, priceCents: 2600 },
+    ]);
+  });
+});
+
+describe('review queue', () => {
+  it('lists drafts oldest first with how well they are sourced', async () => {
+    await llmDraft('eerste');
+    await llmDraft('tweede');
+    const response = await ctx.app.inject({ url: '/api/review?lang=nl' });
+    const drafts = response.json().drafts;
+    expect(drafts.map((d: { slug: string }) => d.slug)).toEqual(['eerste', 'tweede']);
+    expect(drafts[0]).toMatchObject({ status: 'draft', claims: 3, cited: 1, sources: 1 });
+  });
+
+  it('lets moderators delete drafts and only admins delete published pages', async () => {
+    const user = await register(ctx, 'mod@example.com');
+    await llmDraft('rommel');
+    expect((await ctx.app.inject({ method: 'DELETE', url: '/api/pages/nl/rommel', headers: { cookie: user.cookie } })).statusCode).toBe(403);
+    await makeRole(user.user.id, 'moderator');
+    const deleted = await ctx.app.inject({ method: 'DELETE', url: '/api/pages/nl/rommel', headers: { cookie: user.cookie } });
+    expect(deleted.statusCode).toBe(204);
+    expect(ctx.purged).toContain('nl/rommel');
+    expect((await ctx.app.inject({ url: '/api/pages/nl/rommel' })).statusCode).toBe(404);
+    const topics = await ctx.db.execute(sql`select key from topics`);
+    expect(topics.rows).toEqual([]);
+
+    await createPage(user.cookie, 'water');
+    expect((await ctx.app.inject({ method: 'DELETE', url: '/api/pages/nl/water', headers: { cookie: user.cookie } })).statusCode).toBe(403);
+    const admin = await register(ctx, 'admin@example.com');
+    expect((await ctx.app.inject({ method: 'DELETE', url: '/api/pages/nl/water', headers: { cookie: admin.cookie } })).statusCode).toBe(204);
+  });
+
+  it('queues many drafts at once for admins and skips existing pages', async () => {
+    const admin = await register(ctx, 'admin@example.com');
+    await createPage(admin.cookie, 'water');
+    const response = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/admin/drafts',
+      headers: { cookie: admin.cookie },
+      payload: { lang: 'nl', slugs: ['lucht', 'water', 'zonlicht', 'lucht'] },
+    });
+    expect(response.json()).toEqual({ queued: ['lucht', 'zonlicht'], skipped: [{ slug: 'water', reason: 'page_exists' }] });
+    const again = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/admin/drafts',
+      headers: { cookie: admin.cookie },
+      payload: { lang: 'nl', slugs: ['lucht'] },
+    });
+    expect(again.json().skipped).toEqual([{ slug: 'lucht', reason: 'already_queued' }]);
+  });
+});
+
+describe('regions', () => {
+  it('lists every published page with a block for a region', async () => {
+    const { cookie } = await register(ctx, 'editor@example.com');
+    await createPage(cookie, 'parkeren');
+    await createPage(
+      cookie,
+      'zorg',
+      sampleContent({ regions: [{ region: 'BE', verdict: 'no', text: 'Niet in België.' }] }),
+    );
+    const nl = await ctx.app.inject({ url: '/api/regions/nl?lang=nl' });
+    expect(nl.json()).toEqual({
+      region: 'NL',
+      pages: [{ lang: 'nl', slug: 'parkeren', title: 'parkeren', verdict: 'depends', text: 'Per gemeente verschillend.' }],
+    });
+    const counts = await ctx.app.inject({ url: '/api/regions?lang=nl' });
+    expect(counts.json().counts).toEqual({ NL: 1, BE: 1 });
+    expect((await ctx.app.inject({ url: '/api/regions/XX?lang=nl' })).statusCode).toBe(400);
+  });
+});

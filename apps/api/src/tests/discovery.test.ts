@@ -77,7 +77,7 @@ describe('MCP server', () => {
     const client = new Client({ name: 'test-agent', version: '1.0.0' });
     await client.connect(new StreamableHTTPClientTransport(new URL(`${baseUrl}/api/mcp`)));
     const tools = (await client.listTools()).tools.map((tool) => tool.name).sort();
-    expect(tools).toEqual(['get_page', 'is_it_free', 'recent_changes', 'search']);
+    expect(tools).toEqual(['free_in_country', 'get_page', 'is_it_free', 'recent_changes', 'search']);
 
     const answer = await client.callTool({ name: 'is_it_free', arguments: { subject: 'Water', lang: 'nl' } });
     const textOf = (result: typeof answer) => (result.content as Array<{ text: string }>)[0]!.text;

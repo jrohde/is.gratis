@@ -10,7 +10,11 @@ export default [
   route('a-z/:lang', 'routes/a-z.tsx'),
   route('account/login', 'routes/login.tsx'),
   route('account/register', 'routes/register.tsx'),
+  route('account/watchlist', 'routes/watchlist.tsx'),
   route('advertise', 'routes/advertise.tsx'),
+  route('review', 'routes/review.tsx'),
+  route('regions/:lang', 'routes/regions.tsx'),
+  route('regions/:lang/:code', 'routes/region.tsx'),
   route('admin', 'routes/admin.tsx'),
   route(':lang', 'routes/lang-home.tsx'),
   route(':lang/llms.txt', 'routes/lang-llms.ts'),
@@ -20,5 +24,6 @@ export default [
   route(':lang/:slug/feed.xml', 'routes/page-feed.ts'),
   route(':lang/:slug/edit', 'routes/page-edit.tsx'),
   route(':lang/:slug/history', 'routes/page-history.tsx'),
+  route(':lang/:slug/talk', 'routes/page-talk.tsx'),
   route('*', 'routes/not-found.tsx'),
 ] satisfies RouteConfig;

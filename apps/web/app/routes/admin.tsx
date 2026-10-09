@@ -1,11 +1,30 @@
-import { Alert, Anchor, Badge, Button, Card, Container, Group, Loader, SegmentedControl, Stack, Text, TextInput, Title } from '@mantine/core';
+import {
+  Alert,
+  Anchor,
+  Badge,
+  Button,
+  Card,
+  Container,
+  Group,
+  Loader,
+  SegmentedControl,
+  Select,
+  Stack,
+  Table,
+  Tabs,
+  Text,
+  Textarea,
+  TextInput,
+  Title,
+} from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import type { SponsorBooking, SponsorRequestStatus } from '@isgratis/types';
+import { LANGUAGES, toSlug, type Language, type SponsorBooking, type SponsorRequestStatus } from '@isgratis/types';
 import type { Route } from './+types/admin';
 import { api, ClientApiError } from '~/lib/api.client';
 import { CACHE } from '~/lib/cache';
-import { formatDate, messages } from '~/lib/i18n';
+import { formatDate, formatNumber, formatPrice, LANGUAGE_NAMES, messages } from '~/lib/i18n';
+import { STARTER_TOPICS } from '~/lib/starter-topics';
 import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
 
@@ -56,6 +75,11 @@ function BookingCard({ booking, onChange }: { booking: SponsorBooking; onChange:
               /{booking.lang}/{booking.slug}
             </Anchor>
             {booking.region && <Badge variant="outline">{booking.region}</Badge>}
+            {booking.priceCents !== null && (
+              <Badge variant="light" color="green">
+                {formatPrice(booking.priceCents, lang)} / mnd
+              </Badge>
+            )}
           </Group>
           <Text size="xs" c="dimmed">
             {formatDate(booking.createdAt, lang)}
@@ -104,6 +128,114 @@ function BookingCard({ booking, onChange }: { booking: SponsorBooking; onChange:
   );
 }
 
+function BulkDrafts() {
+  const uiLang = useUiLang();
+  const t = messages(uiLang);
+  const [lang, setLang] = useState<Language>(uiLang);
+  const [subjects, setSubjects] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ queued: string[]; skipped: Array<{ slug: string; reason: string }> } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    const slugs = subjects.split('\n').map(toSlug).filter((slug): slug is string => Boolean(slug));
+    if (slugs.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setResult(await api('POST', '/admin/drafts', { lang, slugs: slugs.slice(0, 200) }));
+    } catch (err) {
+      setError(err instanceof ClientApiError ? err.message : t.errorGeneric);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Stack gap="sm">
+      <Text c="dimmed" size="sm">
+        {t.bulkHelp}
+      </Text>
+      <Group align="end">
+        <Select
+          label={t.pageLanguage}
+          value={lang}
+          allowDeselect={false}
+          data={LANGUAGES.map((code) => ({ value: code, label: LANGUAGE_NAMES[code] }))}
+          onChange={(value) => value && setLang(value as Language)}
+          w={180}
+        />
+        <Button variant="default" onClick={() => setSubjects(STARTER_TOPICS[lang].join('\n'))}>
+          {t.bulkSuggest}
+        </Button>
+      </Group>
+      <Textarea autosize minRows={8} maxRows={20} value={subjects} onChange={(event) => setSubjects(event.currentTarget.value)} />
+      {error && <Alert color="red">{error}</Alert>}
+      {result && (
+        <Alert color="green">
+          {t.bulkResult(result.queued.length, result.skipped.length)}
+          {result.skipped.length > 0 && (
+            <Text size="xs" c="dimmed" mt={4}>
+              {result.skipped.map((item) => `${item.slug} (${item.reason})`).join(', ')}
+            </Text>
+          )}
+        </Alert>
+      )}
+      <Group>
+        <Button onClick={() => void submit()} loading={busy}>
+          {t.bulkSubmit}
+        </Button>
+        <Anchor component={Link} to={`/review?lang=${uiLang}`} size="sm">
+          {t.reviewTitle} →
+        </Anchor>
+      </Group>
+    </Stack>
+  );
+}
+
+interface ViewRow {
+  lang: Language;
+  slug: string;
+  title: string;
+  views30: number;
+  priceCents: number;
+}
+
+function ViewStats() {
+  const lang = useUiLang();
+  const t = messages(lang);
+  const [rows, setRows] = useState<ViewRow[] | null>(null);
+  useEffect(() => {
+    void api<{ pages: ViewRow[] }>('GET', '/admin/views?limit=100').then((result) => setRows(result.pages));
+  }, []);
+  if (rows === null) return <Loader />;
+  if (rows.length === 0) return <Text c="dimmed">–</Text>;
+  return (
+    <Table striped highlightOnHover>
+      <Table.Thead>
+        <Table.Tr>
+          <Table.Th>{t.viewsTitle}</Table.Th>
+          <Table.Th ta="right">{t.viewsLabel}</Table.Th>
+          <Table.Th ta="right">{t.quoteTitle}</Table.Th>
+        </Table.Tr>
+      </Table.Thead>
+      <Table.Tbody>
+        {rows.map((row) => (
+          <Table.Tr key={`${row.lang}/${row.slug}`}>
+            <Table.Td>
+              <Anchor component={Link} to={`/${row.lang}/${row.slug}`}>
+                /{row.lang}/{row.slug}
+              </Anchor>
+            </Table.Td>
+            <Table.Td ta="right">{formatNumber(row.views30, lang)}</Table.Td>
+            <Table.Td ta="right">{formatPrice(row.priceCents, lang)}</Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
+  );
+}
+
 export default function Admin() {
   const lang = useUiLang();
   const t = messages(lang);
@@ -133,18 +265,33 @@ export default function Admin() {
   return (
     <Container size="md">
       <Stack gap="lg">
-        <Group justify="space-between">
-          <Title order={1} size="h2">
-            {t.adminTitle}
-          </Title>
-          <SegmentedControl
-            value={filter}
-            onChange={(value) => setFilter(value as SponsorRequestStatus | 'all')}
-            data={['pending', 'active', 'rejected', 'expired', 'all']}
-          />
-        </Group>
-        {bookings === null ? <Loader /> : bookings.length === 0 ? <Text c="dimmed">–</Text> : null}
-        {bookings?.map((booking) => <BookingCard key={booking.id} booking={booking} onChange={() => void load()} />)}
+        <Title order={1} size="h2">
+          {t.adminTitle}
+        </Title>
+        <Tabs defaultValue="sponsors" keepMounted={false}>
+          <Tabs.List mb="md">
+            <Tabs.Tab value="sponsors">{t.advertiseTitle}</Tabs.Tab>
+            <Tabs.Tab value="drafts">{t.bulkTitle}</Tabs.Tab>
+            <Tabs.Tab value="views">{t.viewsTitle}</Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="sponsors">
+            <Stack gap="md">
+              <SegmentedControl
+                value={filter}
+                onChange={(value) => setFilter(value as SponsorRequestStatus | 'all')}
+                data={['pending', 'active', 'rejected', 'expired', 'all']}
+              />
+              {bookings === null ? <Loader /> : bookings.length === 0 ? <Text c="dimmed">–</Text> : null}
+              {bookings?.map((booking) => <BookingCard key={booking.id} booking={booking} onChange={() => void load()} />)}
+            </Stack>
+          </Tabs.Panel>
+          <Tabs.Panel value="drafts">
+            <BulkDrafts />
+          </Tabs.Panel>
+          <Tabs.Panel value="views">
+            <ViewStats />
+          </Tabs.Panel>
+        </Tabs>
       </Stack>
     </Container>
   );

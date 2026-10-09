@@ -30,6 +30,13 @@ data:
   DRAFT_RATE_LIMIT_PER_HOUR: '3'
   DRAFT_GLOBAL_LIMIT_PER_HOUR: '200'
   ADMIN_EMAILS: ''
+  # Monthly price of a sponsored spot: base price plus a price per 1000 views (last 30 days).
+  SPONSOR_BASE_PRICE_CENTS: '2500'
+  SPONSOR_PRICE_PER_1000_VIEWS_CENTS: '400'
+  # The worker checks source links between drafts. It needs outbound HTTP(S) to the internet,
+  # and refuses private and cluster-internal addresses by itself.
+  SOURCE_CHECKS: 'true'
+  SOURCE_CHECK_INTERVAL_DAYS: '7'
 ---
 # Create the real secret yourself; this file only documents its keys:
 #   kubectl -n isgratis create secret generic isgratis-secrets \

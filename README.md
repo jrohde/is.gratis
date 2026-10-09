@@ -106,6 +106,22 @@ Net als op Wikipedia moet elke bewering te controleren zijn:
 - **Beweringen zonder bron.** Een alinea of opsommingspunt zonder citatie krijgt het label **[bron?]** en een oranje stippellijn. Een kerncijfer zonder bron krijgt alleen het label. Lezers kunnen de markering uitzetten. Het korte antwoord bovenaan telt niet mee.
 - **Onderbouwingsscore.** Elke pagina toont hoeveel beweringen een bron hebben. Ook llms.txt en MCP vermelden dit, met genummerde voetnoten.
 - **Controle bij opslaan.** Een citatie naar een bron die niet bestaat, wordt geweigerd, zowel in de editor als in de API. Het taalmodel citeert alleen bronnen die een bewering echt dekken. De rest laat het open, zodat mensen het kunnen nakijken.
+- **Dode links.** Als de worker niets te doen heeft, controleert hij de bronlinks van gepubliceerde pagina's, elke link eens per week (`SOURCE_CHECK_INTERVAL_DAYS`). Een werkende link krijgt een groen vinkje, een kapotte een oranje waarschuwing met de statuscode. Sites die bots weren (401, 403, 429) tellen als werkend. De controle weigert private en clusterinterne adressen, ook na een redirect of een DNS-antwoord dat ineens naar binnen wijst. Zo kan een bewerker de worker niet gebruiken om interne diensten aan te roepen.
+
+### Nakijken, volgen en overleg
+
+- **Nakijkwachtrij** (`/review`). Alle concepten van het taalmodel, oudste eerst, met hoeveel beweringen een bron hebben. Iedereen met een account kan publiceren of verbeteren. Moderators kunnen een onzinconcept verwijderen, admins ook een gepubliceerde pagina.
+- **Concepten in bulk.** In het beheer zet een admin tientallen onderwerpen tegelijk in de wachtrij, met een startlijst per taal. Zo vul je een nieuwe taal snel, en de wachtrij zorgt dat alles door een mens wordt nagekeken.
+- **Volglijst.** Met "Volgen" onderaan een pagina zie je op `/account/watchlist` welke pagina's sinds je laatste bezoek zijn gewijzigd.
+- **Overlegpagina** (`/<taal>/<pagina>/talk`). Discussie over de pagina zelf, los van de tekst, net als op Wikipedia. Berichten zijn platte tekst. Moderators kunnen berichten verbergen.
+
+### Per land
+
+`/regions/<taal>` toont een wereldkaart: hoe donkerder het groen, hoe meer onderwerpen een antwoord voor dat land hebben. `/regions/<taal>/<land>` zet alles op een rij wat in één land gratis is en wat niet. Elke pagina heeft ook een kaart, gekleurd naar het oordeel per land. Klik op een land en het schuift bovenaan. De kaart is getekend uit Natural Earth (publiek domein) en zit in de site zelf, zonder kaartdienst of tegels. Opnieuw maken: `node scripts/generate-map-data.mjs`.
+
+### Adverteren op bezoekersaantallen
+
+De browser telt elke paginaweergave met één anoniem verzoek, zonder cookies of IP-adres. Bots die geen JavaScript draaien tellen niet mee. De prijs van een sponsorplek is een vaste basisprijs plus een bedrag per duizend weergaven in de laatste 30 dagen (`SPONSOR_BASE_PRICE_CENTS`, `SPONSOR_PRICE_PER_1000_VIEWS_CENTS`). Een adverteerder ziet de prijs meteen bij het kiezen van een pagina, en die prijs wordt bij de aanvraag vastgelegd. Admins zien in het beheer de best bekeken pagina's met hun prijs.
 
 ### Logo en slogan
 
@@ -134,7 +150,7 @@ De deelkaarten worden met satori en sharp getekend, zonder lettertypen op de ser
 
 ### MCP-server voor AI-agents
 
-`/api/mcp` is een openbare MCP-server (Model Context Protocol, Streamable HTTP). Hij is stateless en alleen-lezen, zonder sleutel, en schaalt mee met de API-pods. De tools zijn `is_it_free`, `search`, `get_page` en `recent_changes`. Toevoegen aan Claude Code:
+`/api/mcp` is een openbare MCP-server (Model Context Protocol, Streamable HTTP). Hij is stateless en alleen-lezen, zonder sleutel, en schaalt mee met de API-pods. De tools zijn `is_it_free`, `free_in_country`, `search`, `get_page` en `recent_changes`. Toevoegen aan Claude Code:
 
 ```bash
 claude mcp add --transport http is-gratis https://is.gratis/api/mcp
@@ -241,6 +257,7 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 - **Licentie voor bijdragen.** Kies onder welke licentie bewerkers hun tekst bijdragen en vermeld dat bij het registreren.
 - **Startinhoud nalopen.** De twaalf startpagina's zijn zorgvuldig geformuleerd, ook de achtergrondteksten, kerncijfers en weetjes, maar niet tegen bronnen gecontroleerd. Loop ze na voor livegang. Tijdprijzen zijn bewust leeg gelaten: die vragen een prijs en een uurloon met gecontroleerde bron.
 - **Beeldmodel kiezen.** Beeldgeneratie staat standaard uit. Voor alles in eigen beheer is een zelf gehost model achter een OpenAI-compatibele server nodig, zoals LocalAI. Dat vraagt een GPU-node.
-- **Moderatie.** Iedereen met een account kan bewerken en terugzetten. Bij vandalisme zijn pagina-vergrendeling en een moderatorenoverzicht de volgende stap.
+- **Moderatie.** Iedereen met een account kan bewerken en terugzetten. Moderators kunnen concepten verwijderen en overlegberichten verbergen. Bij vandalisme is pagina-vergrendeling de volgende stap. Moderators benoem je nu nog in de database (`update users set role = 'moderator' ...`).
+- **Meldingen.** De volglijst toont wijzigingen op de site zelf. Mail bij een wijziging vraagt een mailserver.
 - **Vertalingen koppelen.** Door het taalmodel geschreven pagina's worden automatisch gekoppeld aan dezelfde pagina in andere talen. Met de hand gemaakte pagina's nog niet.
 - **Rate limits** voor inloggen en bewerken gelden per pod. Het dure deel, conceptgeneratie, wordt wel centraal in Postgres begrensd.

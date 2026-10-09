@@ -89,6 +89,19 @@ export interface Config {
     perUserPerHour: number;
     globalPerHour: number;
   };
+  /** Monthly price of a sponsored spot: base plus a price per thousand views in the last 30 days. */
+  sponsorPricing: {
+    baseCents: number;
+    perThousandCents: number;
+  };
+  /** The worker checks source URLs between jobs. */
+  sourceChecks: {
+    enabled: boolean;
+    /** Check a URL again after this many days. */
+    intervalDays: number;
+    batchSize: number;
+    timeoutMs: number;
+  };
   /**
    * host:port of the HTTP cache (Varnish) to send BAN requests to after a page changes.
    * A hostname is resolved to all its addresses, so a headless Service reaches every replica.
@@ -137,6 +150,16 @@ export function loadConfig(): Config {
       timeoutMs: int('IMAGE_TIMEOUT_MS', 180_000),
       perUserPerHour: int('IMAGE_RATE_LIMIT_PER_HOUR', 5),
       globalPerHour: int('IMAGE_GLOBAL_LIMIT_PER_HOUR', 50),
+    },
+    sponsorPricing: {
+      baseCents: int('SPONSOR_BASE_PRICE_CENTS', 2500),
+      perThousandCents: int('SPONSOR_PRICE_PER_1000_VIEWS_CENTS', 400),
+    },
+    sourceChecks: {
+      enabled: bool('SOURCE_CHECKS', true),
+      intervalDays: int('SOURCE_CHECK_INTERVAL_DAYS', 7),
+      batchSize: int('SOURCE_CHECK_BATCH', 10),
+      timeoutMs: int('SOURCE_CHECK_TIMEOUT_MS', 10_000),
     },
     cacheBanTarget: cacheBanTarget || undefined,
   };

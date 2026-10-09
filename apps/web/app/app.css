@@ -4,3 +4,29 @@
   border-radius: 6px;
   outline: 4px solid var(--mantine-color-yellow-light);
 }
+
+/* Region map: countries with an answer are clickable. */
+.world-map .land {
+  fill: var(--mantine-color-default-border);
+  stroke: var(--mantine-color-body);
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
+}
+.world-map .country {
+  stroke: var(--mantine-color-body);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 120ms ease, filter 120ms ease;
+}
+.world-map .clickable {
+  cursor: pointer;
+  outline: none;
+}
+.world-map .clickable:hover .country,
+.world-map .clickable:focus-visible .country {
+  filter: brightness(1.15) saturate(1.2);
+}
+.world-map .selected .country {
+  stroke: var(--mantine-color-text);
+  stroke-width: 2;
+}

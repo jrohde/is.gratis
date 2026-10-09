@@ -1,12 +1,14 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { requireRole } from '../auth.js';
+import type { Config } from '../config.js';
 import type { Database } from '../db/client.js';
 import type { CacheInvalidator } from '../lib/cache.js';
 import { httpUrlSchema, languageSchema, regionSchema, slugSchema } from '../lib/content.js';
 import { badRequest } from '../lib/errors.js';
-import { bookingSchema, bookingStatusSchema, errorSchema } from '../schemas.js';
+import { bookingSchema, bookingStatusSchema, errorSchema, sponsorQuoteSchema } from '../schemas.js';
 import { createSponsorRequest, listBookings, reviewBooking } from '../services/sponsors.js';
+import { quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
 
 const plain = (max: number) =>
   z
@@ -16,10 +18,64 @@ const plain = (max: number) =>
     .max(max)
     .refine((value) => !/[<>]/.test(value), 'Plain text only');
 
-export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInvalidator }> = async (
+export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInvalidator; config: Config }> = async (
   app,
-  { db, cache },
+  { db, cache, config },
 ) => {
+  const quote = async (lang: Parameters<typeof viewsLast30Days>[1], slug: string) => {
+    const views30 = await viewsLast30Days(db, lang, slug);
+    return { views30, priceCents: quotePrice(views30, config.sponsorPricing), currency: 'EUR' as const };
+  };
+
+  app.get(
+    '/sponsors/quote',
+    {
+      schema: {
+        tags: ['sponsors'],
+        summary: 'Monthly price of a sponsored spot on a page',
+        description: 'A base price plus a price per thousand views in the last 30 days.',
+        querystring: z.object({ lang: languageSchema, slug: slugSchema }),
+        response: { 200: sponsorQuoteSchema },
+      },
+    },
+    async (request) => quote(request.query.lang, request.query.slug),
+  );
+
+  app.get(
+    '/admin/views',
+    {
+      schema: {
+        tags: ['admin'],
+        summary: 'Most viewed pages in the last 30 days (admin)',
+        querystring: z.object({
+          lang: languageSchema.optional(),
+          limit: z.coerce.number().int().min(1).max(500).default(50),
+        }),
+        response: {
+          200: z.object({
+            pages: z.array(
+              z.object({
+                lang: languageSchema,
+                slug: z.string(),
+                title: z.string(),
+                views30: z.number().int(),
+                priceCents: z.number().int(),
+              }),
+            ),
+          }),
+          401: errorSchema,
+          403: errorSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      requireRole(request, 'admin');
+      reply.header('cache-control', 'private, no-store');
+      const rows = await topViewed(db, request.query.limit, request.query.lang);
+      return { pages: rows.map((row) => ({ ...row, priceCents: quotePrice(row.views30, config.sponsorPricing) })) };
+    },
+  );
+
   app.post(
     '/sponsors/requests',
     {
@@ -39,13 +95,18 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
           url: httpUrlSchema,
           message: z.string().trim().max(2000).optional(),
         }),
-        response: { 201: z.object({ id: z.string(), status: bookingStatusSchema }), 429: errorSchema },
+        response: {
+          201: z.object({ id: z.string(), status: bookingStatusSchema, priceCents: z.number().int() }),
+          429: errorSchema,
+        },
       },
     },
     async (request, reply) => {
-      const booking = await createSponsorRequest(db, request.body);
+      // The price is fixed when the request comes in, so the advertiser pays what they were shown.
+      const { priceCents } = await quote(request.body.lang, request.body.slug);
+      const booking = await createSponsorRequest(db, { ...request.body, priceCents });
       request.log.info({ bookingId: booking.id, lang: booking.lang, slug: booking.slug }, 'sponsor request received');
-      return reply.code(201).send({ id: booking.id, status: booking.status });
+      return reply.code(201).send({ id: booking.id, status: booking.status, priceCents: booking.priceCents ?? 0 });
     },
   );
 

@@ -23,11 +23,14 @@ import type { CacheInvalidator } from './lib/cache.js';
 import { HttpError } from './lib/errors.js';
 import { assetRoutes } from './routes/assets.js';
 import { authRoutes } from './routes/auth.js';
+import { communityRoutes } from './routes/community.js';
 import { draftRoutes } from './routes/drafts.js';
 import { healthRoutes } from './routes/health.js';
 import { mcpRoutes } from './routes/mcp.js';
 import { ogRoutes } from './routes/og.js';
 import { pageRoutes } from './routes/pages.js';
+import { regionRoutes } from './routes/regions.js';
+import { reviewRoutes } from './routes/review.js';
 import { sponsorRoutes } from './routes/sponsors.js';
 
 export interface AppDeps {
@@ -103,6 +106,8 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
         { name: 'pages' },
         { name: 'revisions' },
         { name: 'drafts' },
+        { name: 'regions' },
+        { name: 'community' },
         { name: 'auth' },
         { name: 'sponsors' },
         { name: 'assets' },
@@ -123,7 +128,10 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
       await api.register(authRoutes, { db, config });
       await api.register(pageRoutes, { db, cache });
       await api.register(draftRoutes, { db, config });
-      await api.register(sponsorRoutes, { db, cache });
+      await api.register(sponsorRoutes, { db, cache, config });
+      await api.register(reviewRoutes, { db, config, cache });
+      await api.register(regionRoutes, { db });
+      await api.register(communityRoutes, { db, cache });
       await api.register(assetRoutes, { db, config });
       await api.register(ogRoutes, { db });
       await api.register(mcpRoutes, { db, config });
