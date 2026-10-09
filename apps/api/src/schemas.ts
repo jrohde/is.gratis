@@ -50,6 +50,7 @@ export const pageSchema = z.object({
   slug: z.string(),
   title: z.string(),
   status: z.enum(['draft', 'published']),
+  protected: z.boolean(),
   content: pageContentSchema,
   currentRevision: revisionSummarySchema,
   sponsoredOffers: z.array(sponsoredOfferSchema),

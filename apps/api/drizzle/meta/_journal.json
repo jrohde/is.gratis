@@ -43,6 +43,13 @@
       "when": 1791565632151,
       "tag": "0005_translations",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791566234642,
+      "tag": "0006_protect",
+      "breakpoints": true
     }
   ]
 }

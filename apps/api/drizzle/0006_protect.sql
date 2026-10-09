@@ -1,0 +1,1 @@
+ALTER TABLE "pages" ADD COLUMN "protected" boolean DEFAULT false NOT NULL;

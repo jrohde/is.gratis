@@ -112,6 +112,7 @@ export async function getPage(db: Database, lang: Language, slug: string): Promi
     slug: row.page.slug,
     title: row.page.title,
     status: row.page.status,
+    protected: row.page.protected,
     content,
     links: await pageLinks(db, lang, slug, content),
     currentRevision: toRevisionSummary(row.revision, row.authorName),
@@ -430,4 +431,22 @@ export async function searchPages(db: Database, lang: Language, query: string, l
     )
     .limit(limit);
   return rows.map(({ page, content }) => toListItem(page, content));
+}
+
+export async function isProtected(db: Database, lang: Language, slug: string): Promise<boolean> {
+  const [row] = await db
+    .select({ protected: pages.protected })
+    .from(pages)
+    .where(and(eq(pages.lang, lang), eq(pages.slug, slug)))
+    .limit(1);
+  return row?.protected ?? false;
+}
+
+export async function setProtected(db: Database, lang: Language, slug: string, value: boolean): Promise<void> {
+  const rows = await db
+    .update(pages)
+    .set({ protected: value })
+    .where(and(eq(pages.lang, lang), eq(pages.slug, slug)))
+    .returning({ id: pages.id });
+  if (rows.length === 0) throw notFound('This page does not exist');
 }

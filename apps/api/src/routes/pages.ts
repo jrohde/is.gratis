@@ -1,8 +1,10 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { LANGUAGES, normalizeContent, pickLanguage } from '@isgratis/types';
+import type { FastifyRequest } from 'fastify';
+import type { Language } from '@isgratis/types';
 import { requireUser } from '../auth.js';
-import { badRequest } from '../lib/errors.js';
+import { badRequest, HttpError } from '../lib/errors.js';
 import { getAssetMeta } from '../services/assets.js';
 import type { Database } from '../db/client.js';
 import type { CacheInvalidator } from '../lib/cache.js';
@@ -17,6 +19,7 @@ import {
 import {
   getPage,
   getRevision,
+  isProtected,
   languagesForSlug,
   listPages,
   listRevisions,
@@ -28,6 +31,15 @@ import {
 } from '../services/pages.js';
 
 const pageParams = z.object({ lang: languageSchema, slug: slugSchema });
+
+/** Logged in, and a moderator when the page is protected. */
+async function requireEditor(db: Database, request: FastifyRequest, lang: Language, slug: string) {
+  const user = requireUser(request);
+  if (user.role === 'user' && (await isProtected(db, lang, slug))) {
+    throw new HttpError(403, 'protected', 'This page is protected: only moderators can change it. Use the talk page to suggest a change.');
+  }
+  return user;
+}
 const editRateLimit = { rateLimit: { max: 30, timeWindow: '1 minute' } };
 
 export const pageRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInvalidator }> = async (
@@ -104,8 +116,8 @@ export const pageRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInval
       },
     },
     async (request, reply) => {
-      const user = requireUser(request);
       const { lang, slug } = request.params;
+      const user = await requireEditor(db, request, lang, slug);
       // Sources get their ids here, so the stored content always has them.
       const content = normalizeContent(request.body.content);
       if (content.image) {
@@ -189,8 +201,8 @@ export const pageRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheInval
       },
     },
     async (request) => {
-      const user = requireUser(request);
       const { lang, slug } = request.params;
+      const user = await requireEditor(db, request, lang, slug);
       await revertPage(db, { lang, slug, ...request.body, userId: user.id });
       await cache.purgePage(lang, slug);
       return getPage(db, lang, slug);

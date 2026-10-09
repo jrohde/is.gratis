@@ -89,6 +89,8 @@ export const pages = pgTable(
     status: text('status').$type<PageStatus>().notNull().default('draft'),
     currentRevisionId: uuid('current_revision_id').references((): AnyPgColumn => revisions.id),
     searchDoc: tsvector('search_doc'),
+    /** Only moderators may edit a protected page: against edit wars and vandalism. */
+    protected: boolean('protected').notNull().default(false),
     createdAt: createdAt(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

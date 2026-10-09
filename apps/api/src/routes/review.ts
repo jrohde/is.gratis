@@ -10,7 +10,9 @@ import { HttpError } from '../lib/errors.js';
 import { hashIp } from '../lib/hash.js';
 import { errorSchema, reviewItemSchema } from '../schemas.js';
 import { enqueueDraft } from '../services/drafts.js';
-import { deletePage, reviewQueue } from '../services/pages.js';
+import { deletePage, reviewQueue, setProtected } from '../services/pages.js';
+import { count, eq } from 'drizzle-orm';
+import { pages, reports } from '../db/schema.js';
 
 const UNLIMITED = { perIpPerHour: Number.POSITIVE_INFINITY, globalPerHour: Number.POSITIVE_INFINITY };
 
@@ -89,6 +91,47 @@ export const reviewRoutes: FastifyPluginAsyncZod<{ db: Database; config: Config;
         }
       }
       return { queued, skipped };
+    },
+  );
+
+  app.post(
+    '/pages/:lang/:slug/protect',
+    {
+      schema: {
+        tags: ['pages'],
+        summary: 'Protect a page so only moderators can edit it, or lift that (moderator)',
+        params: z.object({ lang: languageSchema, slug: slugSchema }),
+        body: z.object({ protected: z.boolean() }),
+        response: { 200: z.object({ protected: z.boolean() }), 401: errorSchema, 403: errorSchema, 404: errorSchema },
+      },
+    },
+    async (request) => {
+      const user = requireRole(request, 'moderator');
+      const { lang, slug } = request.params;
+      await setProtected(db, lang, slug, request.body.protected);
+      request.log.info({ lang, slug, protected: request.body.protected, userId: user.id }, 'page protection changed');
+      await cache.purgePage(lang, slug);
+      return { protected: request.body.protected };
+    },
+  );
+
+  app.get(
+    '/moderation/summary',
+    {
+      schema: {
+        tags: ['admin'],
+        summary: 'What is waiting for moderators: drafts and open reports',
+        response: { 200: z.object({ drafts: z.number().int(), reports: z.number().int() }), 401: errorSchema, 403: errorSchema },
+      },
+    },
+    async (request, reply) => {
+      requireRole(request, 'moderator');
+      reply.header('cache-control', 'private, no-store');
+      const [[drafts], [open]] = await Promise.all([
+        db.select({ n: count() }).from(pages).where(eq(pages.status, 'draft')),
+        db.select({ n: count() }).from(reports).where(eq(reports.status, 'open')),
+      ]);
+      return { drafts: drafts?.n ?? 0, reports: open?.n ?? 0 };
     },
   );
 };

@@ -198,6 +198,8 @@ export interface Page {
   slug: string;
   title: string;
   status: PageStatus;
+  /** Only moderators may edit it. */
+  protected: boolean;
   content: PageContent;
   currentRevision: RevisionSummary;
   sponsoredOffers: SponsoredOffer[];

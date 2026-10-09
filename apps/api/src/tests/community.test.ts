@@ -150,3 +150,26 @@ describe('reports', () => {
     expect((await ctx.app.inject({ url: '/api/reports', headers: { cookie: anna.cookie } })).json().reports).toEqual([]);
   });
 });
+
+describe('protection and moderation', () => {
+  it('lets only moderators edit a protected page', async () => {
+    const anna = await register(ctx, 'protect@example.com');
+    const page = await createPage(anna.cookie);
+    expect((await ctx.app.inject({ method: 'POST', url: '/api/pages/nl/parkeren/protect', headers: { cookie: anna.cookie }, payload: { protected: true } })).statusCode).toBe(403);
+    await makeRole(anna.user.id, 'moderator');
+    await ctx.app.inject({ method: 'POST', url: '/api/pages/nl/parkeren/protect', headers: { cookie: anna.cookie }, payload: { protected: true } });
+    expect((await ctx.app.inject({ url: '/api/pages/nl/parkeren' })).json().protected).toBe(true);
+    const summary = await ctx.app.inject({ url: '/api/moderation/summary', headers: { cookie: anna.cookie } });
+    expect(summary.json()).toEqual({ drafts: 0, reports: 0 });
+
+    const bob = await register(ctx, 'bob-protect@example.com');
+    const edit = await ctx.app.inject({
+      method: 'PUT',
+      url: '/api/pages/nl/parkeren',
+      headers: { cookie: bob.cookie },
+      payload: { title: 'parkeren', content: sampleContent({ verdict: 'no' }), baseRevisionId: page.currentRevision.id },
+    });
+    expect(edit.statusCode).toBe(403);
+    expect(edit.json().error).toBe('protected');
+  });
+});
