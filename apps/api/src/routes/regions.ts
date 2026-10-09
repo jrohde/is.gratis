@@ -4,6 +4,8 @@ import type { Database } from '../db/client.js';
 import { languageSchema, regionSchema } from '../lib/content.js';
 import { regionEntrySchema } from '../schemas.js';
 import { regionCounts, regionEntries } from '../services/regions.js';
+import { dailyPick } from '../services/daily.js';
+import { pageListItemSchema } from '../schemas.js';
 
 export const regionRoutes: FastifyPluginAsyncZod<{ db: Database }> = async (app, { db }) => {
   app.get(
@@ -34,5 +36,21 @@ export const regionRoutes: FastifyPluginAsyncZod<{ db: Database }> = async (app,
       region: request.params.region,
       pages: await regionEntries(db, request.params.region, request.query.lang),
     }),
+  );
+
+  app.get(
+    '/daily',
+    {
+      schema: {
+        tags: ['pages'],
+        summary: 'Free thing of the day: one subject per day, the same for everyone',
+        querystring: z.object({ lang: languageSchema }),
+        response: { 200: z.object({ day: z.string(), page: pageListItemSchema.nullable() }) },
+      },
+    },
+    async (request) => {
+      const day = new Date().toISOString().slice(0, 10);
+      return { day, page: await dailyPick(db, request.query.lang, day) };
+    },
   );
 };

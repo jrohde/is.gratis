@@ -99,3 +99,13 @@ describe('suggestions', () => {
     expect(calls).toBe(1);
   });
 });
+
+describe('free thing of the day', () => {
+  it('picks the same really free subject all day', async () => {
+    await create('lucht', 'lucht', sampleContent({ scale: { type: 'free_good', region: 'WORLD' } }));
+    await create('parkeren', 'parkeren', sampleContent({ scale: { type: 'paid', region: 'NL' } }));
+    const first = (await ctx.app.inject({ url: '/api/daily?lang=nl' })).json();
+    expect(first.page).toMatchObject({ slug: 'lucht' });
+    expect((await ctx.app.inject({ url: '/api/daily?lang=nl' })).json()).toEqual(first);
+  });
+});

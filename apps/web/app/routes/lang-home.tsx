@@ -19,8 +19,11 @@ const MotionDiv = motion.div;
 
 export async function loader({ params }: Route.LoaderArgs) {
   const lang = parseLang(params.lang);
-  const { pages } = await apiGet<{ pages: PageListItem[] }>(`/pages?lang=${lang}&status=published&limit=24`);
-  return data({ lang, pages, origin: env.publicOrigin }, { headers: { 'Cache-Control': CACHE.short } });
+  const [{ pages }, daily] = await Promise.all([
+    apiGet<{ pages: PageListItem[] }>(`/pages?lang=${lang}&status=published&limit=24`),
+    apiGet<{ day: string; page: PageListItem | null }>(`/daily?lang=${lang}`).catch(() => ({ day: '', page: null })),
+  ]);
+  return data({ lang, pages, daily: daily.page, origin: env.publicOrigin }, { headers: { 'Cache-Control': CACHE.short } });
 }
 
 export const headers: Route.HeadersFunction = ({ loaderHeaders }) => loaderHeaders;
@@ -55,7 +58,7 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
 };
 
 export default function LangHome({ loaderData }: Route.ComponentProps) {
-  const { lang, pages } = loaderData;
+  const { lang, pages, daily } = loaderData;
   const t = messages(lang);
   const play = wasHydratedBeforeMount();
   return (
@@ -77,6 +80,20 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
             <SearchBox lang={lang} size="lg" />
           </div>
         </Stack>
+
+        {daily && (
+          <Card withBorder padding="lg" radius="md" style={{ borderTop: '4px solid var(--mantine-color-green-6)' }}>
+            <Text size="xs" fw={800} tt="uppercase" c="green.8" mb={6} style={{ letterSpacing: 1 }}>
+              {t.dailyTitle}
+            </Text>
+            <Text fz={{ base: 'lg', sm: 'xl' }} component="div">
+              <ClaimRow {...daily} />
+            </Text>
+            <Text c="dimmed" mt={6} lineClamp={3}>
+              {plainText(daily.summary, 300)}
+            </Text>
+          </Card>
+        )}
 
         <Stack gap="md">
           <Title order={2} size="h3">

@@ -286,6 +286,7 @@ const nl = {
   usersSearch: 'Zoek op naam of e-mailadres',
   roles: { user: 'Gebruiker', moderator: 'Moderator', admin: 'Beheerder' },
   more: 'Meer',
+  dailyTitle: 'Gratis van de dag',
 };
 
 export type Messages = typeof nl;
@@ -569,6 +570,7 @@ const en: Messages = {
   usersSearch: 'Search by name or email',
   roles: { user: 'User', moderator: 'Moderator', admin: 'Admin' },
   more: 'More',
+  dailyTitle: 'Free thing of the day',
 };
 
 const de: Messages = {
@@ -739,6 +741,7 @@ const de: Messages = {
   protectedLabel: 'Geschützt',
   protectedHelp: 'Nur Moderatoren können diese Seite bearbeiten. Schlage eine Änderung auf der Diskussionsseite vor.',
   more: 'Mehr',
+  dailyTitle: 'Gratis des Tages',
 };
 
 const es: Messages = {
@@ -910,6 +913,7 @@ const es: Messages = {
   protectedLabel: 'Protegida',
   protectedHelp: 'Solo los moderadores pueden editar esta página. Propón un cambio en la página de discusión.',
   more: 'Más',
+  dailyTitle: 'Lo gratis del día',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };
