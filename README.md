@@ -115,6 +115,10 @@ Net als op Wikipedia moet elke bewering te controleren zijn:
 - **Volglijst.** Met "Volgen" onderaan een pagina zie je op `/account/watchlist` welke pagina's sinds je laatste bezoek zijn gewijzigd.
 - **Overlegpagina** (`/<taal>/<pagina>/talk`). Discussie over de pagina zelf, los van de tekst, net als op Wikipedia. Berichten zijn platte tekst. Moderators kunnen berichten verbergen.
 
+### Vertalen
+
+Een nagekeken pagina kan het taalmodel vertalen naar de talen waarin ze nog ontbreekt: onderaan de pagina voor ingelogde gebruikers, of in het beheer voor alles tegelijk ("Alles vertalen" van de ene taal naar de andere). De vertaling houdt dezelfde bronnen, citaties, schaal en regio's, wordt aan hetzelfde onderwerp gekoppeld en komt als concept in de nakijkwachtrij. Concepten worden niet vertaald: dan zouden fouten zich over talen verspreiden. Vertalingen tellen mee in dezelfde limieten per uur als nieuwe concepten.
+
 ### Zoeken
 
 Zoeken werkt zoals op Wikipedia, helemaal in de eigen database:
@@ -284,5 +288,5 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 - **Beeldmodel kiezen.** Beeldgeneratie staat standaard uit. Voor alles in eigen beheer is een zelf gehost model achter een OpenAI-compatibele server nodig, zoals LocalAI. Dat vraagt een GPU-node.
 - **Moderatie.** Iedereen met een account kan bewerken en terugzetten. Moderators kunnen concepten verwijderen en overlegberichten verbergen. Bij vandalisme is pagina-vergrendeling de volgende stap. Moderators benoem je nu nog in de database (`update users set role = 'moderator' ...`).
 - **Meldingen.** De volglijst toont wijzigingen op de site zelf. Mail bij een wijziging vraagt een mailserver.
-- **Vertalingen koppelen.** Door het taalmodel geschreven pagina's worden automatisch gekoppeld aan dezelfde pagina in andere talen. Met de hand gemaakte pagina's nog niet.
+- **Hand-gemaakte vertalingen koppelen.** Vertalingen door het taalmodel worden automatisch aan hetzelfde onderwerp gekoppeld. Twee pagina's die mensen los van elkaar in verschillende talen maakten, kun je nog niet aan elkaar koppelen.
 - **Rate limits** voor inloggen en bewerken gelden per pod. Het dure deel, conceptgeneratie, wordt wel centraal in Postgres begrensd.

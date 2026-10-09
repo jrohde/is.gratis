@@ -264,6 +264,13 @@ const nl = {
   reportsTitle: 'Meldingen',
   reportsEmpty: 'Geen open meldingen.',
   resolve: 'Afgehandeld',
+  translateTo: 'Laat vertalen naar',
+  translationQueued: 'in de wachtrij, verschijnt als concept',
+  bulkTranslateTitle: 'Alles vertalen',
+  bulkTranslateHelp: 'Zet alle nagekeken pagina’s die in de doeltaal nog ontbreken in de wachtrij. Ze verschijnen als concept in de nakijkwachtrij.',
+  bulkTranslateResult: (queued: number, skipped: number) => `${queued} vertalingen in de wachtrij, ${skipped} overgeslagen.`,
+  from: 'Van',
+  to: 'Naar',
 };
 
 export type Messages = typeof nl;
@@ -525,6 +532,13 @@ const en: Messages = {
   reportsTitle: 'Reports',
   reportsEmpty: 'No open reports.',
   resolve: 'Handled',
+  translateTo: 'Have it translated into',
+  translationQueued: 'queued, appears as a draft',
+  bulkTranslateTitle: 'Translate everything',
+  bulkTranslateHelp: 'Queues every checked page that is still missing in the target language. They appear as drafts in the review queue.',
+  bulkTranslateResult: (queued, skipped) => `${queued} translations queued, ${skipped} skipped.`,
+  from: 'From',
+  to: 'To',
 };
 
 const de: Messages = {
@@ -685,6 +699,8 @@ const de: Messages = {
     copyright: 'Urheberrechtsverletzung',
     other: 'Etwas anderes',
   },
+  translateTo: 'Übersetzen lassen ins',
+  translationQueued: 'in der Warteschlange, erscheint als Entwurf',
 };
 
 const es: Messages = {
@@ -846,6 +862,8 @@ const es: Messages = {
     copyright: 'Infracción de derechos de autor',
     other: 'Otra cosa',
   },
+  translateTo: 'Traducir al',
+  translationQueued: 'en cola, aparecerá como borrador',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

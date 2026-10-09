@@ -42,6 +42,7 @@ import { RegionSection } from '~/components/RegionSection';
 import { SponsoredBlock } from '~/components/SponsoredBlock';
 import { Asterisk, Footnote } from '~/components/Logo';
 import { ReportButton } from '~/components/ReportButton';
+import { TranslateButtons } from '~/components/TranslateButtons';
 import { WatchButton } from '~/components/WatchButton';
 import { api, ClientApiError } from '~/lib/api.client';
 import { apiGet, apiGetOptional } from '~/lib/api.server';
@@ -370,6 +371,7 @@ function PageView({ page }: { page: Page }) {
         </section>
 
         <Divider />
+        <TranslateButtons page={page} />
         <Group justify="space-between" gap="xs">
           <Text size="sm" c="dimmed">
             {t.revisionInfo(page.currentRevision.number, formatDate(page.updatedAt, page.lang), author)}

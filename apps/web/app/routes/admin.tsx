@@ -193,6 +193,47 @@ function BulkDrafts() {
   );
 }
 
+function BulkTranslate() {
+  const uiLang = useUiLang();
+  const t = messages(uiLang);
+  const [from, setFrom] = useState<Language>(uiLang);
+  const [to, setTo] = useState<Language>(uiLang === 'en' ? 'nl' : 'en');
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const options = LANGUAGES.map((code) => ({ value: code, label: LANGUAGE_NAMES[code] }));
+
+  async function submit() {
+    setBusy(true);
+    try {
+      const { queued, skipped } = await api<{ queued: number; skipped: number }>('POST', '/admin/translations', { from, to, limit: 200 });
+      setResult(t.bulkTranslateResult(queued, skipped));
+    } catch (err) {
+      setResult(err instanceof ClientApiError ? err.message : t.errorGeneric);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Stack gap="sm" mt="xl">
+      <Title order={3} size="h4">
+        {t.bulkTranslateTitle}
+      </Title>
+      <Text c="dimmed" size="sm">
+        {t.bulkTranslateHelp}
+      </Text>
+      <Group align="end">
+        <Select label={t.from} value={from} allowDeselect={false} data={options} onChange={(v) => v && setFrom(v as Language)} w={160} />
+        <Select label={t.to} value={to} allowDeselect={false} data={options} onChange={(v) => v && setTo(v as Language)} w={160} />
+        <Button onClick={() => void submit()} loading={busy} disabled={from === to}>
+          {t.bulkSubmit}
+        </Button>
+      </Group>
+      {result && <Alert color="green">{result}</Alert>}
+    </Stack>
+  );
+}
+
 interface ViewRow {
   lang: Language;
   slug: string;
@@ -287,6 +328,7 @@ export default function Admin() {
           </Tabs.Panel>
           <Tabs.Panel value="drafts">
             <BulkDrafts />
+            <BulkTranslate />
           </Tabs.Panel>
           <Tabs.Panel value="views">
             <ViewStats />
