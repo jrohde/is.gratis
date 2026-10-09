@@ -259,6 +259,7 @@ Het antwoord van het model moet aan exact hetzelfde schema voldoen als een mense
 
 ## Nog open
 
+- **Zoekmachine, zoals op Wikipedia.** Nu is er alleen automatisch aanvullen op titel en kort antwoord. Plan: een resultatenpagina `/<taal>/zoeken?q=` met Postgres full-text search (een `tsvector` per taal met de woordenboeken voor Nederlands, Engels, Duits en Spaans) over alle tekst van een pagina, gerangschikt en met gemarkeerde fragmenten (`ts_headline`). Daarbij "bedoelde je…?" via `pg_trgm`, filters op oordeel en land, en onderaan "Maak de pagina …" als er geen exacte treffer is. Alles in de eigen database, zonder externe zoekdienst.
 - **E-mailverificatie en wachtwoordherstel.** Daarvoor is een mailserver nodig; die is nu bewust weggelaten.
 - **Betalingen.** Sponsorplekken worden nu met de hand gefactureerd.
 - **Licentie voor bijdragen.** Kies onder welke licentie bewerkers hun tekst bijdragen en vermeld dat bij het registreren.
