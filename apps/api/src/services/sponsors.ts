@@ -2,10 +2,11 @@
  * Sponsored offers: advertisers request a spot on a page, an admin approves it, and the offer
  * is shown in the clearly labelled "free here" block for the booked period.
  */
-import { and, desc, eq, gt, isNull, lte, or } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import type { Language, Region, SponsorBooking, SponsorRequestStatus } from '@isgratis/types';
 import type { Database } from '../db/client.js';
-import { pages, revisions, sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
+import { offerStats, pages, revisions, sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
+import { newToken } from '../lib/hash.js';
 import { notFound } from '../lib/errors.js';
 
 export function toBooking(row: SponsoredOfferRow): SponsorBooking {
@@ -42,12 +43,17 @@ export async function createSponsorRequest(
     message?: string;
     priceCents: number;
   },
-): Promise<SponsorBooking> {
+): Promise<SponsorBooking & { statsToken: string }> {
   const [row] = await db
     .insert(sponsoredOffers)
-    .values({ ...input, contactEmail: input.contactEmail.trim().toLowerCase(), message: input.message ?? null })
+    .values({
+      ...input,
+      contactEmail: input.contactEmail.trim().toLowerCase(),
+      message: input.message ?? null,
+      statsToken: newToken(),
+    })
     .returning();
-  return toBooking(row!);
+  return { ...toBooking(row!), statsToken: row!.statsToken! };
 }
 
 export async function listBookings(db: Database, status?: SponsorRequestStatus): Promise<SponsorBooking[]> {
@@ -107,4 +113,65 @@ export async function activeOffersOverview(db: Database, lang: Language) {
     region: offer.region,
     page: { lang: offer.lang, slug: offer.slug, title, ...(content.plural ? { plural: true } : {}), ...(content.emoji ? { emoji: content.emoji } : {}) },
   }));
+}
+
+const activeNow = () => {
+  const now = new Date();
+  return and(
+    eq(sponsoredOffers.status, 'active'),
+    or(isNull(sponsoredOffers.startsAt), lte(sponsoredOffers.startsAt, now)),
+    or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, now)),
+  );
+};
+
+/** Counts that offers were shown. Unknown or ended offers are ignored. */
+export async function recordImpressions(db: Database, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const live = await db.select({ id: sponsoredOffers.id }).from(sponsoredOffers).where(and(inArray(sponsoredOffers.id, ids), activeNow()));
+  for (const { id } of live) {
+    await db.execute(sql`
+      insert into offer_stats (offer_id, day, impressions) values (${id}, current_date, 1)
+      on conflict (offer_id, day) do update set impressions = offer_stats.impressions + 1
+    `);
+  }
+}
+
+/** Counts a click and returns where to send the visitor, or null when the offer is not running. */
+export async function clickOffer(db: Database, id: string): Promise<string | null> {
+  const [offer] = await db.select({ url: sponsoredOffers.url }).from(sponsoredOffers).where(and(eq(sponsoredOffers.id, id), activeNow())).limit(1);
+  if (!offer) return null;
+  await db.execute(sql`
+    insert into offer_stats (offer_id, day, clicks) values (${id}, current_date, 1)
+    on conflict (offer_id, day) do update set clicks = offer_stats.clicks + 1
+  `);
+  return offer.url;
+}
+
+/** What an advertiser sees behind their secret link: their offer and its daily numbers. */
+export async function statsForToken(db: Database, token: string) {
+  const [offer] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.statsToken, token)).limit(1);
+  if (!offer) throw notFound('Unknown link');
+  const days = await db
+    .select({ day: offerStats.day, impressions: offerStats.impressions, clicks: offerStats.clicks })
+    .from(offerStats)
+    .where(and(eq(offerStats.offerId, offer.id), gt(offerStats.day, sql`current_date - 90`)))
+    .orderBy(asc(offerStats.day));
+  const totals = days.reduce(
+    (sum, d) => ({ impressions: sum.impressions + d.impressions, clicks: sum.clicks + d.clicks }),
+    { impressions: 0, clicks: 0 },
+  );
+  return {
+    offer: {
+      lang: offer.lang,
+      slug: offer.slug,
+      title: offer.title,
+      advertiserName: offer.advertiserName,
+      status: offer.status,
+      priceCents: offer.priceCents,
+      startsAt: offer.startsAt?.toISOString() ?? null,
+      endsAt: offer.endsAt?.toISOString() ?? null,
+    },
+    days,
+    totals,
+  };
 }

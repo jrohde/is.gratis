@@ -50,6 +50,13 @@
       "when": 1791566234642,
       "tag": "0006_protect",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791567042880,
+      "tag": "0007_offer_stats",
+      "breakpoints": true
     }
   ]
 }

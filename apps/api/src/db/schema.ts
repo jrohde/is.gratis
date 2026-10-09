@@ -188,6 +188,8 @@ export const sponsoredOffers = pgTable(
     endsAt: timestamp('ends_at', { withTimezone: true }),
     /** Monthly price quoted to the advertiser when they asked, in cents. */
     priceCents: integer('price_cents'),
+    /** Secret in the advertiser's statistics link; they need no account. */
+    statsToken: text('stats_token').unique(),
     reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
     createdAt: createdAt(),
@@ -209,6 +211,20 @@ export const pageViews = pgTable(
     count: integer('count').notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.pageId, table.day] })],
+);
+
+/** How often an offer was shown and clicked, per day. No visitor data. */
+export const offerStats = pgTable(
+  'offer_stats',
+  {
+    offerId: uuid('offer_id')
+      .notNull()
+      .references(() => sponsoredOffers.id, { onDelete: 'cascade' }),
+    day: date('day').notNull(),
+    impressions: integer('impressions').notNull().default(0),
+    clicks: integer('clicks').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.offerId, table.day] })],
 );
 
 /** The last check of a source URL by the worker. */

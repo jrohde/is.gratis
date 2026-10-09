@@ -184,5 +184,17 @@ describe('offers overview', () => {
     });
     const offers = (await ctx.app.inject({ url: '/api/offers?lang=nl' })).json().offers;
     expect(offers).toEqual([expect.objectContaining({ title: 'Gratis proefrit', page: expect.objectContaining({ slug: 'parkeren' }) })]);
+
+    // Shown twice, clicked once; the advertiser sees it behind their secret link.
+    const id = offers[0].id;
+    for (let i = 0; i < 2; i++) await ctx.app.inject({ method: 'POST', url: '/api/offers/impressions', payload: { ids: [id] } });
+    const click = await ctx.app.inject({ url: `/api/offers/${id}/go` });
+    expect(click.statusCode).toBe(302);
+    expect(click.headers.location).toBe('https://example.com/fiets');
+    const stats = await ctx.app.inject({ url: `/api/sponsors/stats/${request.json().statsToken}` });
+    expect(stats.json().totals).toEqual({ impressions: 2, clicks: 1 });
+    expect(stats.json().offer).toMatchObject({ title: 'Gratis proefrit', status: 'active' });
+    expect(stats.json().offer.contactEmail).toBeUndefined();
+    expect((await ctx.app.inject({ url: '/api/sponsors/stats/not-a-real-token-at-all' })).statusCode).toBe(404);
   });
 });

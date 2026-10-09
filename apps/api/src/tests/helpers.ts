@@ -44,7 +44,7 @@ export type TestContext = Awaited<ReturnType<typeof createTestApp>>;
 
 export async function resetDatabase(ctx: TestContext) {
   await ctx.db.execute(
-    sql`truncate table reports, related_subjects, search_misses, comments, watches, page_views, source_checks, sessions, sponsored_offers, draft_jobs, assets, revisions, pages, topics, users restart identity cascade`,
+    sql`truncate table offer_stats, reports, related_subjects, search_misses, comments, watches, page_views, source_checks, sessions, sponsored_offers, draft_jobs, assets, revisions, pages, topics, users restart identity cascade`,
   );
 }
 
