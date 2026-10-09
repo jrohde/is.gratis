@@ -1,4 +1,4 @@
-import type { Language } from '@isgratis/types';
+import { LANGUAGES, type Language } from '@isgratis/types';
 import type { Route } from './+types/sitemap';
 import { apiGet } from '~/lib/api.server';
 import { env } from '~/lib/env.server';
@@ -27,9 +27,16 @@ export async function loader(_: Route.LoaderArgs) {
       return `<url><loc>${escape(url(entry))}</loc><lastmod>${entry.updatedAt}</lastmod>${alternates}</url>`;
     })
     .join('\n');
+  // The overview pages of each language: home, index, countries, free offers and the quiz.
+  const overviews = LANGUAGES.flatMap((lang) =>
+    [`/${lang}`, `/a-z/${lang}`, `/regions/${lang}`, `/offers/${lang}`, `/quiz/${lang}`].map(
+      (path) => `<url><loc>${escape(`${env.publicOrigin}${path}`)}</loc></url>`,
+    ),
+  ).join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${overviews}
 ${body}
 </urlset>`;
   return new Response(xml, {
