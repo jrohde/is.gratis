@@ -444,6 +444,14 @@ const nl = {
   previewTitle: 'Zo ziet je aanbod eruit',
   previewTitlePlaceholder: 'Titel van je aanbod',
   previewDescriptionPlaceholder: 'Wat is er precies gratis?',
+  statsReach: (share: string) => `${share} van de bezoekers van de pagina`,
+  statsAverage: (rate: string) => `gemiddeld op is.gratis: ${rate}`,
+  statsMailSends: 'In de mail',
+  statsMailClicks: 'Klikken uit mail',
+  statsMailRate: (rate: string) => `${rate} van de mails`,
+  statsCostPerClick: 'Kosten per klik',
+  statsPageViews: 'Bezoekers pagina',
+  statsCsv: 'Download als CSV',
 };
 
 export type Messages = typeof nl;
@@ -885,6 +893,14 @@ const en: Messages = {
   previewTitle: 'This is how your offer looks',
   previewTitlePlaceholder: 'Title of your offer',
   previewDescriptionPlaceholder: 'What exactly is free?',
+  statsReach: (share: string) => `${share} of the page's visitors`,
+  statsAverage: (rate: string) => `average on is.gratis: ${rate}`,
+  statsMailSends: 'In the mail',
+  statsMailClicks: 'Clicks from mail',
+  statsMailRate: (rate: string) => `${rate} of the mails`,
+  statsCostPerClick: 'Cost per click',
+  statsPageViews: 'Page visitors',
+  statsCsv: 'Download as CSV',
 };
 
 const de: Messages = {
@@ -1192,6 +1208,14 @@ const de: Messages = {
   previewTitle: 'So sieht dein Angebot aus',
   previewTitlePlaceholder: 'Titel deines Angebots',
   previewDescriptionPlaceholder: 'Was genau ist kostenlos?',
+  statsReach: (share: string) => `${share} der Besucher der Seite`,
+  statsAverage: (rate: string) => `Durchschnitt auf is.gratis: ${rate}`,
+  statsMailSends: 'In der Mail',
+  statsMailClicks: 'Klicks aus der Mail',
+  statsMailRate: (rate: string) => `${rate} der Mails`,
+  statsCostPerClick: 'Kosten pro Klick',
+  statsPageViews: 'Besucher der Seite',
+  statsCsv: 'Als CSV herunterladen',
 };
 
 const es: Messages = {
@@ -1500,6 +1524,14 @@ const es: Messages = {
   previewTitle: 'Así se verá tu oferta',
   previewTitlePlaceholder: 'Título de tu oferta',
   previewDescriptionPlaceholder: '¿Qué es gratis exactamente?',
+  statsReach: (share: string) => `${share} de las visitas a la página`,
+  statsAverage: (rate: string) => `media en is.gratis: ${rate}`,
+  statsMailSends: 'En el correo',
+  statsMailClicks: 'Clics desde el correo',
+  statsMailRate: (rate: string) => `${rate} de los correos`,
+  statsCostPerClick: 'Coste por clic',
+  statsPageViews: 'Visitas a la página',
+  statsCsv: 'Descargar en CSV',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

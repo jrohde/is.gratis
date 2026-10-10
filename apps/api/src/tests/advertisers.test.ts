@@ -244,3 +244,29 @@ describe('choosing a page', () => {
     expect((await ctx.app.inject({ url: '/api/sponsors/pages?lang=nl&q=%25' })).json().pages).toEqual([]);
   });
 });
+
+describe('numbers for advertisers', () => {
+  it('shows reach, clicks from the mail apart, cost per click and a CSV', async () => {
+    await page('zwemmen');
+    const { cookie } = await register(ctx, 'admin@example.com', 'Admin', nextAddress());
+    const { id, statsToken } = await request('zwemmen', 'school@example.com');
+    await ctx.app.inject({ method: 'POST', url: `/api/admin/sponsors/${id}/review`, headers: { cookie }, payload: { status: 'active' } });
+    await ctx.db.execute(sql`
+      insert into page_views (page_id, day, count) select id, current_date, 200 from pages where slug = 'zwemmen'
+    `);
+    await ctx.db.execute(sql`insert into offer_stats (offer_id, day, impressions, mail_sends) values (${id}, current_date, 150, 40)`);
+    for (let i = 0; i < 3; i++) await ctx.app.inject({ url: `/api/offers/${id}/go` });
+    await ctx.app.inject({ url: `/api/offers/${id}/go?from=mail` });
+
+    const stats = (await ctx.app.inject({ url: `/api/sponsors/stats/${statsToken}` })).json();
+    expect(stats.totals).toEqual({ impressions: 150, clicks: 3, mailSends: 40, mailClicks: 1, pageViews: 200 });
+    expect(stats.reach).toBe(0.75);
+    // The booked price over every click, from the page and from the mail.
+    expect(stats.costPerClickCents).toBe(Math.round(2500 / 4));
+    expect(stats.averageClickRate).toBeNull();
+
+    const csv = await ctx.app.inject({ url: `/api/sponsors/stats/${statsToken}/csv` });
+    expect(csv.headers['content-type']).toContain('text/csv');
+    expect(csv.body.split('\n')[1]).toMatch(/^\d{4}-\d{2}-\d{2},200,150,3,40,1$/);
+  });
+});

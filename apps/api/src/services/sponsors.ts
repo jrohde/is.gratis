@@ -2,10 +2,10 @@
  * Sponsored offers: advertisers request a spot on a page, an admin approves it, and the offer
  * is shown in the clearly labelled "free here" block for the booked period.
  */
-import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import { OFFER_SLOTS, regionsOverlap, type Language, type Region, type SponsorBooking, type SponsorRequestStatus } from '@isgratis/types';
 import type { Database } from '../db/client.js';
-import { offerStats, pages, revisions, sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
+import { invoices, offerStats, pages, revisions, sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
 import { newToken } from '../lib/hash.js';
 import { conflict, notFound } from '../lib/errors.js';
 
@@ -269,30 +269,86 @@ export async function recordImpressions(db: Database, ids: string[]): Promise<vo
   }
 }
 
-/** Counts a click and returns where to send the visitor, or null when the offer is not running. */
-export async function clickOffer(db: Database, id: string): Promise<string | null> {
+/**
+ * Counts a click and returns where to send the visitor, or null when the offer is not running.
+ * Clicks from the weekly mail are counted apart, so advertisers see what each brings.
+ */
+export async function clickOffer(db: Database, id: string, source: 'page' | 'mail' = 'page'): Promise<string | null> {
   const [offer] = await db.select({ url: sponsoredOffers.url }).from(sponsoredOffers).where(and(eq(sponsoredOffers.id, id), activeNow())).limit(1);
   if (!offer) return null;
+  const column = source === 'mail' ? sql.raw('mail_clicks') : sql.raw('clicks');
   await db.execute(sql`
-    insert into offer_stats (offer_id, day, clicks) values (${id}, current_date, 1)
-    on conflict (offer_id, day) do update set clicks = offer_stats.clicks + 1
+    insert into offer_stats (offer_id, day, ${column}) values (${id}, current_date, 1)
+    on conflict (offer_id, day) do update set ${column} = offer_stats.${column} + 1
   `);
   return offer.url;
 }
 
-/** What an advertiser sees behind their secret link: their offer and its daily numbers. */
+/** Counts that an offer went out in a weekly mail. */
+export async function recordMailSends(db: Database, ids: string[]): Promise<void> {
+  for (const id of ids) {
+    await db.execute(sql`
+      insert into offer_stats (offer_id, day, mail_sends) values (${id}, current_date, 1)
+      on conflict (offer_id, day) do update set mail_sends = offer_stats.mail_sends + 1
+    `);
+  }
+}
+
+/** Clicks per impression over all offers in the last 30 days: what "good" looks like here. */
+async function averageClickRate(db: Database): Promise<number | null> {
+  const [row] = await db
+    .select({
+      impressions: sql<number>`coalesce(sum(${offerStats.impressions}), 0)::int`,
+      clicks: sql<number>`coalesce(sum(${offerStats.clicks}), 0)::int`,
+    })
+    .from(offerStats)
+    .where(gt(offerStats.day, sql`current_date - 30`));
+  // Too few views say nothing yet.
+  return row && row.impressions >= 200 ? row.clicks / row.impressions : null;
+}
+
+/**
+ * What an advertiser sees behind their secret link: per day how often the offer was shown and
+ * clicked, how many people visited the page, the mail, and what a click cost.
+ */
 export async function statsForToken(db: Database, token: string) {
   const [offer] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.statsToken, token)).limit(1);
   if (!offer) throw notFound('Unknown link');
-  const days = await db
-    .select({ day: offerStats.day, impressions: offerStats.impressions, clicks: offerStats.clicks })
-    .from(offerStats)
-    .where(and(eq(offerStats.offerId, offer.id), gt(offerStats.day, sql`current_date - 90`)))
-    .orderBy(asc(offerStats.day));
+  const result = await db.execute<{ day: string; impressions: number; clicks: number; mail_sends: number; mail_clicks: number; page_views: number }>(sql`
+    select to_char(s.day, 'YYYY-MM-DD') as day, s.impressions, s.clicks, s.mail_sends, s.mail_clicks,
+      coalesce((
+        select v.count from page_views v join pages p on p.id = v.page_id
+        where p.lang = ${offer.lang} and p.slug = ${offer.slug} and v.day = s.day
+      ), 0)::int as page_views
+    from offer_stats s
+    where s.offer_id = ${offer.id} and s.day > current_date - 90
+    order by s.day
+  `);
+  const days = result.rows.map((row) => ({
+    day: row.day,
+    impressions: Number(row.impressions),
+    clicks: Number(row.clicks),
+    mailSends: Number(row.mail_sends),
+    mailClicks: Number(row.mail_clicks),
+    pageViews: Number(row.page_views),
+  }));
   const totals = days.reduce(
-    (sum, d) => ({ impressions: sum.impressions + d.impressions, clicks: sum.clicks + d.clicks }),
-    { impressions: 0, clicks: 0 },
+    (sum, d) => ({
+      impressions: sum.impressions + d.impressions,
+      clicks: sum.clicks + d.clicks,
+      mailSends: sum.mailSends + d.mailSends,
+      mailClicks: sum.mailClicks + d.mailClicks,
+      pageViews: sum.pageViews + d.pageViews,
+    }),
+    { impressions: 0, clicks: 0, mailSends: 0, mailClicks: 0, pageViews: 0 },
   );
+  // What was paid, before VAT: the invoices for this offer, or the booked price if there are none.
+  const [billed] = await db
+    .select({ cents: sql<number>`coalesce(sum(${invoices.subtotalCents}), 0)::int` })
+    .from(invoices)
+    .where(and(eq(invoices.offerId, offer.id), ne(invoices.status, 'void')));
+  const spentCents = billed && billed.cents > 0 ? billed.cents : (offer.priceCents ?? 0);
+  const allClicks = totals.clicks + totals.mailClicks;
   return {
     offer: {
       lang: offer.lang,
@@ -301,11 +357,17 @@ export async function statsForToken(db: Database, token: string) {
       advertiserName: offer.advertiserName,
       status: offer.status,
       priceCents: offer.priceCents,
+      exclusive: offer.exclusive,
+      inMailing: offer.inMailing,
       startsAt: offer.startsAt?.toISOString() ?? null,
       endsAt: offer.endsAt?.toISOString() ?? null,
     },
     days,
     totals,
+    /** Share of the page's visitors (on days the offer ran) who saw it. */
+    reach: totals.pageViews > 0 ? Math.min(1, totals.impressions / totals.pageViews) : null,
+    averageClickRate: await averageClickRate(db),
+    costPerClickCents: allClicks > 0 ? Math.round(spentCents / allClicks) : null,
   };
 }
 

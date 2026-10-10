@@ -10,6 +10,7 @@ import { newToken } from '../lib/hash.js';
 import { MAIL_WORDS, renderMail } from '../lib/mail-text.js';
 import type { Mailer } from '../lib/mailer.js';
 import { dailyHistory, newThisWeek } from './daily.js';
+import { recordMailSends } from './sponsors.js';
 
 /** Is an offer for this region of use to a subscriber there? */
 export const offerReaches = regionReaches;
@@ -149,7 +150,7 @@ export async function queueOffersMail(db: Database, week: string, origin: string
             title: offer.title,
             text: offer.description,
             // Through the click counter, so advertisers see what the mail brought them.
-            url: `${origin}/api/offers/${offer.id}/go`,
+            url: `${origin}/api/offers/${offer.id}/go?from=mail`,
             note: `${offer.advertiserName}${offer.region ? ` · ${offer.region}` : ''} · ${words.offersOn} ${claimFor(sub.lang, pageTitle)}*`,
           })),
         },
@@ -157,7 +158,10 @@ export async function queueOffersMail(db: Database, week: string, origin: string
       footer: [words.why(words.lists.offers)],
       unsubscribeUrl,
     });
-    if (await queueMail(db, { key: `offers:${week}:${sub.id}`, to: sub.email, subject: words.offersSubject(offers.length), unsubscribeUrl, ...body })) queued++;
+    if (await queueMail(db, { key: `offers:${week}:${sub.id}`, to: sub.email, subject: words.offersSubject(offers.length), unsubscribeUrl, ...body })) {
+      queued++;
+      await recordMailSends(db, offers.map(({ offer }) => offer.id));
+    }
   }
   return queued;
 }

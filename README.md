@@ -299,6 +299,13 @@ accounts van schrijvers. Het portaal toont alle aanbiedingen van dat adres:
 de stappen (ontvangen, redactie, goedkeuring, zichtbaar), wat de redactie
 vond en waarom, de prijs per maand en de mailing-optie, en de cijfers.
 
+De statistiekenpagina per aanbieding toont per dag de bezoekers van de pagina,
+hoe vaak het aanbod getoond en aangeklikt is, en de mail apart (verstuurd en
+kliks, via `?from=mail` op de klikteller). Daaruit: het bereik (welk deel van
+de bezoekers het zag), de klikratio naast het gemiddelde op is.gratis (vanaf
+200 vertoningen in 30 dagen), en de kosten per klik (gefactureerd bedrag
+zonder btw gedeeld door alle kliks). Alles is te downloaden als CSV.
+
 Een pagina toont dezelfde lezer hooguit 3 aanbiedingen (`OFFER_SLOTS`).
 Aanbiedingen voor overlappende regio's (een land, de EU, de wereld of overal)
 in een overlappende periode tellen samen; een vierde activeren wordt

@@ -192,7 +192,7 @@ describe('offers overview', () => {
     expect(click.statusCode).toBe(302);
     expect(click.headers.location).toBe('https://example.com/fiets');
     const stats = await ctx.app.inject({ url: `/api/sponsors/stats/${request.json().statsToken}` });
-    expect(stats.json().totals).toEqual({ impressions: 2, clicks: 1 });
+    expect(stats.json().totals).toMatchObject({ impressions: 2, clicks: 1, mailClicks: 0 });
     expect(stats.json().offer).toMatchObject({ title: 'Gratis proefrit', status: 'active' });
     expect(stats.json().offer.contactEmail).toBeUndefined();
     expect((await ctx.app.inject({ url: '/api/sponsors/stats/not-a-real-token-at-all' })).statusCode).toBe(404);

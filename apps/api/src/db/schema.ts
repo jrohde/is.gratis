@@ -245,6 +245,9 @@ export const offerStats = pgTable(
     day: date('day').notNull(),
     impressions: integer('impressions').notNull().default(0),
     clicks: integer('clicks').notNull().default(0),
+    /** Weekly mails the offer was in, and clicks from those mails (not counted in clicks). */
+    mailSends: integer('mail_sends').notNull().default(0),
+    mailClicks: integer('mail_clicks').notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.offerId, table.day] })],
 );

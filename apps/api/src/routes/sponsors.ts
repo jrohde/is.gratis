@@ -27,6 +27,14 @@ import { sponsoredOffers } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { advertisablePages, quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
 
+const statsRowSchema = z.object({
+  impressions: z.number().int(),
+  clicks: z.number().int(),
+  mailSends: z.number().int(),
+  mailClicks: z.number().int(),
+  pageViews: z.number().int(),
+});
+
 const plain = (max: number) =>
   z
     .string()
@@ -105,10 +113,11 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         tags: ['sponsors'],
         summary: 'Count a click on an offer and go to it',
         params: z.object({ id: z.uuid() }),
+        querystring: z.object({ from: z.enum(['mail']).optional() }),
       },
     },
     async (request, reply) => {
-      const url = await clickOffer(db, request.params.id);
+      const url = await clickOffer(db, request.params.id, request.query.from === 'mail' ? 'mail' : 'page');
       reply.header('cache-control', 'no-store');
       if (!url) return reply.code(404).send({ error: 'not_found', message: 'This offer is not running' });
       return reply.redirect(url, 302);
@@ -131,11 +140,16 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
               advertiserName: z.string(),
               status: bookingStatusSchema,
               priceCents: z.number().int().nullable(),
+              exclusive: z.boolean(),
+              inMailing: z.boolean(),
               startsAt: z.string().nullable(),
               endsAt: z.string().nullable(),
             }),
-            days: z.array(z.object({ day: z.string(), impressions: z.number().int(), clicks: z.number().int() })),
-            totals: z.object({ impressions: z.number().int(), clicks: z.number().int() }),
+            days: z.array(statsRowSchema.extend({ day: z.string() })),
+            totals: statsRowSchema,
+            reach: z.number().nullable(),
+            averageClickRate: z.number().nullable(),
+            costPerClickCents: z.number().int().nullable(),
           }),
           404: errorSchema,
         },
@@ -144,6 +158,29 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     async (request, reply) => {
       reply.header('cache-control', 'private, no-store');
       return statsForToken(db, request.params.token);
+    },
+  );
+
+  app.get(
+    '/sponsors/stats/:token/csv',
+    {
+      schema: {
+        tags: ['sponsors'],
+        summary: 'The daily numbers of one offer as CSV',
+        params: z.object({ token: z.string().min(16).max(128) }),
+      },
+    },
+    async (request, reply) => {
+      const { days } = await statsForToken(db, request.params.token);
+      const csv = [
+        'day,page_views,impressions,clicks,mail_sends,mail_clicks',
+        ...days.map((d) => [d.day, d.pageViews, d.impressions, d.clicks, d.mailSends, d.mailClicks].join(',')),
+      ].join('\n');
+      return reply
+        .header('content-type', 'text/csv; charset=utf-8')
+        .header('content-disposition', 'attachment; filename="is.gratis-statistieken.csv"')
+        .header('cache-control', 'private, no-store')
+        .send(`${csv}\n`);
     },
   );
 

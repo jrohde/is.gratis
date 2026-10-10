@@ -9,11 +9,35 @@ import { CACHE } from '~/lib/cache';
 import { formatDate, formatNumber, formatPrice, messages } from '~/lib/i18n';
 import { useUiLang } from '~/lib/use-lang';
 
-interface Stats {
-  offer: { lang: string; slug: string; title: string; advertiserName: string; status: string; priceCents: number | null; startsAt: string | null; endsAt: string | null };
-  days: Array<{ day: string; impressions: number; clicks: number }>;
-  totals: { impressions: number; clicks: number };
+interface StatsRow {
+  impressions: number;
+  clicks: number;
+  mailSends: number;
+  mailClicks: number;
+  pageViews: number;
 }
+
+interface Stats {
+  offer: {
+    lang: string;
+    slug: string;
+    title: string;
+    advertiserName: string;
+    status: string;
+    priceCents: number | null;
+    exclusive: boolean;
+    inMailing: boolean;
+    startsAt: string | null;
+    endsAt: string | null;
+  };
+  days: Array<StatsRow & { day: string }>;
+  totals: StatsRow;
+  reach: number | null;
+  averageClickRate: number | null;
+  costPerClickCents: number | null;
+}
+
+const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
 export async function loader({ params }: Route.LoaderArgs) {
   try {
@@ -32,8 +56,27 @@ export const meta: Route.MetaFunction = () => [{ title: 'Statistieken · is.grat
 export default function AdvertiseStats({ loaderData }: Route.ComponentProps) {
   const lang = useUiLang();
   const t = messages(lang);
-  const { offer, days, totals } = loaderData.stats;
-  const rate = totals.impressions ? (totals.clicks / totals.impressions) * 100 : 0;
+  const { offer, days, totals, reach, averageClickRate, costPerClickCents } = loaderData.stats;
+  const token = useParams().token ?? '';
+  const rate = totals.impressions ? totals.clicks / totals.impressions : 0;
+  const mailRate = totals.mailSends ? totals.mailClicks / totals.mailSends : 0;
+  const showMail = offer.inMailing || totals.mailSends > 0;
+  const tiles: Array<{ label: string; value: string; hint?: string }> = [
+    { label: t.statsShown, value: formatNumber(totals.impressions, lang), ...(reach !== null ? { hint: t.statsReach(percent(reach)) } : {}) },
+    { label: t.statsClicks, value: formatNumber(totals.clicks, lang) },
+    {
+      label: t.statsRate,
+      value: percent(rate),
+      ...(averageClickRate !== null ? { hint: t.statsAverage(percent(averageClickRate)) } : {}),
+    },
+    ...(showMail
+      ? [
+          { label: t.statsMailSends, value: formatNumber(totals.mailSends, lang) },
+          { label: t.statsMailClicks, value: formatNumber(totals.mailClicks, lang), hint: t.statsMailRate(percent(mailRate)) },
+        ]
+      : []),
+    ...(costPerClickCents !== null ? [{ label: t.statsCostPerClick, value: formatPrice(costPerClickCents, lang) }] : []),
+  ];
   return (
     <Container size="sm">
       <Stack gap="lg">
@@ -51,19 +94,20 @@ export default function AdvertiseStats({ loaderData }: Route.ComponentProps) {
             </Text>
           </Group>
         </Stack>
-        <SimpleGrid cols={3}>
-          {[
-            [t.statsShown, formatNumber(totals.impressions, lang)],
-            [t.statsClicks, formatNumber(totals.clicks, lang)],
-            [t.statsRate, `${rate.toFixed(1)}%`],
-          ].map(([label, value]) => (
-            <Card key={label} withBorder padding="md">
+        <SimpleGrid cols={{ base: 2, sm: 3 }}>
+          {tiles.map((tile) => (
+            <Card key={tile.label} withBorder padding="md">
               <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                {label}
+                {tile.label}
               </Text>
               <Text fz={28} fw={900}>
-                {value}
+                {tile.value}
               </Text>
+              {tile.hint && (
+                <Text size="xs" c="dimmed">
+                  {tile.hint}
+                </Text>
+              )}
             </Card>
           ))}
         </SimpleGrid>
@@ -74,20 +118,31 @@ export default function AdvertiseStats({ loaderData }: Route.ComponentProps) {
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>{t.statsDay}</Table.Th>
+                <Table.Th ta="right">{t.statsPageViews}</Table.Th>
                 <Table.Th ta="right">{t.statsShown}</Table.Th>
                 <Table.Th ta="right">{t.statsClicks}</Table.Th>
+                {showMail && <Table.Th ta="right">{t.statsMailClicks}</Table.Th>}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {[...days].reverse().map((day) => (
                 <Table.Tr key={day.day}>
                   <Table.Td>{formatDate(day.day, lang)}</Table.Td>
+                  <Table.Td ta="right">{formatNumber(day.pageViews, lang)}</Table.Td>
                   <Table.Td ta="right">{formatNumber(day.impressions, lang)}</Table.Td>
                   <Table.Td ta="right">{formatNumber(day.clicks, lang)}</Table.Td>
+                  {showMail && <Table.Td ta="right">{formatNumber(day.mailClicks, lang)}</Table.Td>}
                 </Table.Tr>
               ))}
             </Table.Tbody>
           </Table>
+        )}
+        {days.length > 0 && (
+          <div>
+            <Button component="a" href={`/api/sponsors/stats/${token}/csv`} variant="default" size="xs">
+              {t.statsCsv}
+            </Button>
+          </div>
         )}
         <Renew />
         <Text size="xs" c="dimmed">
