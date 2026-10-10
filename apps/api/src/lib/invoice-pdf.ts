@@ -49,7 +49,7 @@ export const INVOICE_WORDS: Record<
     vat: (rate: string) => string;
     total: string;
     payOnline: (url: string) => string;
-    transfer: (total: string, iban: string, name: string, number: string) => string;
+    transfer: (total: string, iban: string, name: string, number: string, alone: boolean) => string;
     scan: string;
     paid: string;
     void: string;
@@ -69,7 +69,7 @@ export const INVOICE_WORDS: Record<
     vat: (rate) => `Btw ${rate}`,
     total: 'Totaal',
     payOnline: (url) => `Betaal online met iDEAL, Bancontact of creditcard: ${url}`,
-    transfer: (total, iban, name, number) => `Of maak ${total} over naar ${iban} t.n.v. ${name}, onder vermelding van ${number}.`,
+    transfer: (total, iban, name, number, alone) => `${alone ? 'Maak' : 'Of maak'} ${total} over naar ${iban} t.n.v. ${name}, onder vermelding van ${number}.`,
     scan: 'Scan met je bank-app',
     paid: 'BETAALD',
     void: 'VERVALLEN',
@@ -88,7 +88,7 @@ export const INVOICE_WORDS: Record<
     vat: (rate) => `VAT ${rate}`,
     total: 'Total',
     payOnline: (url) => `Pay online with iDEAL, Bancontact or card: ${url}`,
-    transfer: (total, iban, name, number) => `Or transfer ${total} to ${iban} in the name of ${name}, mentioning ${number}.`,
+    transfer: (total, iban, name, number, alone) => `${alone ? 'Please transfer' : 'Or transfer'} ${total} to ${iban} in the name of ${name}, mentioning ${number}.`,
     scan: 'Scan with your banking app',
     paid: 'PAID',
     void: 'VOID',
@@ -107,7 +107,7 @@ export const INVOICE_WORDS: Record<
     vat: (rate) => `MwSt. ${rate}`,
     total: 'Gesamt',
     payOnline: (url) => `Online bezahlen mit iDEAL, Bancontact oder Kreditkarte: ${url}`,
-    transfer: (total, iban, name, number) => `Oder überweise ${total} an ${iban}, Empfänger ${name}, mit dem Verwendungszweck ${number}.`,
+    transfer: (total, iban, name, number, alone) => `${alone ? 'Bitte überweise' : 'Oder überweise'} ${total} an ${iban}, Empfänger ${name}, mit dem Verwendungszweck ${number}.`,
     scan: 'Mit der Banking-App scannen',
     paid: 'BEZAHLT',
     void: 'STORNIERT',
@@ -126,7 +126,7 @@ export const INVOICE_WORDS: Record<
     vat: (rate) => `IVA ${rate}`,
     total: 'Total',
     payOnline: (url) => `Paga en línea con iDEAL, Bancontact o tarjeta: ${url}`,
-    transfer: (total, iban, name, number) => `O transfiere ${total} a ${iban} a nombre de ${name}, indicando ${number}.`,
+    transfer: (total, iban, name, number, alone) => `${alone ? 'Transfiere' : 'O transfiere'} ${total} a ${iban} a nombre de ${name}, indicando ${number}.`,
     scan: 'Escanea con tu app bancaria',
     paid: 'PAGADA',
     void: 'ANULADA',
@@ -248,12 +248,13 @@ export async function renderInvoicePdf(invoice: InvoiceForPdf, seller: Seller, p
   if (invoice.status === 'open') {
     doc.font('Helvetica').fontSize(10).fillColor(BRAND_INK);
     const textWidth = seller.iban ? width - 130 : width;
+    let textY = y;
     if (payUrl) {
-      doc.text(words.payOnline(payUrl), left, y, { width: textWidth });
-      doc.moveDown(0.5);
+      doc.text(words.payOnline(payUrl), left, textY, { width: textWidth });
+      textY = doc.y + 8;
     }
     if (seller.iban) {
-      doc.text(words.transfer(money(invoice.totalCents, invoice.lang), seller.iban, seller.companyName, invoice.number), left, doc.y, {
+      doc.text(words.transfer(money(invoice.totalCents, invoice.lang), seller.iban, seller.companyName, invoice.number, !payUrl), left, textY, {
         width: textWidth,
       });
       const qr = await QRCode.toBuffer(

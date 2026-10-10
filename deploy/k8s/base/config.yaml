@@ -37,6 +37,16 @@ data:
   SPONSOR_MAILING_PRICE_CENTS: '500'
   # Being the only offer on a page for its readers costs this percentage of the normal price.
   SPONSOR_EXCLUSIVE_PERCENT: '250'
+  # Invoicing: approving an offer issues an invoice. Your details are printed on every invoice.
+  BILLING_ENABLED: 'true'
+  COMPANY_NAME: 'is.gratis'
+  COMPANY_ADDRESS: 'Straat 1|1234 AB Plaats'
+  COMPANY_KVK: ''
+  COMPANY_VAT_NUMBER: ''
+  COMPANY_IBAN: ''
+  COMPANY_BIC: ''
+  VAT_RATE_BPS: '2100'
+  INVOICE_DUE_DAYS: '14'
   # Mail goes out through your own SMTP server (SMTP_URL in the Secret, e.g.
   # smtp://user:pass@mail.mail.svc:587). Without it the bot only writes mail to its log.
   MAIL_FROM: 'is.gratis <hallo@is.gratis>'
@@ -72,6 +82,7 @@ data:
 #     --from-literal=LLM_API_KEY=sk-... \
 #     --from-literal=IMAGE_API_KEY= \
 #     --from-literal=EDITOR_API_KEY= \
+#     --from-literal=MOLLIE_API_KEY=live_... \
 #     --from-literal=SMTP_URL='smtp://user:password@mail.example:587' \
 #     --from-literal=BOT_MASTODON='[{"lang":"nl","url":"https://mastodon.example","token":"..."}]' \
 #     --from-literal=BOT_BLUESKY='[{"lang":"en","identifier":"isgratis.bsky.social","password":"app-password"}]'

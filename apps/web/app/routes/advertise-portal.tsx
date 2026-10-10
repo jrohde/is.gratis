@@ -28,6 +28,45 @@ import { useUiLang } from '~/lib/use-lang';
 export const headers: Route.HeadersFunction = () => ({ 'Cache-Control': CACHE.none });
 export const meta: Route.MetaFunction = () => [{ title: 'Portaal · is.gratis' }, { name: 'robots', content: 'noindex' }];
 
+interface PortalInvoice {
+  number: string;
+  token: string;
+  status: 'open' | 'paid' | 'void';
+  totalCents: number;
+  issuedAt: string;
+  dueAt: string;
+}
+
+const INVOICE_COLORS = { open: 'yellow', paid: 'green', void: 'gray' } as const;
+
+function Invoices({ invoices, lang }: { invoices: PortalInvoice[]; lang: Language }) {
+  const t = messages(lang);
+  if (invoices.length === 0) return null;
+  return (
+    <Card withBorder padding="lg">
+      <Stack gap="xs">
+        <Title order={2} size="h4">
+          {t.invoicesTitle}
+        </Title>
+        {invoices.map((invoice) => (
+          <Group key={invoice.number} justify="space-between" wrap="nowrap">
+            <Anchor component={Link} to={`/advertise/invoice/${invoice.token}?lang=${lang}`} fw={600}>
+              {invoice.number}
+            </Anchor>
+            <Text size="sm" c="dimmed">
+              {formatDate(invoice.issuedAt, lang)}
+            </Text>
+            <Text size="sm">{formatPrice(invoice.totalCents, lang)}</Text>
+            <Badge color={INVOICE_COLORS[invoice.status]} variant="light">
+              {t.invoiceStatus[invoice.status]}
+            </Badge>
+          </Group>
+        ))}
+      </Stack>
+    </Card>
+  );
+}
+
 interface PortalOffer {
   id: string;
   statsToken: string;
@@ -41,6 +80,7 @@ interface PortalOffer {
   status: 'pending' | 'active' | 'rejected' | 'expired';
   priceCents: number | null;
   exclusive: boolean;
+  awaitingPayment: boolean;
   inMailing: boolean;
   mailingPriceCents: number | null;
   startsAt: string | null;
@@ -66,7 +106,7 @@ function Steps({ offer, lang }: { offer: PortalOffer; lang: Language }) {
   const failed = <IconX size={12} />;
   const approved = offer.status === 'active' || offer.status === 'expired';
   const now = Date.now();
-  const started = approved && (!offer.startsAt || new Date(offer.startsAt).getTime() <= now);
+  const started = approved && !offer.awaitingPayment && (!offer.startsAt || new Date(offer.startsAt).getTime() <= now);
   // The step the request is at: the ones before it are done.
   const hasEditorStep = Boolean(offer.editor) || offer.status === 'pending';
   const approvalStep = hasEditorStep ? 2 : 1;
@@ -114,8 +154,15 @@ function Steps({ offer, lang }: { offer: PortalOffer; lang: Language }) {
           {offer.status === 'rejected' ? steps.rejected : approved ? steps.approved : steps.approvalWaiting}
         </Text>
       </Timeline.Item>
+      {offer.awaitingPayment && (
+        <Timeline.Item bullet={waiting} title={steps.payment}>
+          <Text size="xs" c="dimmed">
+            {steps.paymentWaiting}
+          </Text>
+        </Timeline.Item>
+      )}
       {offer.status !== 'rejected' && (
-        <Timeline.Item bullet={started ? done : waiting} title={steps.visible}>
+        <Timeline.Item bullet={started && !offer.awaitingPayment ? done : waiting} title={steps.visible}>
           <Text size="xs" c="dimmed">
             {offer.status === 'expired' && offer.endsAt
               ? steps.ended(formatDate(offer.endsAt, lang))
@@ -238,9 +285,9 @@ function LoginForm({ lang }: { lang: Language }) {
 export default function AdvertisePortal() {
   const lang = useUiLang();
   const t = messages(lang);
-  const [me, setMe] = useState<{ email: string; offers: PortalOffer[] } | null | undefined>(undefined);
+  const [me, setMe] = useState<{ email: string; offers: PortalOffer[]; invoices: PortalInvoice[] } | null | undefined>(undefined);
   const load = () =>
-    api<{ email: string; offers: PortalOffer[] }>('GET', '/advertisers/me')
+    api<{ email: string; offers: PortalOffer[]; invoices: PortalInvoice[] }>('GET', '/advertisers/me')
       .then(setMe)
       .catch(() => setMe(null));
   useEffect(() => {
@@ -283,6 +330,7 @@ export default function AdvertisePortal() {
             ) : (
               me.offers.map((offer) => <OfferCard key={offer.id} offer={offer} lang={lang} />)
             )}
+            <Invoices invoices={me.invoices} lang={lang} />
           </>
         )}
       </Stack>

@@ -12,6 +12,9 @@ import { useUiLang } from '~/lib/use-lang';
 export const headers: Route.HeadersFunction = () => ({ 'Cache-Control': CACHE.short });
 export const meta: Route.MetaFunction = () => [{ title: 'Adverteren · is.gratis' }];
 
+/** Countries an advertiser can be invoiced in: the countries among the regions. */
+const BILLING_COUNTRIES = REGIONS.filter((region) => region !== 'EU' && region !== 'WORLD');
+
 export default function Advertise() {
   const uiLang = useUiLang();
   const t = messages(uiLang);
@@ -29,6 +32,9 @@ export default function Advertise() {
     message: '',
     mailing: false,
     exclusive: false,
+    billingAddress: '',
+    billingCountry: 'NL',
+    vatNumber: '',
   });
   const [status, setStatus] = useState<'idle' | 'busy' | 'done'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +65,8 @@ export default function Advertise() {
       const created = await api<{ statsToken: string }>('POST', '/sponsors/requests', {
         ...form,
         exclusive: form.exclusive && Boolean(quote?.exclusiveAvailable),
+        billingAddress: form.billingAddress.trim() || undefined,
+        vatNumber: form.vatNumber.trim() || undefined,
         slug: toSlug(form.slug),
         message: form.message.trim() || undefined,
       });
@@ -156,6 +164,35 @@ export default function Advertise() {
                   label={t.advertiseMailing(quote ? formatPrice(quote.mailingPriceCents, uiLang) : null)}
                   description={t.advertiseMailingHint}
                 />
+                <Title order={3} size="h5" mt="xs">
+                  {t.billingTitle}
+                </Title>
+                <Textarea
+                  label={t.billingAddress}
+                  required
+                  autosize
+                  minRows={2}
+                  maxLength={300}
+                  value={form.billingAddress}
+                  onChange={text('billingAddress')}
+                />
+                <Group grow>
+                  <Select
+                    label={t.billingCountry}
+                    searchable
+                    allowDeselect={false}
+                    value={form.billingCountry}
+                    data={BILLING_COUNTRIES.map((code) => ({ value: code, label: `${regionFlag(code)} ${regionLabel(code, uiLang)}` }))}
+                    onChange={(value) => value && setForm({ ...form, billingCountry: value })}
+                  />
+                  <TextInput
+                    label={t.vatNumber}
+                    description={form.billingCountry !== 'NL' ? t.vatNumberHint : undefined}
+                    maxLength={20}
+                    value={form.vatNumber}
+                    onChange={text('vatNumber')}
+                  />
+                </Group>
                 <Textarea label={t.message} maxLength={2000} autosize minRows={2} value={form.message} onChange={text('message')} />
                 {error && <Alert color="red">{error}</Alert>}
                 <div>

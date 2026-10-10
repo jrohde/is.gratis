@@ -15,6 +15,7 @@ export default [
   route('advertise/stats/:token', 'routes/advertise-stats.tsx'),
   route('advertise/portal', 'routes/advertise-portal.tsx'),
   route('advertise/login/:token', 'routes/advertise-login.tsx'),
+  route('advertise/invoice/:token', 'routes/advertise-invoice.tsx'),
   route('review', 'routes/review.tsx'),
   route('search/:lang', 'routes/search.tsx'),
   route('offers/:lang', 'routes/offers.tsx'),

@@ -88,6 +88,11 @@ function BookingCard({ booking, onChange }: { booking: SponsorBooking; onChange:
                 {formatPrice(booking.priceCents, lang)} / mnd
               </Badge>
             )}
+            {booking.awaitingPayment && (
+              <Badge variant="light" color="orange">
+                {t.awaitingPaymentBadge}
+              </Badge>
+            )}
             {booking.exclusive && (
               <Badge variant="filled" color="dark">
                 {t.exclusiveBadge}
@@ -365,6 +370,118 @@ interface EditorReview {
 
 const DECISION_COLORS = { publish: 'green', revise: 'teal', reject: 'orange', error: 'red' } as const;
 
+interface AdminInvoice {
+  id: string;
+  number: string;
+  token: string;
+  customerName: string;
+  customerEmail: string;
+  totalCents: number;
+  vatCents: number;
+  status: 'open' | 'paid' | 'void';
+  issuedAt: string;
+  dueAt: string;
+  paidVia: string | null;
+}
+
+const INVOICE_COLORS = { open: 'yellow', paid: 'green', void: 'gray' } as const;
+
+/** Invoices: mark paid or void, import a bank statement, export a quarter for the bookkeeping. */
+function InvoicesAdmin() {
+  const lang = useUiLang();
+  const t = messages(lang);
+  const [invoices, setInvoices] = useState<AdminInvoice[] | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+  const now = new Date();
+  const [year, setYear] = useState(String(now.getUTCFullYear()));
+  const [quarter, setQuarter] = useState(String(Math.floor(now.getUTCMonth() / 3) + 1));
+  const load = useCallback(() => {
+    void api<{ invoices: AdminInvoice[] }>('GET', '/admin/invoices').then((r) => setInvoices(r.invoices));
+  }, []);
+  useEffect(load, [load]);
+
+  async function act(id: string, action: 'paid' | 'void') {
+    if (action === 'void' && !window.confirm(t.invoiceVoidConfirm)) return;
+    await api('POST', `/admin/invoices/${id}/${action}`);
+    load();
+  }
+
+  async function upload(file: File) {
+    const content = await file.text();
+    const r = await api<{ matched: string[]; unmatched: number }>('POST', '/admin/invoices/statement', { content });
+    setResult(t.statementResult(r.matched, r.unmatched));
+    load();
+  }
+
+  if (invoices === null) return <Loader />;
+  const overdue = (invoice: AdminInvoice) => invoice.status === 'open' && new Date(invoice.dueAt).getTime() < Date.now();
+  return (
+    <Stack gap="md">
+      <Group align="end" gap="md">
+        <div>
+          <Text size="sm" fw={600} mb={4}>
+            {t.statementUpload}
+          </Text>
+          <input type="file" accept=".xml,.sta,.940,.txt" onChange={(e) => e.currentTarget.files?.[0] && void upload(e.currentTarget.files[0])} />
+        </div>
+        <Group gap="xs" align="end">
+          <Select label={t.exportYear} w={100} value={year} onChange={(v) => v && setYear(v)} data={[0, 1, 2].map((i) => String(now.getUTCFullYear() - i))} />
+          <Select label={t.exportQuarter} w={80} value={quarter} onChange={(v) => v && setQuarter(v)} data={['1', '2', '3', '4']} />
+          <Button component="a" variant="default" href={`/api/admin/invoices/export?year=${year}&quarter=${quarter}`}>
+            CSV
+          </Button>
+        </Group>
+      </Group>
+      {result && <Alert color="green">{result}</Alert>}
+      {invoices.length === 0 ? (
+        <Text c="dimmed">—</Text>
+      ) : (
+        <Table striped>
+          <Table.Tbody>
+            {invoices.map((invoice) => (
+              <Table.Tr key={invoice.id}>
+                <Table.Td>
+                  <Anchor href={`/advertise/invoice/${invoice.token}`} fw={600}>
+                    {invoice.number}
+                  </Anchor>
+                </Table.Td>
+                <Table.Td>
+                  {invoice.customerName}
+                  <Text size="xs" c="dimmed">
+                    {invoice.customerEmail}
+                  </Text>
+                </Table.Td>
+                <Table.Td ta="right">{formatPrice(invoice.totalCents, lang)}</Table.Td>
+                <Table.Td>
+                  <Badge color={overdue(invoice) ? 'red' : INVOICE_COLORS[invoice.status]} variant="light">
+                    {overdue(invoice) ? t.invoiceOverdue : t.invoiceStatus[invoice.status]}
+                    {invoice.paidVia ? ` · ${invoice.paidVia}` : ''}
+                  </Badge>
+                </Table.Td>
+                <Table.Td c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                  {formatDate(invoice.issuedAt, lang)}
+                </Table.Td>
+                <Table.Td>
+                  {invoice.status === 'open' && (
+                    <Group gap={4} wrap="nowrap">
+                      <Button size="compact-xs" variant="light" onClick={() => void act(invoice.id, 'paid')}>
+                        {t.invoiceMarkPaid}
+                      </Button>
+                      <Button size="compact-xs" variant="subtle" color="red" onClick={() => void act(invoice.id, 'void')}>
+                        {t.invoiceVoid}
+                      </Button>
+                    </Group>
+                  )}
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      )}
+    </Stack>
+  );
+}
+
 interface MailingStats {
   lists: Array<{ list: string; lang: string; confirmed: number; waiting: number }>;
   outbox: Record<string, number>;
@@ -554,6 +671,7 @@ export default function Admin() {
         <Tabs defaultValue="sponsors" keepMounted={false}>
           <Tabs.List mb="md">
             <Tabs.Tab value="sponsors">{t.advertiseTitle}</Tabs.Tab>
+            <Tabs.Tab value="invoices">{t.invoicesTitle}</Tabs.Tab>
             <Tabs.Tab value="drafts">{t.bulkTitle}</Tabs.Tab>
             <Tabs.Tab value="views">{t.viewsTitle}</Tabs.Tab>
             <Tabs.Tab value="users">{t.usersTitle}</Tabs.Tab>
@@ -569,6 +687,9 @@ export default function Admin() {
               {bookings === null ? <Loader /> : bookings.length === 0 ? <Text c="dimmed">–</Text> : null}
               {bookings?.map((booking) => <BookingCard key={booking.id} booking={booking} onChange={() => void load()} />)}
             </Stack>
+          </Tabs.Panel>
+          <Tabs.Panel value="invoices">
+            <InvoicesAdmin />
           </Tabs.Panel>
           <Tabs.Panel value="drafts">
             <BulkDrafts />

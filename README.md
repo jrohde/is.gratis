@@ -322,6 +322,33 @@ Eerlijk spel tussen adverteerders:
   "misleidend"). De melding komt bij de moderatoren, en de redactie bekijkt
   de aanbieding opnieuw, inclusief de landingspagina.
 
+## Facturen en betalen
+
+Keurt de beheerder een aanvraag goed, dan maakt de API een factuur: een
+doorlopend nummer per jaar (2026-0001, ...), de geboekte maanden tegen de
+maandprijs, de mailing, en btw. Zonder einddatum loopt een boeking een maand.
+
+- **Btw**: Nederlandse btw (`VAT_RATE_BPS`, standaard 21%); verlegd voor
+  bedrijven elders in de EU met een btw-nummer; geen Nederlandse btw buiten
+  de EU. Laat je boekhouder dit bevestigen voor jouw situatie.
+- **Vooraf of achteraf**: nieuwe adverteerders betalen vooraf; hun aanbod
+  wacht ("wacht op betaling") tot de factuur betaald is. Wie al eens betaalde,
+  gaat direct live en betaalt binnen `INVOICE_DUE_DAYS`.
+- **Online betalen** via Mollie (iDEAL, Bancontact, kaart) met de knop op de
+  factuurpagina. Mollie meldt een betaling via
+  `POST /api/payments/mollie/webhook`; de API vraagt de status altijd bij
+  Mollie zelf na voordat ze iets doet. Zet `MOLLIE_API_KEY` in de Secret; met
+  een `test_`-sleutel kun je alles proberen zonder echt geld.
+- **Overmaken**: de PDF heeft een QR-code (EPC) die bank-apps lezen, met
+  rekeningnummer, bedrag en factuurnummer. Upload in het beheer (tab Facturen)
+  een afschrift als CAMT.053 of MT940 (ABN AMRO: Internet Bankieren →
+  Downloaden); facturen waarvan nummer en bedrag kloppen, gaan op betaald.
+- **Herinneringen**: de bot stuurt één herinnering een dag na de vervaldatum,
+  en een week voor het einde van een aanbieding een mail met de cijfers en
+  een verlengknop.
+- **Boekhouding**: facturen worden nooit verwijderd, alleen op vervallen
+  gezet. Per kwartaal is er een CSV-export.
+
 ## Mailinglijsten
 
 Losse lijsten, elk apart aan te melden; nieuwe lijsten kunnen erbij
