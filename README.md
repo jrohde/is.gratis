@@ -325,7 +325,9 @@ Eerlijk spel tussen adverteerders:
 ## Facturen en betalen
 
 Keurt de beheerder een aanvraag goed, dan maakt de API een factuur: een
-doorlopend nummer per jaar (2026-0001, ...), de geboekte maanden tegen de
+doorlopend nummer per jaar met een eigen voorvoegsel (`INVOICE_PREFIX`,
+standaard IG: IG2026-0001, ...), zodat deze reeks nooit botst met je andere
+facturen, de geboekte maanden tegen de
 maandprijs, de mailing, en btw. Zonder einddatum loopt een boeking een maand.
 
 - **Btw**: Nederlandse btw (`VAT_RATE_BPS`, standaard 21%); verlegd voor
@@ -337,12 +339,16 @@ maandprijs, de mailing, en btw. Zonder einddatum loopt een boeking een maand.
 - **Online betalen** via Mollie (iDEAL, Bancontact, kaart) met de knop op de
   factuurpagina. Mollie meldt een betaling via
   `POST /api/payments/mollie/webhook`; de API vraagt de status altijd bij
-  Mollie zelf na voordat ze iets doet. Zet `MOLLIE_API_KEY` in de Secret; met
-  een `test_`-sleutel kun je alles proberen zonder echt geld.
+  Mollie zelf na voordat ze iets doet, en negeert betalingen die niet bij een
+  is.gratis-factuur horen. Gebruik je Mollie al voor iets anders, maak dan in
+  Mollie een apart websiteprofiel voor is.gratis en zet de API-sleutel van dat
+  profiel als `MOLLIE_API_KEY` in de Secret; met een `test_`-sleutel kun je
+  alles proberen zonder echt geld.
 - **Overmaken**: de PDF heeft een QR-code (EPC) die bank-apps lezen, met
   rekeningnummer, bedrag en factuurnummer. Upload in het beheer (tab Facturen)
   een afschrift als CAMT.053 of MT940 (ABN AMRO: Internet Bankieren →
   Downloaden); facturen waarvan nummer en bedrag kloppen, gaan op betaald.
+  Andere ontvangsten op dezelfde rekening worden genegeerd.
 - **Herinneringen**: de bot stuurt één herinnering een dag na de vervaldatum,
   en een week voor het einde van een aanbieding een mail met de cijfers en
   een verlengknop.

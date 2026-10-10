@@ -47,6 +47,8 @@ data:
   COMPANY_BIC: ''
   VAT_RATE_BPS: '2100'
   INVOICE_DUE_DAYS: '14'
+  # Before every invoice number (IG2026-0001), so this series never mixes with your other invoices.
+  INVOICE_PREFIX: 'IG'
   # Mail goes out through your own SMTP server (SMTP_URL in the Secret, e.g.
   # smtp://user:pass@mail.mail.svc:587). Without it the bot only writes mail to its log.
   MAIL_FROM: 'is.gratis <hallo@is.gratis>'

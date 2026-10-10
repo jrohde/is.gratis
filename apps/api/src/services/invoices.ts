@@ -37,14 +37,14 @@ export function monthsIn(start: Date, end: Date): number {
   return Math.max(1, Math.round((end.getTime() - start.getTime()) / (30.44 * 86_400_000)));
 }
 
-/** The next number of the year, without gaps: 2026-0001, 2026-0002, ... */
-async function nextNumber(db: Database, year: number): Promise<string> {
+/** The next number of the year, without gaps: IG2026-0001, IG2026-0002, ... */
+async function nextNumber(db: Database, year: number, prefix: string): Promise<string> {
   const [row] = await db
     .insert(invoiceCounters)
     .values({ year, last: 1 })
     .onConflictDoUpdate({ target: invoiceCounters.year, set: { last: sql`${invoiceCounters.last} + 1` } })
     .returning();
-  return `${year}-${String(row!.last).padStart(4, '0')}`;
+  return `${prefix}${year}-${String(row!.last).padStart(4, '0')}`;
 }
 
 /** Has this address paid an invoice before? Then it may go live before paying. */
@@ -99,7 +99,7 @@ export async function invoiceOffer(deps: BillingDeps, offerId: string): Promise<
   const [invoice] = await deps.db
     .insert(invoices)
     .values({
-      number: await nextNumber(deps.db, issuedAt.getUTCFullYear()),
+      number: await nextNumber(deps.db, issuedAt.getUTCFullYear(), deps.billing.invoicePrefix),
       token: newToken(),
       offerId: offer.id,
       lang,
@@ -261,14 +261,17 @@ export function parseStatement(content: string): StatementCredit[] {
 
 /**
  * Matches incoming transfers to open invoices by the invoice number in the description and the
- * exact amount. Anything that does not match is left for a person.
+ * exact amount. The account may receive other money too: anything that does not match is left
+ * alone, for a person.
  */
 export async function importStatement(deps: BillingDeps, content: string): Promise<{ matched: string[]; unmatched: number }> {
   const credits = parseStatement(content);
   const matched: string[] = [];
   let unmatched = 0;
+  // People type "IG2026-0001", "ig 2026 0001" or "IG20260001"; the prefix is required.
+  const pattern = new RegExp(`\\b${deps.billing.invoicePrefix}\\s?(20\\d{2})[-\\s]?(\\d{4})\\b`, 'gi');
   for (const credit of credits) {
-    const numbers = [...credit.text.matchAll(/\b(20\d{2})[-\s]?(\d{4})\b/g)].map((m) => `${m[1]}-${m[2]}`);
+    const numbers = [...credit.text.matchAll(pattern)].map((m) => `${deps.billing.invoicePrefix}${m[1]}-${m[2]}`);
     let found = false;
     for (const number of numbers) {
       const [invoice] = await deps.db

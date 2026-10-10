@@ -111,6 +111,8 @@ export interface Config {
     /** Dutch VAT in basis points: 2100 is 21%. */
     vatRateBps: number;
     dueDays: number;
+    /** Before every invoice number, so this series never mixes with your other invoices: IG2026-0001. */
+    invoicePrefix: string;
     /** Mollie API key (live_... or test_...). Without it invoices are paid by bank transfer only. */
     mollieApiKey: string;
   };
@@ -239,6 +241,7 @@ export function loadConfig(): Config {
       bic: str('COMPANY_BIC', ''),
       vatRateBps: int('VAT_RATE_BPS', 2100),
       dueDays: int('INVOICE_DUE_DAYS', 14),
+      invoicePrefix: str('INVOICE_PREFIX', 'IG').replace(/[^A-Za-z]/g, '').toUpperCase(),
       mollieApiKey: str('MOLLIE_API_KEY', ''),
     },
     mail: {

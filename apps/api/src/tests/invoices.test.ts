@@ -116,7 +116,7 @@ describe('invoices', () => {
     expect(await visibleOffers()).toEqual([]);
 
     const [mail] = await sentMail();
-    expect(mail!.subject).toBe(`Factuur ${new Date().getUTCFullYear()}-0001 van is.gratis`);
+    expect(mail!.subject).toBe(`Factuur IG${new Date().getUTCFullYear()}-0001 van is.gratis`);
     expect(mail!.text).toContain('Je aanbod gaat live zodra de betaling binnen is.');
     const token = invoiceToken(mail!);
 
@@ -200,7 +200,10 @@ describe('bank statements', () => {
       ctx.app.inject({ method: 'POST', url: '/api/admin/invoices/statement', headers: { cookie: admin }, payload: { content } });
     const wrongAmount = await upload(camt(((invoice!.total_cents - 100) / 100).toFixed(2), `Factuur ${invoice!.number}`));
     expect(wrongAmount.json()).toEqual({ matched: [], unmatched: 1 });
-    const right = await upload(camt((invoice!.total_cents / 100).toFixed(2), `betaling factuur ${invoice!.number.replace('-', ' ')}`));
+    // Other money on the same account is left alone.
+    const other = await upload(camt((invoice!.total_cents / 100).toFixed(2), 'Huur maart 2026-0001'));
+    expect(other.json()).toEqual({ matched: [], unmatched: 1 });
+    const right = await upload(camt((invoice!.total_cents / 100).toFixed(2), `betaling ${invoice!.number.replace('-', ' ').toLowerCase()}`));
     expect(right.json()).toEqual({ matched: [invoice!.number], unmatched: 0 });
     expect(await visibleOffers()).toHaveLength(1);
   });

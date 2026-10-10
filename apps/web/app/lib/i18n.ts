@@ -423,7 +423,7 @@ const nl = {
   invoiceVoidConfirm: 'Deze factuur laten vervallen? Het nummer blijft bestaan.',
   statementUpload: 'Bankafschrift inlezen (CAMT.053 of MT940)',
   statementResult: (matched: string[], unmatched: number) =>
-    `${matched.length} factuur/facturen op betaald gezet${matched.length ? ` (${matched.join(', ')})` : ''}; ${unmatched} ontvangst(en) niet herkend.`,
+    `${matched.length} factuur/facturen op betaald gezet${matched.length ? ` (${matched.join(', ')})` : ''}; ${unmatched} andere ontvangst(en) genegeerd.`,
   exportYear: 'Jaar',
   exportQuarter: 'Kwartaal',
   awaitingPaymentBadge: 'wacht op betaling',
@@ -852,7 +852,7 @@ const en: Messages = {
   invoiceVoidConfirm: 'Void this invoice? Its number stays taken.',
   statementUpload: 'Import a bank statement (CAMT.053 or MT940)',
   statementResult: (matched: string[], unmatched: number) =>
-    `${matched.length} invoice(s) marked paid${matched.length ? ` (${matched.join(', ')})` : ''}; ${unmatched} payment(s) not recognised.`,
+    `${matched.length} invoice(s) marked paid${matched.length ? ` (${matched.join(', ')})` : ''}; ${unmatched} other payment(s) ignored.`,
   exportYear: 'Year',
   exportQuarter: 'Quarter',
   awaitingPaymentBadge: 'awaiting payment',
