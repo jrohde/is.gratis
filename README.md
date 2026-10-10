@@ -289,6 +289,21 @@ een `name`, een `due(now)` die de sleutels teruggeeft die nu aan de beurt zijn
 korte omschrijving teruggeeft. Voeg hem toe aan `buildTasks`. Herhalen,
 vastleggen en niet-dubbel-doen regelt de planner.
 
+## Adverteerders
+
+Adverteerders hebben geen wachtwoord. Na een aanvraag krijgen ze een mail met
+hun geheime statistiekenlink. Op `/advertise/portal` vragen ze een inloglink
+aan voor het adres van hun aanvragen: die werkt één keer, een half uur lang,
+en geeft een sessie van 30 dagen in een eigen cookie (`isg_adv`), los van de
+accounts van schrijvers. Het portaal toont alle aanbiedingen van dat adres:
+de stappen (ontvangen, redactie, goedkeuring, zichtbaar), wat de redactie
+vond en waarom, de prijs per maand en de mailing-optie, en de cijfers.
+
+Een pagina toont dezelfde lezer hooguit 3 aanbiedingen (`OFFER_SLOTS`).
+Aanbiedingen voor overlappende regio's (een land, de EU, de wereld of overal)
+in een overlappende periode tellen samen; een vierde activeren wordt
+geweigerd, en het aanvraagformulier toont hoeveel plekken er vrij zijn.
+
 ## Mailinglijsten
 
 Losse lijsten, elk apart aan te melden; nieuwe lijsten kunnen erbij

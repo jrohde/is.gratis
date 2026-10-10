@@ -1,4 +1,19 @@
-import { Alert, Anchor, Badge, Button, Card, Container, Group, Loader, SimpleGrid, Stack, Text, TextInput, Timeline, Title } from '@mantine/core';
+import {
+  Alert,
+  Anchor,
+  Badge,
+  Button,
+  Card,
+  Container,
+  Group,
+  Loader,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+  Timeline,
+  Title,
+} from '@mantine/core';
 import { IconCheck, IconClock, IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
@@ -30,7 +45,11 @@ interface PortalOffer {
   startsAt: string | null;
   endsAt: string | null;
   createdAt: string;
-  editor: { decision: 'approve' | 'reject' | 'unsure'; notes: string; suggestion?: { title?: string; description?: string } } | null;
+  editor: {
+    decision: 'approve' | 'reject' | 'unsure';
+    notes: string;
+    suggestion?: { title?: string; description?: string };
+  } | null;
   impressions: number;
   clicks: number;
 }
@@ -48,7 +67,10 @@ function Steps({ offer, lang }: { offer: PortalOffer; lang: Language }) {
   const now = Date.now();
   const started = approved && (!offer.startsAt || new Date(offer.startsAt).getTime() <= now);
   // The step the request is at: the ones before it are done.
-  const active = offer.status === 'rejected' ? 2 : approved ? (started ? 3 : 2) : offer.editor ? 2 : 1;
+  const hasEditorStep = Boolean(offer.editor) || offer.status === 'pending';
+  const approvalStep = hasEditorStep ? 2 : 1;
+  const active =
+    offer.status === 'rejected' ? approvalStep : approved ? (started ? approvalStep + 1 : approvalStep) : offer.editor ? 2 : 1;
   return (
     <Timeline active={active} bulletSize={20} lineWidth={2} color={offer.status === 'rejected' ? 'red' : 'green'}>
       <Timeline.Item bullet={done} title={steps.received}>
@@ -56,25 +78,36 @@ function Steps({ offer, lang }: { offer: PortalOffer; lang: Language }) {
           {formatDate(offer.createdAt, lang)}
         </Text>
       </Timeline.Item>
-      <Timeline.Item bullet={offer.editor ? (offer.editor.decision === 'reject' ? failed : done) : waiting} title={steps.editor}>
-        {offer.editor ? (
-          <Stack gap={4}>
-            <Badge size="sm" variant="light" color={offer.editor.decision === 'approve' ? 'green' : offer.editor.decision === 'reject' ? 'red' : 'orange'}>
-              {t.portalEditor[offer.editor.decision]}
-            </Badge>
-            <Text size="sm">{offer.editor.notes}</Text>
-            {offer.editor.suggestion && (
-              <Text size="sm" c="dimmed">
-                {t.portalSuggestion} {[offer.editor.suggestion.title, offer.editor.suggestion.description].filter(Boolean).join(' — ')}
-              </Text>
-            )}
-          </Stack>
-        ) : (
-          <Text size="xs" c="dimmed">
-            {steps.editorBusy}
-          </Text>
-        )}
-      </Timeline.Item>
+      {/* Offers approved before the editors existed, or while they were off, skip this step. */}
+      {(offer.editor || offer.status === 'pending') && (
+        <Timeline.Item
+          bullet={offer.editor ? (offer.editor.decision === 'reject' ? failed : done) : waiting}
+          title={steps.editor}
+        >
+          {offer.editor ? (
+            <Stack gap={4}>
+              <Badge
+                size="sm"
+                variant="light"
+                color={offer.editor.decision === 'approve' ? 'green' : offer.editor.decision === 'reject' ? 'red' : 'orange'}
+              >
+                {t.portalEditor[offer.editor.decision]}
+              </Badge>
+              <Text size="sm">{offer.editor.notes}</Text>
+              {offer.editor.suggestion && (
+                <Text size="sm" c="dimmed">
+                  {t.portalSuggestion}{' '}
+                  {[offer.editor.suggestion.title, offer.editor.suggestion.description].filter(Boolean).join(' — ')}
+                </Text>
+              )}
+            </Stack>
+          ) : (
+            <Text size="xs" c="dimmed">
+              {steps.editorBusy}
+            </Text>
+          )}
+        </Timeline.Item>
+      )}
       <Timeline.Item bullet={offer.status === 'rejected' ? failed : approved ? done : waiting} title={steps.approval}>
         <Text size="xs" c="dimmed">
           {offer.status === 'rejected' ? steps.rejected : approved ? steps.approved : steps.approvalWaiting}
@@ -89,7 +122,9 @@ function Steps({ offer, lang }: { offer: PortalOffer; lang: Language }) {
                 ? steps.visibleUntil(formatDate(offer.startsAt, lang), formatDate(offer.endsAt, lang))
                 : offer.startsAt
                   ? steps.visibleFrom(formatDate(offer.startsAt, lang))
-                  : ''}
+                  : started
+                    ? steps.visibleNow
+                    : ''}
           </Text>
         </Timeline.Item>
       )}
@@ -118,7 +153,9 @@ function OfferCard({ offer, lang }: { offer: PortalOffer; lang: Language }) {
         </Group>
         <Text size="sm">
           {offer.priceCents !== null && t.portalPerMonth(formatPrice(offer.priceCents, lang))}
-          {offer.inMailing && offer.mailingPriceCents !== null && ` ${t.portalMailing(formatPrice(offer.mailingPriceCents, lang))}`}
+          {offer.inMailing &&
+            offer.mailingPriceCents !== null &&
+            ` ${t.portalMailing(formatPrice(offer.mailingPriceCents, lang))}`}
         </Text>
         <Steps offer={offer} lang={lang} />
         {(offer.status === 'active' || offer.status === 'expired') && (
@@ -175,7 +212,14 @@ function LoginForm({ lang }: { lang: Language }) {
         ) : (
           <form onSubmit={(event) => void submit(event)}>
             <Group align="end" gap="xs">
-              <TextInput type="email" required label={t.email} value={email} onChange={(e) => setEmail(e.currentTarget.value)} style={{ flex: 1, minWidth: 220 }} />
+              <TextInput
+                type="email"
+                required
+                label={t.email}
+                value={email}
+                onChange={(e) => setEmail(e.currentTarget.value)}
+                style={{ flex: 1, minWidth: 220 }}
+              />
               <Button type="submit" loading={state === 'busy'}>
                 {t.portalSendLink}
               </Button>
