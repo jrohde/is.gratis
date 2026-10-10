@@ -57,6 +57,13 @@ export default function Login() {
                 {t.register}
               </Anchor>
             </Text>
+            {/* Accounts are for writers; advertisers sign in with a link by mail. */}
+            <Text size="sm" c="dimmed">
+              {t.advertiserLoginHint}{' '}
+              <Anchor component={Link} to={`/advertise/portal?lang=${lang}`}>
+                {t.portalTitle}
+              </Anchor>
+            </Text>
           </Stack>
         </form>
       </Card>

@@ -25,7 +25,7 @@ import { mailRequestReceived } from '../services/advertisers.js';
 import { hasPaidBefore, invoiceOffer } from '../services/invoices.js';
 import { sponsoredOffers } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
+import { advertisablePages, quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
 
 const plain = (max: number) =>
   z
@@ -198,6 +198,50 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
       request.log.info({ slug: renewed.slug }, 'sponsor renewal requested');
       await mailRequestReceived(db, renewed, config.publicOrigin);
       return reply.code(201).send({ statsToken: renewed.statsToken, priceCents: renewed.priceCents, slug: renewed.slug });
+    },
+  );
+
+  app.get(
+    '/sponsors/pages',
+    {
+      schema: {
+        tags: ['sponsors'],
+        summary: 'Pages to advertise on: visitors, price and free spots, busiest first',
+        querystring: z.object({
+          lang: languageSchema,
+          q: z.string().trim().max(80).default(''),
+          region: regionSchema.optional(),
+        }),
+        response: {
+          200: z.object({
+            pages: z.array(
+              z.object({
+                slug: z.string(),
+                title: z.string(),
+                emoji: z.string().optional(),
+                plural: z.boolean().optional(),
+                views30: z.number().int(),
+                priceCents: z.number().int(),
+                slotsFree: z.number().int(),
+              }),
+            ),
+          }),
+        },
+      },
+    },
+    async (request, reply) => {
+      reply.header('cache-control', 'public, max-age=60');
+      const { lang, q, region } = request.query;
+      const found = await advertisablePages(db, lang, q, 30);
+      return {
+        pages: await Promise.all(
+          found.map(async (page) => ({
+            ...page,
+            priceCents: quotePrice(page.views30, config.sponsorPricing),
+            slotsFree: (await slotsFree(db, lang, page.slug, region ?? null)).free,
+          })),
+        ),
+      };
     },
   );
 

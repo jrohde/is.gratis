@@ -1,16 +1,95 @@
 import { Alert, Anchor, Button, Card, Checkbox, Container, Group, List, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { isLanguage, LANGUAGES, REGIONS, toSlug, type Language, type Region, type SponsorQuote } from '@isgratis/types';
+import { claimFor, isLanguage, LANGUAGES, REGIONS, toSlug, type Language, type Region, type SponsorQuote } from '@isgratis/types';
 import type { Route } from './+types/advertise';
 import { api, ClientApiError } from '~/lib/api.client';
 import { CACHE } from '~/lib/cache';
 import { formatNumber, formatPrice, LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { regionFlag, regionLabel } from '~/lib/regions';
 import { useUiLang } from '~/lib/use-lang';
+import { SponsoredOfferCard } from '~/components/SponsoredBlock';
 
 export const headers: Route.HeadersFunction = () => ({ 'Cache-Control': CACHE.short });
 export const meta: Route.MetaFunction = () => [{ title: 'Adverteren · is.gratis' }];
+
+interface AdvertisablePage {
+  slug: string;
+  title: string;
+  emoji?: string;
+  plural?: boolean;
+  views30: number;
+  priceCents: number;
+  slotsFree: number;
+}
+
+/** Search the pages to advertise on: busiest first, with visitors, price and free spots. */
+function PagePicker({
+  lang,
+  region,
+  uiLang,
+  selected,
+  onPick,
+}: {
+  lang: Language;
+  region: Region | null;
+  uiLang: Language;
+  selected: string;
+  onPick: (slug: string) => void;
+}) {
+  const t = messages(uiLang);
+  const [query, setQuery] = useState('');
+  const [pages, setPages] = useState<AdvertisablePage[] | null>(null);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ lang, q: query, ...(region ? { region } : {}) });
+      api<{ pages: AdvertisablePage[] }>('GET', `/sponsors/pages?${params}`)
+        .then((result) => setPages(result.pages))
+        .catch(() => setPages([]));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [lang, query, region]);
+  return (
+    <Stack gap="xs">
+      <TextInput label={t.pickerSearch} placeholder={t.pickerPlaceholder} value={query} onChange={(e) => setQuery(e.currentTarget.value)} />
+      <Stack gap={4} mah={260} style={{ overflowY: 'auto' }}>
+        {pages?.length === 0 && (
+          <Text size="sm" c="dimmed">
+            {t.pickerEmpty}
+          </Text>
+        )}
+        {pages?.slice(0, 12).map((page) => (
+          <Group
+            key={page.slug}
+            justify="space-between"
+            wrap="wrap"
+            gap={4}
+            px="xs"
+            py={6}
+            style={{
+              borderRadius: 6,
+              background: page.slug === selected ? 'var(--mantine-color-green-light)' : undefined,
+            }}
+          >
+            <Text size="sm" fw={600} style={{ flex: '1 1 180px' }}>
+              {page.emoji ? `${page.emoji} ` : ''}
+              {claimFor(lang, page.title, page.plural)}*
+            </Text>
+            <Group gap="xs" wrap="nowrap">
+              <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                {t.pickerViews(formatNumber(page.views30, uiLang))} · {formatPrice(page.priceCents, uiLang)} ·{' '}
+                {page.slotsFree > 0 ? t.pickerFree(page.slotsFree) : t.pickerFull}
+              </Text>
+              <Button size="compact-xs" variant={page.slug === selected ? 'filled' : 'light'} onClick={() => onPick(page.slug)}>
+                {t.pickerChoose}
+              </Button>
+            </Group>
+          </Group>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
 
 /** Countries an advertiser can be invoiced in: the countries among the regions. */
 const BILLING_COUNTRIES = REGIONS.filter((region) => region !== 'EU' && region !== 'WORLD');
@@ -112,6 +191,16 @@ export default function Advertise() {
           <Card withBorder padding="lg">
             <form onSubmit={(event) => void submit(event)}>
               <Stack>
+                <Title order={3} size="h5">
+                  {t.pickerTitle}
+                </Title>
+                <PagePicker
+                  lang={form.lang}
+                  region={form.region}
+                  uiLang={uiLang}
+                  selected={slug}
+                  onPick={(picked) => setForm({ ...form, slug: picked })}
+                />
                 <Group grow>
                   <Select
                     label={t.pageLanguage}
@@ -150,6 +239,23 @@ export default function Advertise() {
                 </Group>
                 <TextInput label={t.offerTitle} required maxLength={80} value={form.title} onChange={text('title')} />
                 <Textarea label={t.offerDescription} required maxLength={280} autosize minRows={2} value={form.description} onChange={text('description')} />
+                <Stack gap={4}>
+                  <Text size="sm" fw={500}>
+                    {t.previewTitle}
+                  </Text>
+                  <div style={{ background: 'var(--mantine-color-yellow-light)', padding: 12, borderRadius: 8 }}>
+                    <SponsoredOfferCard
+                      preview
+                      lang={form.lang}
+                      offer={{
+                        id: 'preview',
+                        title: form.title || t.previewTitlePlaceholder,
+                        description: form.description || t.previewDescriptionPlaceholder,
+                        advertiserName: form.advertiserName || t.advertiserName,
+                      }}
+                    />
+                  </div>
+                </Stack>
                 <TextInput label={t.offerUrl} type="url" required value={form.url} onChange={text('url')} />
                 <Checkbox
                   checked={form.exclusive && Boolean(quote?.exclusiveAvailable)}

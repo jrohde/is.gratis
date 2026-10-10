@@ -225,3 +225,22 @@ describe('fair play between advertisers', () => {
     expect(wrong.statusCode).toBe(400);
   });
 });
+
+describe('choosing a page', () => {
+  it('lists pages busiest first, with price and free spots, and searches titles', async () => {
+    await page('zwemmen');
+    await page('zwembad');
+    await page('lucht');
+    await ctx.db.execute(sql`
+      insert into page_views (page_id, day, count)
+      select id, current_date, case slug when 'zwembad' then 500 else 10 end from pages where lang = 'nl'
+    `);
+    const all = (await ctx.app.inject({ url: '/api/sponsors/pages?lang=nl' })).json().pages;
+    expect(all.map((p: { slug: string }) => p.slug)).toEqual(['zwembad', 'lucht', 'zwemmen']);
+    expect(all[0]).toMatchObject({ views30: 500, priceCents: 2700, slotsFree: 3 });
+    const found = (await ctx.app.inject({ url: '/api/sponsors/pages?lang=nl&q=zwem' })).json().pages;
+    expect(found.map((p: { slug: string }) => p.slug)).toEqual(['zwembad', 'zwemmen']);
+    // A search for a wildcard is a search for that character, not for everything.
+    expect((await ctx.app.inject({ url: '/api/sponsors/pages?lang=nl&q=%25' })).json().pages).toEqual([]);
+  });
+});

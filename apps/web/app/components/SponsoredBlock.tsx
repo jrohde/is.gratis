@@ -17,6 +17,62 @@ function shuffled<T>(items: T[]): T[] {
 }
 
 /**
+ * One sponsored offer as readers see it, with the stamp it earned. Also the preview in the
+ * request form, so advertisers see exactly what they buy.
+ */
+export function SponsoredOfferCard({
+  offer,
+  lang,
+  onReport,
+  preview = false,
+}: {
+  offer: Pick<SponsoredOffer, 'id' | 'title' | 'description' | 'advertiserName'>;
+  lang: Language;
+  onReport?: () => void;
+  /** In the request form: nothing to click yet. */
+  preview?: boolean;
+}) {
+  const t = messages(lang);
+  return (
+    <Card withBorder padding="md" pos="relative">
+      {/* Only reviewed offers are shown, so each carries the stamp. */}
+      <span
+        title={t.stampTitle}
+        style={{ position: 'absolute', top: 8, right: 10, width: 88, height: 88 }}
+        dangerouslySetInnerHTML={{ __html: stampSvg(lang, { size: 88, idPrefix: `stamp-${offer.id}` }) }}
+      />
+      <Stack gap={6} pr={96} mih={88}>
+        <Text fw={700}>{offer.title}</Text>
+        <Text size="sm">{offer.description}</Text>
+        <Group justify="space-between" mt="xs">
+          <Text size="xs" c="dimmed">
+            {offer.advertiserName}
+            {onReport && (
+              <>
+                {' · '}
+                <Anchor component="button" type="button" size="xs" c="dimmed" onClick={onReport}>
+                  {t.offerReport}
+                </Anchor>
+              </>
+            )}
+          </Text>
+          <Button
+            component="a"
+            href={preview ? undefined : `/api/offers/${offer.id}/go`}
+            rel="sponsored noopener"
+            target="_blank"
+            size="xs"
+            color="dark"
+          >
+            {t.viewOffer}
+          </Button>
+        </Group>
+      </Stack>
+    </Card>
+  );
+}
+
+/**
  * The paid "free here" block. Always visually separate from the answer and always labelled,
  * as advertising rules (and the trust of readers) require.
  */
@@ -73,36 +129,7 @@ export function SponsoredBlock({
       </Text>
       <SimpleGrid cols={{ base: 1, sm: visible.length > 1 ? 2 : 1 }}>
         {ordered.map((offer) => (
-          <Card key={offer.id} withBorder padding="md" pos="relative">
-            {/* Only reviewed offers are shown, so each carries the stamp. */}
-            <span
-              title={t.stampTitle}
-              style={{ position: 'absolute', top: 8, right: 10, width: 88, height: 88 }}
-              dangerouslySetInnerHTML={{ __html: stampSvg(lang, { size: 88, idPrefix: `stamp-${offer.id}` }) }}
-            />
-            <Stack gap={6} pr={96} mih={88}>
-              <Text fw={700}>{offer.title}</Text>
-              <Text size="sm">{offer.description}</Text>
-              <Group justify="space-between" mt="xs">
-                <Text size="xs" c="dimmed">
-                  {offer.advertiserName} ·{' '}
-                  <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setReporting(offer.id)}>
-                    {t.offerReport}
-                  </Anchor>
-                </Text>
-                <Button
-                  component="a"
-                  href={`/api/offers/${offer.id}/go`}
-                  rel="sponsored noopener"
-                  target="_blank"
-                  size="xs"
-                  color="dark"
-                >
-                  {t.viewOffer}
-                </Button>
-              </Group>
-            </Stack>
-          </Card>
+          <SponsoredOfferCard key={offer.id} offer={offer} lang={lang} onReport={() => setReporting(offer.id)} />
         ))}
       </SimpleGrid>
       {reporting && <ReportModal lang={lang} target={{ offerId: reporting }} opened onClose={() => setReporting(null)} />}

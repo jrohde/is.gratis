@@ -432,6 +432,18 @@ const nl = {
   billingCountry: 'Land',
   vatNumber: 'Btw-nummer (optioneel)',
   vatNumberHint: 'Met een btw-nummer uit een ander EU-land wordt de btw verlegd.',
+  advertiserLoginHint: 'Adverteerder? Je hebt geen account nodig:',
+  pickerTitle: 'Kies een pagina',
+  pickerSearch: 'Zoek een onderwerp',
+  pickerPlaceholder: 'Bijvoorbeeld zwemmen, museum, wifi',
+  pickerEmpty: 'Geen pagina gevonden. Je kunt hieronder ook zelf een onderwerp invullen.',
+  pickerViews: (n: string) => `${n} bezoekers`,
+  pickerFree: (n: number) => `${n} vrij`,
+  pickerFull: 'vol',
+  pickerChoose: 'Kies',
+  previewTitle: 'Zo ziet je aanbod eruit',
+  previewTitlePlaceholder: 'Titel van je aanbod',
+  previewDescriptionPlaceholder: 'Wat is er precies gratis?',
 };
 
 export type Messages = typeof nl;
@@ -861,6 +873,18 @@ const en: Messages = {
   billingCountry: 'Country',
   vatNumber: 'VAT number (optional)',
   vatNumberHint: 'With a VAT number from another EU country, VAT is reverse charged.',
+  advertiserLoginHint: 'Advertiser? You do not need an account:',
+  pickerTitle: 'Choose a page',
+  pickerSearch: 'Search a subject',
+  pickerPlaceholder: 'For example swimming, museum, wifi',
+  pickerEmpty: 'No page found. You can also enter a subject below yourself.',
+  pickerViews: (n: string) => `${n} visitors`,
+  pickerFree: (n: number) => `${n} free`,
+  pickerFull: 'full',
+  pickerChoose: 'Choose',
+  previewTitle: 'This is how your offer looks',
+  previewTitlePlaceholder: 'Title of your offer',
+  previewDescriptionPlaceholder: 'What exactly is free?',
 };
 
 const de: Messages = {
@@ -1156,6 +1180,18 @@ const de: Messages = {
   billingCountry: 'Land',
   vatNumber: 'USt-IdNr. (optional)',
   vatNumberHint: 'Mit einer USt-IdNr. aus einem anderen EU-Land gilt das Reverse-Charge-Verfahren.',
+  advertiserLoginHint: 'Werbetreibend? Du brauchst kein Konto:',
+  pickerTitle: 'Wähle eine Seite',
+  pickerSearch: 'Thema suchen',
+  pickerPlaceholder: 'Zum Beispiel Schwimmen, Museum, WLAN',
+  pickerEmpty: 'Keine Seite gefunden. Du kannst unten auch selbst ein Thema eingeben.',
+  pickerViews: (n: string) => `${n} Besucher`,
+  pickerFree: (n: number) => `${n} frei`,
+  pickerFull: 'voll',
+  pickerChoose: 'Wählen',
+  previewTitle: 'So sieht dein Angebot aus',
+  previewTitlePlaceholder: 'Titel deines Angebots',
+  previewDescriptionPlaceholder: 'Was genau ist kostenlos?',
 };
 
 const es: Messages = {
@@ -1452,6 +1488,18 @@ const es: Messages = {
   billingCountry: 'País',
   vatNumber: 'NIF-IVA (opcional)',
   vatNumberHint: 'Con un NIF-IVA de otro país de la UE se aplica la inversión del sujeto pasivo.',
+  advertiserLoginHint: '¿Anunciante? No necesitas una cuenta:',
+  pickerTitle: 'Elige una página',
+  pickerSearch: 'Busca un tema',
+  pickerPlaceholder: 'Por ejemplo natación, museo, wifi',
+  pickerEmpty: 'No se encontró ninguna página. También puedes escribir un tema abajo.',
+  pickerViews: (n: string) => `${n} visitas`,
+  pickerFree: (n: number) => `${n} libres`,
+  pickerFull: 'completo',
+  pickerChoose: 'Elegir',
+  previewTitle: 'Así se verá tu oferta',
+  previewTitlePlaceholder: 'Título de tu oferta',
+  previewDescriptionPlaceholder: '¿Qué es gratis exactamente?',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

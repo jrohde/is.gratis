@@ -28,6 +28,32 @@ export async function viewsLast30Days(db: Database, lang: Language, slug: string
   return Number(row?.total ?? 0);
 }
 
+/**
+ * Published pages an advertiser can choose from, busiest first, optionally matching a search
+ * in the title. Pages without visits are included: they are the cheapest place to start.
+ */
+export async function advertisablePages(db: Database, lang: Language, query: string, limit: number) {
+  const pattern = `%${query.trim().replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
+  const result = await db.execute<{ slug: string; title: string; content: { emoji?: string; plural?: boolean }; views30: number }>(sql`
+    select p.slug, p.title, r.content, coalesce(v.total, 0)::int as views30
+    from pages p
+    join revisions r on r.id = p.current_revision_id
+    left join (
+      select page_id, sum(count) as total from page_views where day >= current_date - 30 group by page_id
+    ) v on v.page_id = p.id
+    where p.lang = ${lang} and p.status = 'published' and (${query.trim() === ''} or p.title ilike ${pattern})
+    order by views30 desc, p.title
+    limit ${limit}
+  `);
+  return result.rows.map((row) => ({
+    slug: row.slug,
+    title: row.title,
+    views30: Number(row.views30),
+    ...(row.content.emoji ? { emoji: row.content.emoji } : {}),
+    ...(row.content.plural ? { plural: true } : {}),
+  }));
+}
+
 export async function topViewed(db: Database, limit: number, lang?: Language) {
   const total = sum(pageViews.count).mapWith(Number);
   const rows = await db
