@@ -8,7 +8,7 @@ import { HttpError } from '../lib/errors.js';
 import { hashIp } from '../lib/hash.js';
 import { dailyPick } from '../services/daily.js';
 import { enqueueDraft } from '../services/drafts.js';
-import { reviewDrafts, type EditorDeps } from '../services/editorial.js';
+import { reviewDrafts, reviewOffers, type EditorDeps, type OfferEditorDeps } from '../services/editorial.js';
 import { wantedSubjects } from '../services/search.js';
 import type { Channel } from './publishers.js';
 import { dailyAt, today, type BotTask } from './scheduler.js';
@@ -108,6 +108,15 @@ export function editorDesk(deps: Omit<EditorDeps, 'db'>, perRun: number): BotTas
   };
 }
 
+/** Every ten minutes: the editorial language model advises on sponsor requests. */
+export function offerDesk(deps: Omit<OfferEditorDeps, 'db'>, perRun: number): BotTask {
+  return {
+    name: 'offer-editor',
+    due: (now) => [now.toISOString().slice(0, 15)],
+    run: (ctx) => reviewOffers({ ...deps, db: ctx.db }, perRun),
+  };
+}
+
 /** Every day: forget bot runs older than a month. */
 export function housekeeping(): BotTask {
   return {
@@ -126,7 +135,7 @@ export interface TaskOptions {
   origin: string;
   cache: CacheInvalidator;
   drafts?: Parameters<typeof draftWanted>[0];
-  editor?: { deps: Omit<EditorDeps, 'db' | 'cache'>; perRun: number };
+  editor?: { deps: Omit<EditorDeps, 'db' | 'cache'>; offers: Omit<OfferEditorDeps, 'db'>; perRun: number };
 }
 
 export function buildTasks(options: TaskOptions): BotTask[] {
@@ -135,6 +144,11 @@ export function buildTasks(options: TaskOptions): BotTask[] {
     expireOffers(options.cache),
     housekeeping(),
     ...(options.drafts ? [draftWanted(options.drafts)] : []),
-    ...(options.editor ? [editorDesk({ ...options.editor.deps, cache: options.cache }, options.editor.perRun)] : []),
+    ...(options.editor
+      ? [
+          editorDesk({ ...options.editor.deps, cache: options.cache }, options.editor.perRun),
+          offerDesk(options.editor.offers, options.editor.perRun),
+        ]
+      : []),
   ];
 }

@@ -27,6 +27,7 @@ import type {
   DraftJobStatus,
   EditorDecision,
   Language,
+  OfferEditorDecision,
   PageContent,
   PageStatus,
   Region,
@@ -193,6 +194,13 @@ export const sponsoredOffers = pgTable(
     statsToken: text('stats_token').unique(),
     reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    /** The editorial language model's advice; see lib/offer-editor.ts. */
+    editorDecision: text('editor_decision').$type<OfferEditorDecision>(),
+    editorNotes: text('editor_notes'),
+    editorSuggestion: jsonb('editor_suggestion').$type<{ title?: string; description?: string }>(),
+    editorCheckedAt: timestamp('editor_checked_at', { withTimezone: true }),
+    /** Failed attempts; after three the editor leaves the offer to the admin. */
+    editorAttempts: integer('editor_attempts').notNull().default(0),
     createdAt: createdAt(),
   },
   (table) => [index('sponsored_offers_page_idx').on(table.lang, table.slug, table.status)],

@@ -11,8 +11,11 @@ export function testDatabaseUrl(): string {
 }
 
 export async function createTestApp(overrides: Partial<Config> = {}) {
+  const base = loadConfig();
   const config: Config = {
-    ...loadConfig(),
+    ...base,
+    // The editorial model runs in the bot; tests that need its gate switch it on.
+    editor: { ...base.editor, enabled: false },
     databaseUrl: testDatabaseUrl(),
     adminEmails: ['admin@example.com'],
     trustedOrigins: ['https://is.gratis', 'https://*.is.gratis'],

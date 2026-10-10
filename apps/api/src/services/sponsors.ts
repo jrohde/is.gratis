@@ -7,7 +7,7 @@ import type { Language, Region, SponsorBooking, SponsorRequestStatus } from '@is
 import type { Database } from '../db/client.js';
 import { offerStats, pages, revisions, sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
 import { newToken } from '../lib/hash.js';
-import { notFound } from '../lib/errors.js';
+import { conflict, notFound } from '../lib/errors.js';
 
 export function toBooking(row: SponsoredOfferRow): SponsorBooking {
   return {
@@ -26,6 +26,15 @@ export function toBooking(row: SponsoredOfferRow): SponsorBooking {
     startsAt: row.startsAt?.toISOString() ?? null,
     endsAt: row.endsAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
+    editor:
+      row.editorDecision && row.editorCheckedAt
+        ? {
+            decision: row.editorDecision,
+            notes: row.editorNotes ?? '',
+            ...(row.editorSuggestion ? { suggestion: row.editorSuggestion } : {}),
+            checkedAt: row.editorCheckedAt.toISOString(),
+          }
+        : null,
   };
 }
 
@@ -69,11 +78,29 @@ export async function listBookings(db: Database, status?: SponsorRequestStatus):
 export async function reviewBooking(
   db: Database,
   id: string,
-  input: { status: SponsorRequestStatus; startsAt: Date | null; endsAt: Date | null; reviewerId: string },
+  input: {
+    status: SponsorRequestStatus;
+    startsAt: Date | null;
+    endsAt: Date | null;
+    reviewerId: string;
+    /** Take over the editor's neutral rewording of title and description. */
+    applySuggestion?: boolean;
+    /** Activate although the editorial language model did not approve. */
+    override?: boolean;
+    editorRequired?: boolean;
+  },
 ): Promise<SponsorBooking> {
+  const [current] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.id, id)).limit(1);
+  if (!current) throw notFound('Booking not found');
+  if (input.status === 'active' && input.editorRequired && current.editorDecision !== 'approve' && !input.override) {
+    throw conflict('editor_not_approved', 'The editorial check did not approve this offer');
+  }
+  const suggestion = input.applySuggestion ? current.editorSuggestion : null;
   const [row] = await db
     .update(sponsoredOffers)
     .set({
+      ...(suggestion?.title ? { title: suggestion.title } : {}),
+      ...(suggestion?.description ? { description: suggestion.description } : {}),
       status: input.status,
       startsAt: input.startsAt,
       endsAt: input.endsAt,

@@ -324,6 +324,11 @@ const nl = {
   botEmpty: 'De bot heeft nog niets gedaan. Draait het botproces?',
   editorDecisions: 'Redactie (taalmodel)',
   botRuns: 'Taken',
+  offerEditor: { approve: 'Redactie: akkoord', reject: 'Redactie: afgewezen', unsure: 'Redactie: twijfelt' },
+  offerEditorPending: 'De redactie (taalmodel) heeft nog niet gekeken; dat gebeurt binnen tien minuten.',
+  offerSuggestion: 'Neutralere tekst voorgesteld:',
+  applySuggestion: 'Voorstel overnemen bij goedkeuren',
+  overrideEditor: 'De redactie keurde deze aanbieding niet goed. Toch activeren?',
 };
 
 export type Messages = typeof nl;
@@ -645,6 +650,11 @@ const en: Messages = {
   botEmpty: 'The bot has not done anything yet. Is the bot process running?',
   editorDecisions: 'Editors (language model)',
   botRuns: 'Tasks',
+  offerEditor: { approve: 'Editors: approved', reject: 'Editors: rejected', unsure: 'Editors: unsure' },
+  offerEditorPending: 'The editors (language model) have not looked yet; they will within ten minutes.',
+  offerSuggestion: 'A more neutral wording was suggested:',
+  applySuggestion: 'Use the suggestion when approving',
+  overrideEditor: 'The editors did not approve this offer. Activate it anyway?',
 };
 
 const de: Messages = {

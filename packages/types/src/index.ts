@@ -191,6 +191,8 @@ export interface SponsorBooking extends SponsoredOffer {
   startsAt: string | null;
   endsAt: string | null;
   createdAt: string;
+  /** Null until the editorial language model has looked at it (or when it is switched off). */
+  editor: OfferEditorAdvice | null;
 }
 
 export interface Page {
@@ -382,6 +384,15 @@ export interface User {
 }
 
 export type SponsorRequestStatus = 'pending' | 'active' | 'rejected' | 'expired';
+export type OfferEditorDecision = 'approve' | 'reject' | 'unsure';
+
+/** The editorial language model's advice on a sponsored offer. */
+export interface OfferEditorAdvice {
+  decision: OfferEditorDecision;
+  notes: string;
+  suggestion?: { title?: string; description?: string };
+  checkedAt: string;
+}
 
 export interface SponsorRequestBody {
   lang: Language;

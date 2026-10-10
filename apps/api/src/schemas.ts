@@ -156,4 +156,12 @@ export const bookingSchema = sponsoredOfferSchema.extend({
   startsAt: z.string().nullable(),
   endsAt: z.string().nullable(),
   createdAt: z.string(),
+  editor: z
+    .object({
+      decision: z.enum(['approve', 'reject', 'unsure']),
+      notes: z.string(),
+      suggestion: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
+      checkedAt: z.string(),
+    })
+    .nullable(),
 });

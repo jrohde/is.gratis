@@ -11,7 +11,7 @@ import { loadConfig } from './config.js';
 import { createDatabase } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
 import { createCacheInvalidator } from './lib/cache.js';
-import { checkLink } from './lib/link-check.js';
+import { checkLink, fetchPageText } from './lib/link-check.js';
 
 const config = loadConfig();
 const logger = pino({ level: config.logLevel, name: 'bot' });
@@ -48,6 +48,7 @@ const tasks = buildTasks({
     ? {
         editor: {
           deps: { llm: config.editor, check: (url: string) => checkLink(url, config.sourceChecks.timeoutMs) },
+          offers: { llm: config.editor, fetchText: (url: string) => fetchPageText(url, config.sourceChecks.timeoutMs) },
           perRun: config.editor.perRun,
         },
       }

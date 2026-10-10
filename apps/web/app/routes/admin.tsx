@@ -4,6 +4,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Container,
   Group,
   Loader,
@@ -50,12 +51,19 @@ function BookingCard({ booking, onChange }: { booking: SponsorBooking; onChange:
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [useSuggestion, setUseSuggestion] = useState(false);
+  const advice = booking.editor;
 
   async function review(status: SponsorRequestStatus) {
     setError(null);
+    // Going live without the editor's approval is allowed, but only on purpose.
+    const override = status === 'active' && advice !== null && advice.decision !== 'approve';
+    if (override && !window.confirm(t.overrideEditor)) return;
     try {
       await api('POST', `/admin/sponsors/${booking.id}/review`, {
         status,
+        override,
+        applySuggestion: status === 'active' && useSuggestion,
         startsAt: status === 'active' ? dayToIso(startsAt, false) : booking.startsAt,
         endsAt: status === 'active' ? dayToIso(endsAt, true) : status === 'expired' ? new Date().toISOString() : booking.endsAt,
       });
@@ -103,6 +111,38 @@ function BookingCard({ booking, onChange }: { booking: SponsorBooking; onChange:
             {booking.startsAt ? formatDate(booking.startsAt, lang) : '…'} – {booking.endsAt ? formatDate(booking.endsAt, lang) : '…'}
           </Text>
         )}
+        {booking.status === 'pending' &&
+          (advice ? (
+            <Alert
+              color={advice.decision === 'approve' ? 'green' : advice.decision === 'reject' ? 'red' : 'orange'}
+              variant="light"
+              p="xs"
+              title={t.offerEditor[advice.decision]}
+            >
+              <Stack gap={6}>
+                <Text size="sm">{advice.notes}</Text>
+                {advice.suggestion && (
+                  <>
+                    <Text size="sm" fw={600}>
+                      {t.offerSuggestion}
+                    </Text>
+                    {advice.suggestion.title && <Text size="sm">{advice.suggestion.title}</Text>}
+                    {advice.suggestion.description && <Text size="sm">{advice.suggestion.description}</Text>}
+                    <Checkbox
+                      size="xs"
+                      label={t.applySuggestion}
+                      checked={useSuggestion}
+                      onChange={(e) => setUseSuggestion(e.currentTarget.checked)}
+                    />
+                  </>
+                )}
+              </Stack>
+            </Alert>
+          ) : (
+            <Text size="xs" c="dimmed">
+              {t.offerEditorPending}
+            </Text>
+          ))}
         {error && <Alert color="red">{error}</Alert>}
         {booking.status === 'pending' && (
           <Group align="end" gap="xs">

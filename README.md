@@ -260,6 +260,17 @@ voor de redactie dan voor het schrijven werkt het best: zet `EDITOR_MODEL`
 (en eventueel `EDITOR_BASE_URL`, met `EDITOR_API_KEY` in de Secret). Uitzetten
 kan met `EDITOR_ENABLED=false`; dan wachten concepten weer op mensen.
 
+**Advertenties** gaan ook langs de redactie. Een gesponsorde aanbieding staat
+onder het kopje "hier is het gratis", dus ze moet echt gratis zijn (geen
+proefabonnement, geen aankoop), over het onderwerp gaan en neutraal zijn
+verwoord. De bot leest de tekst van de landingspagina (met dezelfde
+bescherming tegen interne adressen als de bronnencontrole) en geeft de
+beheerder advies: akkoord, afgewezen of twijfel, eventueel met een neutralere
+tekst die de beheerder bij goedkeuren kan overnemen. Zolang de redactie aan
+staat, gaat een aanbieding zonder haar akkoord alleen live als de beheerder
+bewust overstemt; dat wordt gelogd. De beheerder keurt altijd zelf goed,
+omdat daar ook de betaling aan hangt.
+
 Instellen (accounts en tokens horen in de Secret, niet in de ConfigMap):
 
 | Variabele | Inhoud |

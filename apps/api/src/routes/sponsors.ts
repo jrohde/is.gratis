@@ -288,13 +288,23 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
       schema: {
         tags: ['admin'],
         summary: 'Approve, reject or end a booking (admin)',
+        description:
+          'While the editorial language model is on, activating needs its approval, or override: true.',
         params: z.object({ id: z.uuid() }),
         body: z.object({
           status: bookingStatusSchema,
           startsAt: z.iso.datetime({ offset: true }).nullable().default(null),
           endsAt: z.iso.datetime({ offset: true }).nullable().default(null),
+          applySuggestion: z.boolean().default(false),
+          override: z.boolean().default(false),
         }),
-        response: { 200: z.object({ booking: bookingSchema }), 401: errorSchema, 403: errorSchema, 404: errorSchema },
+        response: {
+          200: z.object({ booking: bookingSchema }),
+          401: errorSchema,
+          403: errorSchema,
+          404: errorSchema,
+          409: errorSchema,
+        },
       },
     },
     async (request) => {
@@ -307,7 +317,11 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         startsAt,
         endsAt,
         reviewerId: reviewer.id,
+        applySuggestion: request.body.applySuggestion,
+        override: request.body.override,
+        editorRequired: config.editor.enabled,
       });
+      if (request.body.override && booking.editor?.decision !== 'approve') request.log.warn({ bookingId: booking.id, userId: reviewer.id }, 'offer activated over the editor');
       await cache.purgePage(booking.lang, booking.slug);
       return { booking };
     },

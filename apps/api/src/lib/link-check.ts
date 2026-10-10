@@ -112,3 +112,103 @@ export async function checkLink(raw: string, timeoutMs = 10_000, maxRedirects = 
   }
   return { ok: false, status: null, error: 'Too many redirects' };
 }
+
+export interface PageTextResult {
+  ok: boolean;
+  status: number | null;
+  /** Readable text of an HTML or plain text page, without scripts, styles and tags. */
+  text: string | null;
+  error: string | null;
+}
+
+function getBody(url: URL, timeoutMs: number, maxBytes: number): Promise<{ status: number; location?: string; type: string; body: string }> {
+  return new Promise((resolve, reject) => {
+    const client = url.protocol === 'https:' ? https : http;
+    const req = client.request(
+      url,
+      {
+        method: 'GET',
+        lookup: guardedLookup as never,
+        timeout: timeoutMs,
+        headers: {
+          'user-agent': 'is.gratis offer checker (+https://is.gratis/developers)',
+          accept: 'text/html,text/plain;q=0.9,*/*;q=0.1',
+        },
+      },
+      (res) => {
+        const status = res.statusCode ?? 0;
+        const type = String(res.headers['content-type'] ?? '');
+        if (status >= 300 || !/text\/(html|plain)|application\/xhtml/.test(type)) {
+          res.resume();
+          resolve({ status, location: res.headers.location, type, body: '' });
+          res.destroy();
+          return;
+        }
+        const chunks: Buffer[] = [];
+        let size = 0;
+        res.on('data', (chunk: Buffer) => {
+          size += chunk.length;
+          if (size <= maxBytes) chunks.push(chunk);
+          else res.destroy();
+        });
+        const done = () => resolve({ status, type, body: Buffer.concat(chunks).toString('utf8') });
+        res.on('end', done);
+        res.on('close', done);
+      },
+    );
+    req.on('timeout', () => req.destroy(new Error('Timed out')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+/** Turns HTML into the text a visitor reads, roughly: enough for a language model to judge. */
+export function htmlToText(html: string): string {
+  return html
+    .replace(/<(script|style|noscript|svg|template)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\b[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&euro;/g, '€')
+    .replace(/[ \t\r\f\v]+/g, ' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+}
+
+/**
+ * Reads the text of a page, with the same protection against internal addresses as checkLink.
+ * Used to show the editorial language model what an advertiser's landing page really says.
+ */
+export async function fetchPageText(raw: string, timeoutMs = 10_000, maxBytes = 1_000_000, maxRedirects = 3): Promise<PageTextResult> {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return { ok: false, status: null, text: null, error: 'Invalid URL' };
+  }
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return { ok: false, status: null, text: null, error: 'Not http(s)' };
+    const host = url.hostname.replace(/^\[|\]$/g, '');
+    if (isIP(host) && isPrivateAddress(host)) return { ok: false, status: null, text: null, error: 'Private address' };
+    try {
+      const response = await getBody(url, timeoutMs, maxBytes);
+      if (response.status >= 300 && response.status < 400 && response.location) {
+        url = new URL(response.location, url);
+        continue;
+      }
+      if (response.status < 200 || response.status >= 300) return { ok: false, status: response.status, text: null, error: null };
+      const text = response.type.includes('html') ? htmlToText(response.body) : response.body.trim();
+      return { ok: true, status: response.status, text, error: null };
+    } catch (error) {
+      return { ok: false, status: null, text: null, error: (error as Error).message.slice(0, 200) };
+    }
+  }
+  return { ok: false, status: null, text: null, error: 'Too many redirects' };
+}

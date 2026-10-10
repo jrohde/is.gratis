@@ -1,16 +1,18 @@
 /**
  * The editorial desk: LLM drafts go past the editorial language model, which publishes them,
- * publishes a corrected version, or leaves them for a person with a note saying why.
+ * publishes a corrected version, or leaves them for a person with a note saying why. Sponsored
+ * offers go past it too, before the admin approves them.
  */
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, lt, sql } from 'drizzle-orm';
 import type { Language } from '@isgratis/types';
 import type { Database } from '../db/client.js';
-import { editorReviews, pages } from '../db/schema.js';
+import { editorReviews, pages, revisions, sponsoredOffers } from '../db/schema.js';
 import type { CacheInvalidator } from '../lib/cache.js';
 import { reviewDraft, type EditorVerdict } from '../lib/editor.js';
 import { HttpError } from '../lib/errors.js';
-import type { LinkCheckResult } from '../lib/link-check.js';
+import type { LinkCheckResult, PageTextResult } from '../lib/link-check.js';
 import type { LlmConfig } from '../lib/llm.js';
+import { reviewOffer } from '../lib/offer-editor.js';
 import { clearLinkCache } from './links.js';
 import { getPage, saveRevision } from './pages.js';
 import { clearSuggestionCache } from './search.js';
@@ -139,4 +141,77 @@ export async function recentEditorReviews(db: Database, limit: number) {
     notes: review.notes,
     createdAt: review.createdAt.toISOString(),
   }));
+}
+
+/** After this many failed attempts on an offer, the editor leaves it to the admin. */
+export const OFFER_EDITOR_MAX_ATTEMPTS = 3;
+
+export interface OfferEditorDeps {
+  db: Database;
+  llm: LlmConfig;
+  fetchText: (url: string) => Promise<PageTextResult>;
+  /** Injectable for tests. */
+  review?: typeof reviewOffer;
+}
+
+/**
+ * Gives advice on sponsor requests that are waiting for the admin: is the offer really free,
+ * about the page, honestly worded, and does the landing page say the same?
+ */
+export async function reviewOffers(deps: OfferEditorDeps, limit: number): Promise<string> {
+  const waiting = await deps.db
+    .select()
+    .from(sponsoredOffers)
+    .where(
+      and(
+        eq(sponsoredOffers.status, 'pending'),
+        isNull(sponsoredOffers.editorDecision),
+        lt(sponsoredOffers.editorAttempts, OFFER_EDITOR_MAX_ATTEMPTS),
+      ),
+    )
+    .orderBy(asc(sponsoredOffers.createdAt))
+    .limit(limit);
+  const counts = { approve: 0, reject: 0, unsure: 0, error: 0 };
+  for (const offer of waiting) {
+    try {
+      const [page] = await deps.db
+        .select({ title: pages.title, summary: sql<string>`${revisions.content}->>'summary'` })
+        .from(pages)
+        .innerJoin(revisions, eq(revisions.id, pages.currentRevisionId))
+        .where(and(eq(pages.lang, offer.lang), eq(pages.slug, offer.slug)))
+        .limit(1);
+      const landing = await deps.fetchText(offer.url);
+      const verdict = await (deps.review ?? reviewOffer)(deps.llm, {
+        lang: offer.lang,
+        advertiserName: offer.advertiserName,
+        title: offer.title,
+        description: offer.description,
+        url: offer.url,
+        region: offer.region,
+        page: page ?? null,
+        landingText: landing.ok ? landing.text : null,
+        landingError: landing.ok ? null : (landing.error ?? `HTTP ${landing.status ?? '?'}`),
+      });
+      await deps.db
+        .update(sponsoredOffers)
+        .set({
+          editorDecision: verdict.decision,
+          editorNotes: verdict.notes,
+          editorSuggestion: verdict.suggestion ?? null,
+          editorCheckedAt: new Date(),
+        })
+        .where(eq(sponsoredOffers.id, offer.id));
+      counts[verdict.decision]++;
+    } catch (error) {
+      await deps.db
+        .update(sponsoredOffers)
+        .set({
+          editorAttempts: sql`${sponsoredOffers.editorAttempts} + 1`,
+          editorNotes: (error instanceof Error ? error.message : String(error)).slice(0, 1000),
+        })
+        .where(eq(sponsoredOffers.id, offer.id));
+      counts.error++;
+    }
+  }
+  return `${counts.approve} approved, ${counts.reject} rejected, ${counts.unsure} unsure, ${counts.error} failed`;
 }
