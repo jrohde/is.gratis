@@ -38,6 +38,10 @@ data:
   SOURCE_CHECKS: 'true'
   # The search page asks the LLM for related subjects, once per query, at most this many per hour.
   SEARCH_RELATED: 'true'
+  # The bot posts the free thing of the day from this time (UTC). Accounts go in the Secret
+  # (BOT_MASTODON, BOT_BLUESKY); BOT_DRY_RUN_LANGUAGES=nl,en only writes the posts to the log.
+  BOT_DAILY_TIME: '07:00'
+  BOT_DRY_RUN_LANGUAGES: ''
   SEARCH_RELATED_PER_HOUR: '120'
   SOURCE_CHECK_INTERVAL_DAYS: '7'
 ---
@@ -45,5 +49,7 @@ data:
 #   kubectl -n isgratis create secret generic isgratis-secrets \
 #     --from-literal=IP_HASH_SALT="$(openssl rand -hex 32)" \
 #     --from-literal=LLM_API_KEY=sk-... \
-#     --from-literal=IMAGE_API_KEY=
+#     --from-literal=IMAGE_API_KEY= \
+#     --from-literal=BOT_MASTODON='[{"lang":"nl","url":"https://mastodon.example","token":"..."}]' \
+#     --from-literal=BOT_BLUESKY='[{"lang":"en","identifier":"isgratis.bsky.social","password":"app-password"}]'
 # (Both keys may be empty for a model in your own cluster.)

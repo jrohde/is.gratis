@@ -68,6 +68,20 @@ services:
       api:
         condition: service_healthy
 
+  bot:
+    build:
+      context: .
+      dockerfile: deploy/docker/api.Dockerfile
+    command: ['node', 'dist/bot.js']
+    environment:
+      <<: *api-env
+      BOT_DRY_RUN_LANGUAGES: ${BOT_DRY_RUN_LANGUAGES:-nl}
+      BOT_MASTODON: ${BOT_MASTODON:-[]}
+      BOT_BLUESKY: ${BOT_BLUESKY:-[]}
+    depends_on:
+      api:
+        condition: service_healthy
+
   web:
     build:
       context: .

@@ -319,6 +319,7 @@ const nl = {
   weekTitle: 'Gratis deze week',
   weekIntro: 'Elke dag één ding dat echt gratis is, en wat er deze week bij kwam.',
   weekNew: 'Nieuw deze week',
+  botEmpty: 'De bot heeft nog niets gedaan. Draait het botproces?',
 };
 
 export type Messages = typeof nl;
@@ -635,6 +636,7 @@ const en: Messages = {
   weekTitle: 'Free this week',
   weekIntro: 'One thing a day that is really free, and what was added this week.',
   weekNew: 'New this week',
+  botEmpty: 'The bot has not done anything yet. Is the bot process running?',
 };
 
 const de: Messages = {

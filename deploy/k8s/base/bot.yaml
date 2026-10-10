@@ -1,0 +1,51 @@
+# The bot: scheduled tasks such as posting the free thing of the day. More replicas are safe
+# (each run is claimed in Postgres first) but one is enough.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bot
+  labels:
+    app.kubernetes.io/name: bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bot
+    spec:
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bot
+          image: isgratis-api
+          command: ['node', 'dist/bot.js']
+          envFrom:
+            - configMapRef:
+                name: isgratis-config
+            - secretRef:
+                name: isgratis-secrets
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: isgratis-db-app
+                  key: uri
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ['ALL']

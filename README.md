@@ -212,6 +212,40 @@ De site volgt de systeeminstelling. Via het schermpictogram in de kop kun je lic
 
 `water.is.gratis` stuurt door naar `is.gratis/<taal>/water`. De taal volgt uit de talen waarin de pagina bestaat en de `Accept-Language` van de bezoeker. Lokaal werkt dit met `water.localhost`.
 
+## De bot
+
+Een apart proces (`node dist/bot.js`, Deployment `bot`) dat elke minuut kijkt
+of er taken klaarstaan. Elke taak kent zijn eigen *sleutels* (bijvoorbeeld
+`mastodon:nl:2026-10-10`); per taak en sleutel draait hij precies één keer,
+vastgelegd in de tabel `bot_runs`. Mislukt een run, dan probeert de bot het
+nog maximaal twee keer; een run die langer dan 15 minuten hangt, mag opnieuw.
+Meerdere bot-pods tegelijk is dus veilig, maar één is genoeg.
+
+Taken nu:
+
+- **Gratis van de dag** — post dagelijks (`BOT_DAILY_TIME`, standaard 07:00)
+  het onderwerp van de dag naar Mastodon en/of Bluesky, per taal.
+- **Aanbiedingen verlopen** — zet elk uur verlopen aanbiedingen op verlopen
+  en ververst de cache.
+
+Instellen (accounts en tokens horen in de Secret, niet in de ConfigMap):
+
+| Variabele | Inhoud |
+| --- | --- |
+| `BOT_MASTODON` | JSON-lijst: `[{"lang":"nl","url":"https://social.example","token":"…"}]` |
+| `BOT_BLUESKY` | JSON-lijst: `[{"lang":"en","service":"https://bsky.social","identifier":"…","password":"app-wachtwoord"}]` |
+| `BOT_DRY_RUN_LANGUAGES` | Talen die alleen naar het log posten, bijvoorbeeld `nl,en` |
+| `BOT_DAILY_TIME` | Tijdstip van de dagelijkse post (`HH:MM`) |
+
+In het beheer staat een tabblad **Bot** met elke run: wat, wanneer, en of het
+lukte.
+
+Een taak toevoegen: schrijf in `apps/api/src/bot/tasks.ts` een `BotTask` met
+een `name`, een `due(now)` die de sleutels teruggeeft die nu aan de beurt zijn
+(`dailyAt`, `today` helpen), en een `run(ctx, key)` die het werk doet en een
+korte omschrijving teruggeeft. Voeg hem toe aan `buildTasks`. Herhalen,
+vastleggen en niet-dubbel-doen regelt de planner.
+
 ## Projectstructuur
 
 ```

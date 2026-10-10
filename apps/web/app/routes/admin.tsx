@@ -292,6 +292,50 @@ function Users() {
   );
 }
 
+interface BotRun {
+  task: string;
+  key: string;
+  status: 'running' | 'done' | 'failed';
+  attempts: number;
+  detail: string | null;
+  updatedAt: string;
+}
+
+const RUN_COLORS = { running: 'blue', done: 'green', failed: 'red' } as const;
+
+/** What the bot did: every run of every task, newest first. */
+function BotRuns() {
+  const lang = useUiLang();
+  const t = messages(lang);
+  const [runs, setRuns] = useState<BotRun[] | null>(null);
+  useEffect(() => {
+    void api<{ runs: BotRun[] }>('GET', '/admin/bot').then((result) => setRuns(result.runs));
+  }, []);
+  if (runs === null) return <Loader />;
+  if (runs.length === 0) return <Text c="dimmed">{t.botEmpty}</Text>;
+  return (
+    <Table striped>
+      <Table.Tbody>
+        {runs.map((run) => (
+          <Table.Tr key={`${run.task}/${run.key}`}>
+            <Table.Td>
+              <Badge color={RUN_COLORS[run.status]} variant="light">
+                {run.status}
+              </Badge>
+            </Table.Td>
+            <Table.Td fw={600}>{run.task}</Table.Td>
+            <Table.Td c="dimmed">{run.key}</Table.Td>
+            <Table.Td style={{ overflowWrap: 'anywhere' }}>{run.detail}</Table.Td>
+            <Table.Td c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+              {new Date(run.updatedAt).toLocaleString(lang)}
+            </Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
+  );
+}
+
 interface ViewRow {
   lang: Language;
   slug: string;
@@ -373,6 +417,7 @@ export default function Admin() {
             <Tabs.Tab value="drafts">{t.bulkTitle}</Tabs.Tab>
             <Tabs.Tab value="views">{t.viewsTitle}</Tabs.Tab>
             <Tabs.Tab value="users">{t.usersTitle}</Tabs.Tab>
+            <Tabs.Tab value="bot">Bot</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="sponsors">
             <Stack gap="md">
@@ -394,6 +439,9 @@ export default function Admin() {
           </Tabs.Panel>
           <Tabs.Panel value="users">
             <Users />
+          </Tabs.Panel>
+          <Tabs.Panel value="bot">
+            <BotRuns />
           </Tabs.Panel>
         </Tabs>
       </Stack>

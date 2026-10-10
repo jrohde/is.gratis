@@ -17,6 +17,7 @@
     "test": "npm run test --workspaces --if-present",
     "dev:api": "npm run dev -w @isgratis/api",
     "dev:worker": "npm run dev:worker -w @isgratis/api",
+    "dev:bot": "npm run dev:bot -w @isgratis/api",
     "dev:web": "npm run dev -w @isgratis/web",
     "db:migrate": "npm run db:migrate -w @isgratis/api",
     "db:seed": "npm run db:seed -w @isgratis/api"

@@ -11,6 +11,7 @@ resources:
   - postgres.yaml
   - api.yaml
   - worker.yaml
+  - bot.yaml
   - web.yaml
   - varnish.yaml
   - ingress.yaml
