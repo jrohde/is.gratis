@@ -122,6 +122,7 @@ export const regionEntrySchema = z.object({
 export const sponsorQuoteSchema = z.object({
   views30: z.number().int(),
   priceCents: z.number().int(),
+  mailingPriceCents: z.number().int(),
   currency: z.literal('EUR'),
 });
 
@@ -164,4 +165,6 @@ export const bookingSchema = sponsoredOfferSchema.extend({
       checkedAt: z.string(),
     })
     .nullable(),
+  inMailing: z.boolean(),
+  mailingPriceCents: z.number().int().nullable(),
 });

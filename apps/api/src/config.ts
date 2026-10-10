@@ -93,6 +93,22 @@ export interface Config {
   sponsorPricing: {
     baseCents: number;
     perThousandCents: number;
+    /** Monthly extra for being in the weekly mail of free offers. */
+    mailingCents: number;
+  };
+  /**
+   * Mail, sent by the bot through your own SMTP server. Without SMTP_URL mail is only written to
+   * the bot's log, so everything works before the mail server exists.
+   */
+  mail: {
+    /** e.g. smtp://user:pass@mail.isgratis.svc:587 or smtps://...:465 */
+    smtpUrl: string;
+    from: string;
+    /** The weekly mails go out on this day (0 = Sunday, 1 = Monday) from this time (UTC). */
+    weeklyDay: number;
+    weeklyTime: string;
+    /** At most this many mails per minute, to stay friendly with the SMTP server. */
+    perMinute: number;
   };
   search: {
     /** Ask the language model for related subjects on the search page. */
@@ -192,6 +208,14 @@ export function loadConfig(): Config {
     sponsorPricing: {
       baseCents: int('SPONSOR_BASE_PRICE_CENTS', 2500),
       perThousandCents: int('SPONSOR_PRICE_PER_1000_VIEWS_CENTS', 400),
+      mailingCents: int('SPONSOR_MAILING_PRICE_CENTS', 500),
+    },
+    mail: {
+      smtpUrl: str('SMTP_URL', ''),
+      from: str('MAIL_FROM', 'is.gratis <hallo@is.gratis>'),
+      weeklyDay: int('MAIL_WEEKLY_DAY', 1),
+      weeklyTime: str('MAIL_WEEKLY_TIME', '08:00'),
+      perMinute: int('MAIL_PER_MINUTE', 60),
     },
     bot: {
       dailyTime: str('BOT_DAILY_TIME', '07:00'),

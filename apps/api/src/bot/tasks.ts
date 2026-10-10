@@ -8,10 +8,11 @@ import { HttpError } from '../lib/errors.js';
 import { hashIp } from '../lib/hash.js';
 import { dailyPick } from '../services/daily.js';
 import { enqueueDraft } from '../services/drafts.js';
+import { pruneMailing, queueOffersMail, queueWeekMail } from '../services/mailing.js';
 import { reviewDrafts, reviewOffers, type EditorDeps, type OfferEditorDeps } from '../services/editorial.js';
 import { wantedSubjects } from '../services/search.js';
 import type { Channel } from './publishers.js';
-import { dailyAt, today, type BotTask } from './scheduler.js';
+import { dailyAt, today, weeklyAt, type BotTask } from './scheduler.js';
 
 /** "Lucht is gratis* *echt", the short answer, and the link; shortened to fit the channel. */
 export function composePost(page: PageListItem, link: string, maxLength: number): string {
@@ -117,14 +118,34 @@ export function offerDesk(deps: Omit<OfferEditorDeps, 'db'>, perRun: number): Bo
   };
 }
 
-/** Every day: forget bot runs older than a month. */
+/**
+ * Once a week: queue the mail of each list for its subscribers. The bot sends the queue in its
+ * loop; queueing per subscriber is idempotent, so a retried run never mails anyone twice.
+ */
+export function weeklyMail(options: { weekday: number; time: string; origin: string }): BotTask {
+  return {
+    name: 'weekly-mail',
+    due: (now) => {
+      const week = weeklyAt(options.weekday, options.time, now);
+      return week ? [`offers:${week}`, `week:${week}`] : [];
+    },
+    run: async (ctx, key) => {
+      const [list, week] = key.split(':') as [string, string];
+      const queued = list === 'offers' ? await queueOffersMail(ctx.db, week, options.origin) : await queueWeekMail(ctx.db, week, options.origin);
+      return `${queued} mails queued`;
+    },
+  };
+}
+
+/** Every day: forget bot runs older than a month, unconfirmed subscriptions and old mail. */
 export function housekeeping(): BotTask {
   return {
     name: 'housekeeping',
     due: (now) => [today(now)],
     run: async (ctx) => {
       const result = await ctx.db.execute(sql`delete from bot_runs where updated_at < now() - interval '30 days'`);
-      return `${result.rowCount ?? 0} old runs removed`;
+      const mailing = await pruneMailing(ctx.db);
+      return `${result.rowCount ?? 0} old runs, ${mailing.subscriptions} unconfirmed subscriptions, ${mailing.mails} old mails removed`;
     },
   };
 }
@@ -135,6 +156,7 @@ export interface TaskOptions {
   origin: string;
   cache: CacheInvalidator;
   drafts?: Parameters<typeof draftWanted>[0];
+  mail?: { weekday: number; time: string };
   editor?: { deps: Omit<EditorDeps, 'db' | 'cache'>; offers: Omit<OfferEditorDeps, 'db'>; perRun: number };
 }
 
@@ -143,6 +165,7 @@ export function buildTasks(options: TaskOptions): BotTask[] {
     postDaily(options.channels, { time: options.dailyTime, origin: options.origin }),
     expireOffers(options.cache),
     housekeeping(),
+    ...(options.mail ? [weeklyMail({ ...options.mail, origin: options.origin })] : []),
     ...(options.drafts ? [draftWanted(options.drafts)] : []),
     ...(options.editor
       ? [

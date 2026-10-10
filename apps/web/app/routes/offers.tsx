@@ -5,6 +5,7 @@ import { countOfferImpressions } from '~/lib/views';
 import { stampSvg, type SponsoredOffer } from '@isgratis/types';
 import type { Route } from './+types/offers';
 import { ClaimLink } from '~/components/Claim';
+import { MailingSignup } from '~/components/MailingSignup';
 import { apiGet } from '~/lib/api.server';
 import { env } from '~/lib/env.server';
 import { messages } from '~/lib/i18n';
@@ -84,6 +85,7 @@ export default function Offers({ loaderData }: Route.ComponentProps) {
             ))}
           </SimpleGrid>
         )}
+        <MailingSignup list="offers" lang={lang} />
         <Text size="sm" c="dimmed">
           {t.sponsoredDisclaimer}{' '}
           <Anchor component={Link} to={`/advertise?lang=${lang}`}>

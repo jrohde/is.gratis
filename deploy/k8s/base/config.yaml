@@ -33,6 +33,15 @@ data:
   # Monthly price of a sponsored spot: base price plus a price per 1000 views (last 30 days).
   SPONSOR_BASE_PRICE_CENTS: '2500'
   SPONSOR_PRICE_PER_1000_VIEWS_CENTS: '400'
+  # Monthly extra for an offer that is also in the weekly mail of free offers.
+  SPONSOR_MAILING_PRICE_CENTS: '500'
+  # Mail goes out through your own SMTP server (SMTP_URL in the Secret, e.g.
+  # smtp://user:pass@mail.mail.svc:587). Without it the bot only writes mail to its log.
+  MAIL_FROM: 'is.gratis <hallo@is.gratis>'
+  # The weekly mails: day (0 = Sunday, 1 = Monday) and time (UTC).
+  MAIL_WEEKLY_DAY: '1'
+  MAIL_WEEKLY_TIME: '08:00'
+  MAIL_PER_MINUTE: '60'
   # The worker checks source links between drafts. It needs outbound HTTP(S) to the internet,
   # and refuses private and cluster-internal addresses by itself.
   SOURCE_CHECKS: 'true'
@@ -61,6 +70,7 @@ data:
 #     --from-literal=LLM_API_KEY=sk-... \
 #     --from-literal=IMAGE_API_KEY= \
 #     --from-literal=EDITOR_API_KEY= \
+#     --from-literal=SMTP_URL='smtp://user:password@mail.example:587' \
 #     --from-literal=BOT_MASTODON='[{"lang":"nl","url":"https://mastodon.example","token":"..."}]' \
 #     --from-literal=BOT_BLUESKY='[{"lang":"en","identifier":"isgratis.bsky.social","password":"app-password"}]'
 # (Both keys may be empty for a model in your own cluster.)

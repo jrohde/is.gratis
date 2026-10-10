@@ -3,6 +3,7 @@ import { IconRss } from '@tabler/icons-react';
 import { data, Link } from 'react-router';
 import type { PageListItem } from '@isgratis/types';
 import type { Route } from './+types/week';
+import { MailingSignup } from '~/components/MailingSignup';
 import { ClaimRow } from '~/components/Claim';
 import { apiGet } from '~/lib/api.server';
 import { env } from '~/lib/env.server';
@@ -78,6 +79,7 @@ export default function Week({ loaderData }: Route.ComponentProps) {
             </Card>
           </Stack>
         )}
+        <MailingSignup list="week" lang={lang} />
         <Group gap="md">
           <Anchor component={Link} to={`/offers/${lang}`}>
             {t.offersTitle} →

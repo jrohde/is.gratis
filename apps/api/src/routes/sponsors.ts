@@ -33,7 +33,12 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
 ) => {
   const quote = async (lang: Parameters<typeof viewsLast30Days>[1], slug: string) => {
     const views30 = await viewsLast30Days(db, lang, slug);
-    return { views30, priceCents: quotePrice(views30, config.sponsorPricing), currency: 'EUR' as const };
+    return {
+      views30,
+      priceCents: quotePrice(views30, config.sponsorPricing),
+      mailingPriceCents: config.sponsorPricing.mailingCents,
+      currency: 'EUR' as const,
+    };
   };
 
   app.get(
@@ -174,6 +179,7 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
       const renewed = await renewFromToken(db, request.params.token, {
         slug: request.body.slug,
         priceCents: async (lang, slug) => (await quote(lang, slug)).priceCents,
+        mailingPriceCents: config.sponsorPricing.mailingCents,
       });
       request.log.info({ slug: renewed.slug }, 'sponsor renewal requested');
       return reply.code(201).send(renewed);
@@ -247,6 +253,7 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
           description: plain(280),
           url: httpUrlSchema,
           message: z.string().trim().max(2000).optional(),
+          mailing: z.boolean().default(false),
         }),
         response: {
           201: z.object({ id: z.string(), status: bookingStatusSchema, priceCents: z.number().int(), statsToken: z.string() }),
@@ -257,7 +264,13 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     async (request, reply) => {
       // The price is fixed when the request comes in, so the advertiser pays what they were shown.
       const { priceCents } = await quote(request.body.lang, request.body.slug);
-      const booking = await createSponsorRequest(db, { ...request.body, priceCents });
+      const { mailing, ...body } = request.body;
+      const booking = await createSponsorRequest(db, {
+        ...body,
+        priceCents,
+        inMailing: mailing,
+        mailingPriceCents: mailing ? config.sponsorPricing.mailingCents : null,
+      });
       request.log.info({ bookingId: booking.id, lang: booking.lang, slug: booking.slug }, 'sponsor request received');
       return reply
         .code(201)

@@ -9,7 +9,7 @@ import { createTestApp, register, resetDatabase, sampleContent, type TestContext
 
 let ctx: TestContext;
 beforeAll(async () => {
-  ctx = await createTestApp({ sponsorPricing: { baseCents: 2500, perThousandCents: 400 } });
+  ctx = await createTestApp({ sponsorPricing: { baseCents: 2500, perThousandCents: 400, mailingCents: 500 } });
 });
 afterAll(async () => ctx.close());
 beforeEach(async () => {

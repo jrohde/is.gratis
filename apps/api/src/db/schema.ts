@@ -27,6 +27,7 @@ import type {
   DraftJobStatus,
   EditorDecision,
   Language,
+  MailingList,
   OfferEditorDecision,
   PageContent,
   PageStatus,
@@ -201,6 +202,9 @@ export const sponsoredOffers = pgTable(
     editorCheckedAt: timestamp('editor_checked_at', { withTimezone: true }),
     /** Failed attempts; after three the editor leaves the offer to the admin. */
     editorAttempts: integer('editor_attempts').notNull().default(0),
+    /** Booked extra: also in the weekly mail of free offers, for this monthly price. */
+    inMailing: boolean('in_mailing').notNull().default(false),
+    mailingPriceCents: integer('mailing_price_cents'),
     createdAt: createdAt(),
   },
   (table) => [index('sponsored_offers_page_idx').on(table.lang, table.slug, table.status)],
@@ -347,6 +351,7 @@ export const botRuns = pgTable(
 );
 
 export type UserRow = typeof users.$inferSelect;
+export type SubscriptionRow = typeof subscriptions.$inferSelect;
 export type PageRow = typeof pages.$inferSelect;
 export type RevisionRow = typeof revisions.$inferSelect;
 export type DraftJobRow = typeof draftJobs.$inferSelect;
@@ -373,4 +378,51 @@ export const editorReviews = pgTable(
     createdAt: createdAt(),
   },
   (table) => [index('editor_reviews_revision_idx').on(table.revisionId), index('editor_reviews_created_idx').on(table.createdAt)],
+);
+
+/**
+ * Subscriptions to the mailing lists. Nothing is sent before the address is confirmed (double
+ * opt-in); unsubscribing deletes the row. The token is in every mail's unsubscribe link.
+ */
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: text('email').notNull(),
+    list: text('list').$type<MailingList>().notNull(),
+    lang: text('lang').$type<Language>().notNull(),
+    /** offers: only offers for this region (and those valid everywhere); null means all. */
+    region: text('region').$type<Region>(),
+    token: text('token').notNull().unique(),
+    confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    // One subscription per address and list, plus at most one waiting for confirmation: a change
+    // of language or region replaces the current one only once it is confirmed.
+    uniqueIndex('subscriptions_confirmed_idx').on(table.email, table.list).where(sql`confirmed_at is not null`),
+    uniqueIndex('subscriptions_waiting_idx').on(table.email, table.list).where(sql`confirmed_at is null`),
+    index('subscriptions_list_idx').on(table.list, table.lang),
+  ],
+);
+
+/** Mail waiting to be sent by the bot, and what happened to it. The key makes queueing idempotent. */
+export const mailOutbox = pgTable(
+  'mail_outbox',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    key: text('key').notNull().unique(),
+    to: text('to').notNull(),
+    subject: text('subject').notNull(),
+    text: text('text').notNull(),
+    html: text('html').notNull(),
+    /** For the List-Unsubscribe header (one click, RFC 8058). */
+    unsubscribeUrl: text('unsubscribe_url'),
+    status: text('status').$type<'queued' | 'sent' | 'failed'>().notNull().default('queued'),
+    attempts: integer('attempts').notNull().default(0),
+    error: text('error'),
+    createdAt: createdAt(),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+  },
+  (table) => [index('mail_outbox_status_idx').on(table.status, table.createdAt)],
 );

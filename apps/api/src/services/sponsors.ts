@@ -35,6 +35,8 @@ export function toBooking(row: SponsoredOfferRow): SponsorBooking {
             checkedAt: row.editorCheckedAt.toISOString(),
           }
         : null,
+    inMailing: row.inMailing,
+    mailingPriceCents: row.mailingPriceCents,
   };
 }
 
@@ -51,6 +53,8 @@ export async function createSponsorRequest(
     url: string;
     message?: string;
     priceCents: number;
+    inMailing?: boolean;
+    mailingPriceCents?: number | null;
   },
 ): Promise<SponsorBooking & { statsToken: string }> {
   const [row] = await db
@@ -211,7 +215,7 @@ export async function statsForToken(db: Database, token: string) {
 export async function renewFromToken(
   db: Database,
   token: string,
-  input: { slug?: string; priceCents: (lang: Language, slug: string) => Promise<number> },
+  input: { slug?: string; priceCents: (lang: Language, slug: string) => Promise<number>; mailingPriceCents: number },
 ): Promise<{ statsToken: string; priceCents: number; slug: string }> {
   const [offer] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.statsToken, token)).limit(1);
   if (!offer) throw notFound('Unknown link');
@@ -236,6 +240,9 @@ export async function renewFromToken(
       url: offer.url,
       message: slug === offer.slug ? `Verlenging van ${offer.id}` : `Opwaardering van ${offer.id} (/${offer.lang}/${offer.slug})`,
       priceCents,
+      // The mailing extra carries over, at today's price.
+      inMailing: offer.inMailing,
+      mailingPriceCents: offer.inMailing ? input.mailingPriceCents : null,
       statsToken: newToken(),
     })
     .returning();

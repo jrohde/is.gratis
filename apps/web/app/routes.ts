@@ -21,6 +21,7 @@ export default [
   route('regions/:lang', 'routes/regions.tsx'),
   route('regions/:lang/:code', 'routes/region.tsx'),
   route('admin', 'routes/admin.tsx'),
+  route('mailing/:action/:token', 'routes/mailing.tsx'),
   route(':lang', 'routes/lang-home.tsx'),
   route(':lang/llms.txt', 'routes/lang-llms.ts'),
   route(':lang/feed.xml', 'routes/lang-feed.ts'),

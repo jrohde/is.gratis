@@ -12,6 +12,8 @@ import { createDatabase } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
 import { createCacheInvalidator } from './lib/cache.js';
 import { checkLink, fetchPageText } from './lib/link-check.js';
+import { createMailer } from './lib/mailer.js';
+import { sendQueuedMail } from './services/mailing.js';
 
 const config = loadConfig();
 const logger = pino({ level: config.logLevel, name: 'bot' });
@@ -43,6 +45,7 @@ const tasks = buildTasks({
   dailyTime: config.bot.dailyTime,
   origin: config.publicOrigin,
   cache,
+  mail: { weekday: config.mail.weeklyDay, time: config.mail.weeklyTime },
   drafts: { ...config.bot.drafts, globalPerHour: config.drafts.globalPerHour, ipHashSalt: config.ipHashSalt },
   ...(config.editor.enabled
     ? {
@@ -55,17 +58,26 @@ const tasks = buildTasks({
     : {}),
 });
 
+const mailer = createMailer(config.mail, logger);
+
 let stopping = false;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function main() {
   if (config.migrateOnStart) await runMigrations(config.databaseUrl);
-  logger.info({ tasks: tasks.map((t) => t.name), channels: channels.map((c) => c.id) }, 'bot started');
+  logger.info({ tasks: tasks.map((t) => t.name), channels: channels.map((c) => c.id), mail: mailer.dryRun ? 'log only' : 'smtp' }, 'bot started');
   while (!stopping) {
     try {
       await tick({ db, now: new Date(), logger }, tasks);
     } catch (error) {
       logger.error({ err: error }, 'bot tick failed');
+    }
+    // Mail is not a scheduled task but a queue: confirmation mails should not wait for a slot.
+    try {
+      const { sent, failed } = await sendQueuedMail(db, mailer, config.mail.perMinute);
+      if (sent || failed) logger.info({ sent, failed, dryRun: mailer.dryRun }, 'mail sent');
+    } catch (error) {
+      logger.error({ err: error }, 'sending mail failed');
     }
     for (let i = 0; i < 60 && !stopping; i++) await sleep(1000);
   }

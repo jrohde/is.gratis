@@ -8,6 +8,8 @@
 # With the llm profile, pull a model once:
 #   docker compose exec ollama ollama pull llama3.1:8b
 # and set LLM_BASE_URL=http://ollama:11434/v1 and LLM_MODEL=llama3.1:8b (see .env.example).
+#
+# Mail from the bot lands in Mailpit, a local mail catcher: read it at http://localhost:8025.
 
 services:
   postgres:
@@ -80,9 +82,18 @@ services:
       BOT_BLUESKY: ${BOT_BLUESKY:-[]}
       EDITOR_ENABLED: ${EDITOR_ENABLED:-true}
       EDITOR_MODEL: ${EDITOR_MODEL:-}
+      SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
     depends_on:
       api:
         condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  # Catches all mail in development; in production SMTP_URL points at your own mail server.
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - '${MAILPIT_HOST_PORT:-8025}:8025'
 
   web:
     build:

@@ -89,3 +89,18 @@ export function dailyAt(time: string, now: Date): boolean {
 }
 
 export const today = (now: Date) => now.toISOString().slice(0, 10);
+
+/** The ISO week of a moment, e.g. 2026-W41: weeks start on Monday, week 1 has the first Thursday. */
+export function isoWeek(now: Date): string {
+  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = Date.UTC(date.getUTCFullYear(), 0, 1);
+  const week = Math.ceil(((date.getTime() - yearStart) / 86_400_000 + 1) / 7);
+  return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+/** Once a week: from the given time on the given weekday (0 = Sunday), keyed by ISO week. */
+export function weeklyAt(weekday: number, time: string, now: Date): string | null {
+  return now.getUTCDay() === weekday && dailyAt(time, now) ? isoWeek(now) : null;
+}

@@ -88,6 +88,12 @@ function BookingCard({ booking, onChange }: { booking: SponsorBooking; onChange:
                 {formatPrice(booking.priceCents, lang)} / mnd
               </Badge>
             )}
+            {booking.inMailing && (
+              <Badge variant="light" color="grape">
+                {t.inMailing}
+                {booking.mailingPriceCents !== null ? ` +${formatPrice(booking.mailingPriceCents, lang)}` : ''}
+              </Badge>
+            )}
           </Group>
           <Text size="xs" c="dimmed">
             {formatDate(booking.createdAt, lang)}
@@ -354,6 +360,49 @@ interface EditorReview {
 
 const DECISION_COLORS = { publish: 'green', revise: 'teal', reject: 'orange', error: 'red' } as const;
 
+interface MailingStats {
+  lists: Array<{ list: string; lang: string; confirmed: number; waiting: number }>;
+  outbox: Record<string, number>;
+}
+
+/** Subscribers per list and language, and what the outbox is doing. */
+function MailingNumbers() {
+  const t = messages(useUiLang());
+  const [stats, setStats] = useState<MailingStats | null>(null);
+  useEffect(() => {
+    void api<MailingStats>('GET', '/admin/mailing').then(setStats);
+  }, []);
+  if (stats === null) return <Loader />;
+  return (
+    <Stack gap="xs">
+      {stats.lists.length === 0 ? (
+        <Text c="dimmed">—</Text>
+      ) : (
+        <Table striped>
+          <Table.Tbody>
+            {stats.lists.map((row) => (
+              <Table.Tr key={`${row.list}/${row.lang}`}>
+                <Table.Td fw={600}>{row.list}</Table.Td>
+                <Table.Td tt="uppercase">{row.lang}</Table.Td>
+                <Table.Td>
+                  {row.confirmed} {t.mailingConfirmedCount}
+                </Table.Td>
+                <Table.Td c="dimmed">
+                  {row.waiting} {t.mailingWaitingCount}
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      )}
+      <Text size="sm" c="dimmed">
+        {t.mailingOutbox}:{' '}
+        {['queued', 'sent', 'failed'].map((status) => `${status} ${stats.outbox[status] ?? 0}`).join(' · ')}
+      </Text>
+    </Stack>
+  );
+}
+
 /** What the editorial language model decided, newest first. */
 function EditorReviews() {
   const lang = useUiLang();
@@ -530,6 +579,8 @@ export default function Admin() {
             <Stack gap="lg">
               <Title order={3}>{t.editorDecisions}</Title>
               <EditorReviews />
+              <Title order={3}>{t.mailingStatsTitle}</Title>
+              <MailingNumbers />
               <Title order={3}>{t.botRuns}</Title>
               <BotRuns />
             </Stack>

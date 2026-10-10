@@ -193,6 +193,9 @@ export interface SponsorBooking extends SponsoredOffer {
   createdAt: string;
   /** Null until the editorial language model has looked at it (or when it is switched off). */
   editor: OfferEditorAdvice | null;
+  /** Booked extra: also in the weekly mail of free offers. */
+  inMailing: boolean;
+  mailingPriceCents: number | null;
 }
 
 export interface Page {
@@ -257,6 +260,8 @@ export interface RegionEntry {
 export interface SponsorQuote {
   views30: number;
   priceCents: number;
+  /** Monthly extra for also being in the weekly mail of free offers. */
+  mailingPriceCents: number;
   currency: 'EUR';
 }
 
@@ -384,6 +389,13 @@ export interface User {
 }
 
 export type SponsorRequestStatus = 'pending' | 'active' | 'rejected' | 'expired';
+
+/**
+ * Mailing lists, each subscribed to on its own. offers: this week's free offers from sponsors,
+ * per region; week: the free things of the week and the new pages.
+ */
+export const MAILING_LISTS = ['offers', 'week'] as const;
+export type MailingList = (typeof MAILING_LISTS)[number];
 export type OfferEditorDecision = 'approve' | 'reject' | 'unsure';
 
 /** The editorial language model's advice on a sponsored offer. */
@@ -404,6 +416,8 @@ export interface SponsorRequestBody {
   description: string;
   url: string;
   message?: string;
+  /** Also in the weekly mail of free offers, for a small extra. */
+  mailing?: boolean;
 }
 
 export interface ApiError {

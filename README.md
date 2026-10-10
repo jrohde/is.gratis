@@ -289,6 +289,41 @@ een `name`, een `due(now)` die de sleutels teruggeeft die nu aan de beurt zijn
 korte omschrijving teruggeeft. Voeg hem toe aan `buildTasks`. Herhalen,
 vastleggen en niet-dubbel-doen regelt de planner.
 
+## Mailinglijsten
+
+Losse lijsten, elk apart aan te melden; nieuwe lijsten kunnen erbij
+(`MAILING_LISTS` in `packages/types`):
+
+- **Gratis aanbiedingen van de week** (`offers`), per regio: de lopende
+  gesponsorde aanbiedingen die de mailing hebben geboekt. Een aanbieding voor
+  de EU gaat ook naar abonnees in EU-landen, een zonder regio naar iedereen.
+  Is er niets voor iemands regio, dan krijgt die geen mail. Links lopen via de
+  klikteller, zodat adverteerders zien wat de mail opleverde.
+- **Gratis deze week** (`week`): het gratis ding van elke dag en de nieuwe
+  pagina's.
+
+Adverteerders vinken bij hun aanvraag "ook in de wekelijkse mail" aan, voor
+`SPONSOR_MAILING_PRICE_CENTS` per maand extra (standaard € 5). Bij verlengen
+gaat de optie mee, tegen de prijs van dat moment.
+
+Inschrijven gaat met bevestiging per mail (double opt-in); zonder bevestiging
+wordt niets verstuurd, en onbevestigde aanmeldingen verdwijnen na een week.
+Bevestigen en afmelden gebeuren met een knop op de site, niet door het openen
+van de link, omdat mailsystemen links openen om ze te scannen. Elke mail heeft
+een afmeldlink en de `List-Unsubscribe`-kop voor afmelden met één klik
+(RFC 8058). Afmelden verwijdert het adres. Het formulier antwoordt altijd
+hetzelfde, zodat niemand kan nagaan wie ingeschreven is. Een andere regio of
+taal kiezen gaat ook via een bevestiging en vervangt dan de oude inschrijving.
+
+Mail wordt in de database klaargezet en door de bot verstuurd via je eigen
+SMTP-server (`SMTP_URL` in de Secret). De wekelijkse mails gaan op
+`MAIL_WEEKLY_DAY` om `MAIL_WEEKLY_TIME` de wachtrij in; iedereen krijgt ze
+precies één keer, ook als de bot halverwege herstart. Is de mailserver
+onbereikbaar, dan probeert de bot het later opnieuw, tot vijf keer. Zonder
+`SMTP_URL` schrijft de bot de mail alleen naar zijn log; met docker compose
+vangt Mailpit alle mail op (http://localhost:8025). In het beheer staan onder
+**Bot** het aantal abonnees per lijst en taal en de stand van de wachtrij.
+
 ## Projectstructuur
 
 ```

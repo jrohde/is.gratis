@@ -1,4 +1,4 @@
-import { Alert, Anchor, Button, Card, Container, Group, List, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Card, Checkbox, Container, Group, List, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { isLanguage, LANGUAGES, REGIONS, toSlug, type Language, type Region, type SponsorQuote } from '@isgratis/types';
@@ -27,6 +27,7 @@ export default function Advertise() {
     description: '',
     url: 'https://',
     message: '',
+    mailing: false,
   });
   const [status, setStatus] = useState<'idle' | 'busy' | 'done'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +131,12 @@ export default function Advertise() {
                 <TextInput label={t.offerTitle} required maxLength={80} value={form.title} onChange={text('title')} />
                 <Textarea label={t.offerDescription} required maxLength={280} autosize minRows={2} value={form.description} onChange={text('description')} />
                 <TextInput label={t.offerUrl} type="url" required value={form.url} onChange={text('url')} />
+                <Checkbox
+                  checked={form.mailing}
+                  onChange={(event) => setForm({ ...form, mailing: event.currentTarget.checked })}
+                  label={t.advertiseMailing(quote ? formatPrice(quote.mailingPriceCents, uiLang) : null)}
+                  description={t.advertiseMailingHint}
+                />
                 <Textarea label={t.message} maxLength={2000} autosize minRows={2} value={form.message} onChange={text('message')} />
                 {error && <Alert color="red">{error}</Alert>}
                 <div>
