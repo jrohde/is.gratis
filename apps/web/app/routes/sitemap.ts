@@ -29,7 +29,7 @@ export async function loader(_: Route.LoaderArgs) {
     .join('\n');
   // The overview pages of each language: home, index, countries, free offers and the quiz.
   const overviews = LANGUAGES.flatMap((lang) =>
-    [`/${lang}`, `/a-z/${lang}`, `/regions/${lang}`, `/offers/${lang}`, `/quiz/${lang}`].map(
+    [`/${lang}`, `/a-z/${lang}`, `/regions/${lang}`, `/offers/${lang}`, `/quiz/${lang}`, `/week/${lang}`].map(
       (path) => `<url><loc>${escape(`${env.publicOrigin}${path}`)}</loc></url>`,
     ),
   ).join('\n');

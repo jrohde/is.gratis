@@ -148,7 +148,9 @@ Zoeken werkt zoals op Wikipedia, helemaal in de eigen database:
 ### Voor bezoekers: gratis van de dag, aanbod en quiz
 
 - **Gratis van de dag** op de homepage: elke dag een ander onderwerp dat (bijna) voor iedereen gratis is, voor iedereen hetzelfde. Een hash van de datum kiest; er is geen tabel of cronjob voor nodig.
+- **Gratis deze week** (`/week/<taal>`): de zeven onderwerpen van de dag en wat er die week nieuw bij kwam. De feed `/<taal>/daily.xml` geeft elke dag één item ("Wifi is gratis\* \*door iemand anders"), klaar om met een eigen bot of een RSS-naar-sociale-media-dienst te delen.
 - **Nu gratis te krijgen** (`/offers/<taal>`): alle goedgekeurde gesponsorde aanbiedingen op één plek, gemarkeerd als gesponsord en met het keurmerk. Meer zichtbaarheid voor adverteerders, dus meer waarde per plek.
+- **Verlengen en opwaarderen:** op de statistiekenpagina vraagt de adverteerder met één klik dezelfde plek opnieuw aan, of hetzelfde aanbod op een pagina die vaker bekeken wordt, met de prijs van vandaag. Het wordt een nieuwe aanvraag die de beheerder goedkeurt.
 - **Statistieken voor adverteerders:** bij een aanvraag krijgt de adverteerder een geheime link (`/advertise/stats/<token>`) met hoe vaak het aanbod getoond en aangeklikt is, per dag en in totaal. Getoond wordt in de browser geteld, klikken via een korte doorverwijzing (`/api/offers/<id>/go`); er wordt niets over bezoekers opgeslagen.
 - **Quiz** (`/quiz/<taal>`): je ziet een bewering ("Onderwijs is gratis\*") en raadt de voetnoot op de gratis-schaal. Precies goed is 2 punten, één stap ernaast 1. Na tien vragen kun je je score delen.
 

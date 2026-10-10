@@ -119,3 +119,13 @@ describe('quiz', () => {
     expect(questions[0].scale).toEqual({ type: 'free_good', region: 'WORLD' });
   });
 });
+
+describe('free this week', () => {
+  it('lists a free thing for each of the last days and the new pages', async () => {
+    await create('lucht', 'lucht', sampleContent({ scale: { type: 'free_good', region: 'WORLD' } }));
+    const body = (await ctx.app.inject({ url: '/api/week?lang=nl' })).json();
+    expect(body.days).toHaveLength(7);
+    expect(body.days[0]).toMatchObject({ page: { slug: 'lucht' } });
+    expect(body.fresh.map((p: { slug: string }) => p.slug)).toEqual(['lucht']);
+  });
+});

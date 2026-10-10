@@ -1,4 +1,4 @@
-import { Button, Card, Group, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
+import { Anchor, Button, Card, Group, SimpleGrid, Stack, Text, Title, Container } from '@mantine/core';
 import { motion } from 'motion/react';
 import { data, Link } from 'react-router';
 import { LANGUAGES, SLOGAN, type PageListItem } from '@isgratis/types';
@@ -83,9 +83,14 @@ export default function LangHome({ loaderData }: Route.ComponentProps) {
 
         {daily && (
           <Card withBorder padding="lg" radius="md" style={{ borderTop: '4px solid var(--mantine-color-green-6)' }}>
-            <Text size="xs" fw={800} tt="uppercase" c="green.8" mb={6} style={{ letterSpacing: 1 }}>
-              {t.dailyTitle}
-            </Text>
+            <Group justify="space-between" mb={6}>
+              <Text size="xs" fw={800} tt="uppercase" c="green.8" style={{ letterSpacing: 1 }}>
+                {t.dailyTitle}
+              </Text>
+              <Anchor component={Link} to={`/week/${lang}`} size="xs">
+                {t.weekTitle} →
+              </Anchor>
+            </Group>
             <Text fz={{ base: 'lg', sm: 'xl' }} component="div">
               <ClaimRow {...daily} />
             </Text>

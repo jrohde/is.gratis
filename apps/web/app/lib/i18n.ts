@@ -316,6 +316,9 @@ const nl = {
   upgradeIntro: 'Deze pagina’s worden vaker bekeken:',
   viewsMonth: (n: string) => `${n} weergaven per maand`,
   renewDone: 'Aangevraagd! We keuren het met de hand goed. Je nieuwe statistieken:',
+  weekTitle: 'Gratis deze week',
+  weekIntro: 'Elke dag één ding dat echt gratis is, en wat er deze week bij kwam.',
+  weekNew: 'Nieuw deze week',
 };
 
 export type Messages = typeof nl;
@@ -629,6 +632,9 @@ const en: Messages = {
   upgradeIntro: 'These pages are viewed more often:',
   viewsMonth: (n) => `${n} views a month`,
   renewDone: 'Requested! We review it by hand. Your new statistics:',
+  weekTitle: 'Free this week',
+  weekIntro: 'One thing a day that is really free, and what was added this week.',
+  weekNew: 'New this week',
 };
 
 const de: Messages = {
@@ -825,6 +831,9 @@ const de: Messages = {
   upgradeIntro: 'Diese Seiten werden öfter aufgerufen:',
   viewsMonth: (n) => `${n} Aufrufe pro Monat`,
   renewDone: 'Angefragt! Wir prüfen es von Hand. Deine neue Statistik:',
+  weekTitle: 'Gratis diese Woche',
+  weekIntro: 'Jeden Tag eine Sache, die wirklich gratis ist, und was diese Woche neu dazukam.',
+  weekNew: 'Neu diese Woche',
 };
 
 const es: Messages = {
@@ -1022,6 +1031,9 @@ const es: Messages = {
   upgradeIntro: 'Estas páginas se ven más a menudo:',
   viewsMonth: (n) => `${n} visitas al mes`,
   renewDone: '¡Solicitado! Lo revisamos a mano. Tus nuevas estadísticas:',
+  weekTitle: 'Gratis esta semana',
+  weekIntro: 'Cada día una cosa que es gratis de verdad, y lo nuevo de esta semana.',
+  weekNew: 'Nuevo esta semana',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

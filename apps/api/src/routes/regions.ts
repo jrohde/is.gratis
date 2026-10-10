@@ -4,7 +4,7 @@ import type { Database } from '../db/client.js';
 import { languageSchema, regionSchema } from '../lib/content.js';
 import { regionEntrySchema } from '../schemas.js';
 import { regionCounts, regionEntries } from '../services/regions.js';
-import { dailyPick, quizQuestions } from '../services/daily.js';
+import { dailyHistory, dailyPick, newThisWeek, quizQuestions } from '../services/daily.js';
 import { pageListItemSchema } from '../schemas.js';
 
 export const regionRoutes: FastifyPluginAsyncZod<{ db: Database }> = async (app, { db }) => {
@@ -68,5 +68,26 @@ export const regionRoutes: FastifyPluginAsyncZod<{ db: Database }> = async (app,
       reply.header('cache-control', 'no-store');
       return { questions: await quizQuestions(db, request.query.lang, request.query.count) };
     },
+  );
+
+  app.get(
+    '/week',
+    {
+      schema: {
+        tags: ['pages'],
+        summary: 'Free this week: the free things of the day of the last week, and new pages',
+        querystring: z.object({ lang: languageSchema, days: z.coerce.number().int().min(1).max(31).default(7) }),
+        response: {
+          200: z.object({
+            days: z.array(z.object({ day: z.string(), page: pageListItemSchema })),
+            fresh: z.array(pageListItemSchema),
+          }),
+        },
+      },
+    },
+    async (request) => ({
+      days: await dailyHistory(db, request.query.lang, request.query.days),
+      fresh: await newThisWeek(db, request.query.lang, 12),
+    }),
   );
 };
