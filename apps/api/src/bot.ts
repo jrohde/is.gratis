@@ -46,6 +46,7 @@ const tasks = buildTasks({
   origin: config.publicOrigin,
   cache,
   mail: { weekday: config.mail.weeklyDay, time: config.mail.weeklyTime },
+  billing: config.billing,
   drafts: { ...config.bot.drafts, globalPerHour: config.drafts.globalPerHour, ipHashSalt: config.ipHashSalt },
   ...(config.editor.enabled
     ? {

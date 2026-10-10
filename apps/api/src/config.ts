@@ -98,6 +98,22 @@ export interface Config {
     /** Being the only offer for these readers costs this percentage of the normal price. */
     exclusivePercent: number;
   };
+  /** Invoicing: the seller's details printed on every invoice, VAT and payment terms. */
+  billing: {
+    enabled: boolean;
+    companyName: string;
+    /** Lines separated by "|" or newlines. */
+    companyAddress: string;
+    kvk: string;
+    vatNumber: string;
+    iban: string;
+    bic: string;
+    /** Dutch VAT in basis points: 2100 is 21%. */
+    vatRateBps: number;
+    dueDays: number;
+    /** Mollie API key (live_... or test_...). Without it invoices are paid by bank transfer only. */
+    mollieApiKey: string;
+  };
   /**
    * Mail, sent by the bot through your own SMTP server. Without SMTP_URL mail is only written to
    * the bot's log, so everything works before the mail server exists.
@@ -212,6 +228,18 @@ export function loadConfig(): Config {
       perThousandCents: int('SPONSOR_PRICE_PER_1000_VIEWS_CENTS', 400),
       mailingCents: int('SPONSOR_MAILING_PRICE_CENTS', 500),
       exclusivePercent: int('SPONSOR_EXCLUSIVE_PERCENT', 250),
+    },
+    billing: {
+      enabled: bool('BILLING_ENABLED', true),
+      companyName: str('COMPANY_NAME', 'is.gratis'),
+      companyAddress: str('COMPANY_ADDRESS', ''),
+      kvk: str('COMPANY_KVK', ''),
+      vatNumber: str('COMPANY_VAT_NUMBER', ''),
+      iban: str('COMPANY_IBAN', ''),
+      bic: str('COMPANY_BIC', ''),
+      vatRateBps: int('VAT_RATE_BPS', 2100),
+      dueDays: int('INVOICE_DUE_DAYS', 14),
+      mollieApiKey: str('MOLLIE_API_KEY', ''),
     },
     mail: {
       smtpUrl: str('SMTP_URL', ''),

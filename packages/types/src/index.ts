@@ -215,6 +215,8 @@ export interface SponsorBooking extends SponsoredOffer {
   editor: OfferEditorAdvice | null;
   /** Booked as the only offer for these readers on the page. */
   exclusive: boolean;
+  /** Approved, but not shown until the first invoice is paid. */
+  awaitingPayment: boolean;
   /** Booked extra: also in the weekly mail of free offers. */
   inMailing: boolean;
   mailingPriceCents: number | null;
@@ -451,6 +453,10 @@ export interface SponsorRequestBody {
   mailing?: boolean;
   /** The only offer for these readers on the page, for a higher price. */
   exclusive?: boolean;
+  /** For the invoice. A VAT number from another EU country means reverse charge. */
+  billingAddress?: string;
+  billingCountry?: string;
+  vatNumber?: string;
 }
 
 export interface ApiError {

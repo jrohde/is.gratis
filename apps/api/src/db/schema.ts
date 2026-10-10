@@ -202,6 +202,13 @@ export const sponsoredOffers = pgTable(
     editorCheckedAt: timestamp('editor_checked_at', { withTimezone: true }),
     /** Failed attempts; after three the editor leaves the offer to the admin. */
     editorAttempts: integer('editor_attempts').notNull().default(0),
+    /** Billing details: an invoice needs the customer's address, and a VAT number for reverse charge. */
+    billingAddress: text('billing_address'),
+    billingCountry: text('billing_country'),
+    vatNumber: text('vat_number'),
+    /** Approved but not shown until the first invoice is paid (new advertisers pay in advance). */
+    awaitingPayment: boolean('awaiting_payment').notNull().default(false),
+    renewalReminderSentAt: timestamp('renewal_reminder_sent_at', { withTimezone: true }),
     /** The only offer for these readers on the page; priceCents is then the exclusive price. */
     exclusive: boolean('exclusive').notNull().default(false),
     /** Booked extra: also in the weekly mail of free offers, for this monthly price. */
@@ -458,3 +465,55 @@ export const advertiserSessions = pgTable(
   },
   (table) => [index('advertiser_sessions_email_idx').on(table.email)],
 );
+
+export type InvoiceStatus = 'open' | 'paid' | 'void';
+export interface InvoiceLine {
+  description: string;
+  amountCents: number;
+}
+
+/**
+ * Invoices for sponsored offers. Numbers run per year without gaps (invoice_counters); an
+ * invoice is never deleted, only voided, as Dutch bookkeeping rules require.
+ */
+export const invoices = pgTable(
+  'invoices',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    number: text('number').notNull().unique(),
+    /** Secret in the invoice link; the advertiser needs no account to see and pay it. */
+    token: text('token').notNull().unique(),
+    offerId: uuid('offer_id').references(() => sponsoredOffers.id, { onDelete: 'set null' }),
+    lang: text('lang').$type<Language>().notNull(),
+    customerName: text('customer_name').notNull(),
+    customerEmail: text('customer_email').notNull(),
+    customerAddress: text('customer_address'),
+    customerCountry: text('customer_country'),
+    customerVatNumber: text('customer_vat_number'),
+    lines: jsonb('lines').$type<InvoiceLine[]>().notNull(),
+    subtotalCents: integer('subtotal_cents').notNull(),
+    /** In basis points: 2100 is 21%. */
+    vatRateBps: integer('vat_rate_bps').notNull(),
+    /** Why there is no Dutch VAT, printed on the invoice: reverse charge or outside the EU. */
+    vatNote: text('vat_note'),
+    vatCents: integer('vat_cents').notNull(),
+    totalCents: integer('total_cents').notNull(),
+    status: text('status').$type<InvoiceStatus>().notNull().default('open'),
+    issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
+    dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
+    paidAt: timestamp('paid_at', { withTimezone: true }),
+    paidVia: text('paid_via').$type<'mollie' | 'transfer' | 'manual'>(),
+    molliePaymentId: text('mollie_payment_id'),
+    reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (table) => [index('invoices_status_idx').on(table.status, table.dueAt), index('invoices_offer_idx').on(table.offerId)],
+);
+
+/** The last invoice number used per year, so numbers run without gaps. */
+export const invoiceCounters = pgTable('invoice_counters', {
+  year: integer('year').primaryKey(),
+  last: integer('last').notNull(),
+});
+
+export type InvoiceRow = typeof invoices.$inferSelect;

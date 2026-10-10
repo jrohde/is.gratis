@@ -46,6 +46,8 @@ export async function activeOffers(db: Database, lang: Language, slug: string): 
         eq(sponsoredOffers.lang, lang),
         eq(sponsoredOffers.slug, slug),
         eq(sponsoredOffers.status, 'active'),
+        // Approved but unpaid offers keep their spot, but nobody sees them yet.
+        eq(sponsoredOffers.awaitingPayment, false),
         or(isNull(sponsoredOffers.startsAt), lte(sponsoredOffers.startsAt, now)),
         or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, now)),
       ),

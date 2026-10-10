@@ -170,6 +170,7 @@ export const bookingSchema = sponsoredOfferSchema.extend({
     })
     .nullable(),
   exclusive: z.boolean(),
+  awaitingPayment: z.boolean(),
   inMailing: z.boolean(),
   mailingPriceCents: z.number().int().nullable(),
 });

@@ -113,6 +113,7 @@ export async function advertiserOffers(db: Database, email: string) {
     status: offer.status,
     priceCents: offer.priceCents,
     exclusive: offer.exclusive,
+    awaitingPayment: offer.awaitingPayment,
     inMailing: offer.inMailing,
     mailingPriceCents: offer.mailingPriceCents,
     startsAt: offer.startsAt?.toISOString() ?? null,

@@ -101,6 +101,8 @@ async function mailingOffers(db: Database, lang: Language) {
       and(
         eq(sponsoredOffers.lang, lang),
         eq(sponsoredOffers.status, 'active'),
+        // Approved but unpaid offers keep their spot, but nobody sees them yet.
+        eq(sponsoredOffers.awaitingPayment, false),
         eq(sponsoredOffers.inMailing, true),
         or(isNull(sponsoredOffers.startsAt), lte(sponsoredOffers.startsAt, now)),
         or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, now)),

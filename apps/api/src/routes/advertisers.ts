@@ -13,6 +13,8 @@ import {
   endAdvertiserSession,
   requestAdvertiserLogin,
 } from '../services/advertisers.js';
+import { invoicesForEmail } from '../services/invoices.js';
+import { invoiceSchema } from './invoices.js';
 
 /** Separate from the editors' session: an advertiser is not a user of the encyclopedia. */
 export const ADVERTISER_COOKIE = 'isg_adv';
@@ -30,6 +32,7 @@ const portalOfferSchema = z.object({
   status: z.enum(['pending', 'active', 'rejected', 'expired']),
   priceCents: z.number().int().nullable(),
   exclusive: z.boolean(),
+  awaitingPayment: z.boolean(),
   inMailing: z.boolean(),
   mailingPriceCents: z.number().int().nullable(),
   startsAt: z.string().nullable(),
@@ -98,7 +101,10 @@ export const advertiserRoutes: FastifyPluginAsyncZod<{ db: Database; config: Con
       schema: {
         tags: ['sponsors'],
         summary: 'The signed-in advertiser and all their offers',
-        response: { 200: z.object({ email: z.string(), offers: z.array(portalOfferSchema) }), 401: errorSchema },
+        response: {
+          200: z.object({ email: z.string(), offers: z.array(portalOfferSchema), invoices: z.array(invoiceSchema) }),
+          401: errorSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -106,7 +112,7 @@ export const advertiserRoutes: FastifyPluginAsyncZod<{ db: Database; config: Con
       const token = request.cookies[ADVERTISER_COOKIE];
       const email = token ? await advertiserForSession(db, token) : null;
       if (!email) throw unauthorized();
-      return { email, offers: await advertiserOffers(db, email) };
+      return { email, offers: await advertiserOffers(db, email), invoices: await invoicesForEmail(db, email) };
     },
   );
 

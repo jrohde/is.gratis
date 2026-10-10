@@ -36,6 +36,7 @@ export function toBooking(row: SponsoredOfferRow): SponsorBooking {
           }
         : null,
     exclusive: row.exclusive,
+    awaitingPayment: row.awaitingPayment,
     inMailing: row.inMailing,
     mailingPriceCents: row.mailingPriceCents,
   };
@@ -62,6 +63,9 @@ export async function createSponsorRequest(
     inMailing?: boolean;
     mailingPriceCents?: number | null;
     exclusive?: boolean;
+    billingAddress?: string;
+    billingCountry?: string;
+    vatNumber?: string;
   },
 ): Promise<SponsorBooking & { statsToken: string }> {
   const [row] = await db
@@ -74,6 +78,12 @@ export async function createSponsorRequest(
     })
     .returning();
   return { ...toBooking(row!), statsToken: row!.statsToken! };
+}
+
+export async function bookingById(db: Database, id: string): Promise<SponsorBooking> {
+  const [row] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.id, id)).limit(1);
+  if (!row) throw notFound('Booking not found');
+  return toBooking(row);
 }
 
 export async function listBookings(db: Database, status?: SponsorRequestStatus): Promise<SponsorBooking[]> {
@@ -217,6 +227,8 @@ export async function activeOffersOverview(db: Database, lang: Language) {
       and(
         eq(sponsoredOffers.lang, lang),
         eq(sponsoredOffers.status, 'active'),
+        // Approved but unpaid offers keep their spot, but nobody sees them yet.
+        eq(sponsoredOffers.awaitingPayment, false),
         or(isNull(sponsoredOffers.startsAt), lte(sponsoredOffers.startsAt, now)),
         or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, now)),
       ),
@@ -238,6 +250,8 @@ const activeNow = () => {
   const now = new Date();
   return and(
     eq(sponsoredOffers.status, 'active'),
+    // Approved but unpaid offers keep their spot, but nobody sees them yet.
+    eq(sponsoredOffers.awaitingPayment, false),
     or(isNull(sponsoredOffers.startsAt), lte(sponsoredOffers.startsAt, now)),
     or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, now)),
   );
@@ -335,6 +349,9 @@ export async function renewFromToken(
       url: offer.url,
       message: slug === offer.slug ? `Verlenging van ${offer.id}` : `Opwaardering van ${offer.id} (/${offer.lang}/${offer.slug})`,
       priceCents,
+      billingAddress: offer.billingAddress,
+      billingCountry: offer.billingCountry,
+      vatNumber: offer.vatNumber,
       // The extras carry over, at today's prices.
       exclusive: offer.exclusive,
       inMailing: offer.inMailing,

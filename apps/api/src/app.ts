@@ -26,6 +26,7 @@ import { authRoutes } from './routes/auth.js';
 import { botRoutes } from './routes/bot.js';
 import { mailingRoutes } from './routes/mailing.js';
 import { advertiserRoutes } from './routes/advertisers.js';
+import { invoiceRoutes } from './routes/invoices.js';
 import { communityRoutes } from './routes/community.js';
 import { draftRoutes } from './routes/drafts.js';
 import { healthRoutes } from './routes/health.js';
@@ -46,9 +47,11 @@ export interface AppDeps {
   cache: CacheInvalidator;
   /** A pino logger shared with other components; defaults to a new one at config.logLevel. */
   logger?: FastifyBaseLogger;
+  /** Stands in for Mollie in tests. */
+  mollieFetch?: typeof fetch;
 }
 
-export async function buildApp({ config, db, cache, logger }: AppDeps) {
+export async function buildApp({ config, db, cache, logger, mollieFetch }: AppDeps) {
   const app = Fastify({
     ...(logger ? { loggerInstance: logger } : { logger: { level: config.logLevel } }),
     // The API runs behind the ingress and Varnish; take the client IP from X-Forwarded-For.
@@ -147,6 +150,7 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
       await api.register(botRoutes, { db });
       await api.register(mailingRoutes, { db, config });
       await api.register(advertiserRoutes, { db, config });
+      await api.register(invoiceRoutes, { db, config, cache, ...(mollieFetch ? { mollieFetch } : {}) });
       await api.register(communityRoutes, { db, cache });
       await api.register(assetRoutes, { db, config });
       await api.register(ogRoutes, { db });

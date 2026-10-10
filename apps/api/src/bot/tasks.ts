@@ -10,6 +10,7 @@ import { dailyPick } from '../services/daily.js';
 import { pruneAdvertiserLogins } from '../services/advertisers.js';
 import { enqueueDraft } from '../services/drafts.js';
 import { pruneMailing, queueOffersMail, queueWeekMail } from '../services/mailing.js';
+import { remindOverdue, remindRenewals, type BillingDeps } from '../services/invoices.js';
 import { reviewDrafts, reviewOffers, type EditorDeps, type OfferEditorDeps } from '../services/editorial.js';
 import { wantedSubjects } from '../services/search.js';
 import type { Channel } from './publishers.js';
@@ -152,6 +153,19 @@ export function housekeeping(): BotTask {
   };
 }
 
+/** Every morning: one reminder for invoices past their due date, and renewal mails a week ahead. */
+export function billingReminders(deps: Omit<BillingDeps, 'db'>, time = '09:00'): BotTask {
+  return {
+    name: 'billing-reminders',
+    due: (now) => (dailyAt(time, now) ? [today(now)] : []),
+    run: async (ctx) => {
+      const overdue = await remindOverdue({ ...deps, db: ctx.db });
+      const renewals = await remindRenewals({ db: ctx.db, origin: deps.origin });
+      return `${overdue} payment reminders, ${renewals} renewal mails`;
+    },
+  };
+}
+
 export interface TaskOptions {
   channels: Channel[];
   dailyTime: string;
@@ -159,6 +173,7 @@ export interface TaskOptions {
   cache: CacheInvalidator;
   drafts?: Parameters<typeof draftWanted>[0];
   mail?: { weekday: number; time: string };
+  billing?: BillingDeps['billing'];
   editor?: { deps: Omit<EditorDeps, 'db' | 'cache'>; offers: Omit<OfferEditorDeps, 'db'>; perRun: number };
 }
 
@@ -168,6 +183,7 @@ export function buildTasks(options: TaskOptions): BotTask[] {
     expireOffers(options.cache),
     housekeeping(),
     ...(options.mail ? [weeklyMail({ ...options.mail, origin: options.origin })] : []),
+    ...(options.billing?.enabled ? [billingReminders({ billing: options.billing, origin: options.origin, cache: options.cache })] : []),
     ...(options.drafts ? [draftWanted(options.drafts)] : []),
     ...(options.editor
       ? [

@@ -99,6 +99,13 @@
       "when": 1791654661769,
       "tag": "0013_exclusive_and_offer_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791657755280,
+      "tag": "0014_invoices",
+      "breakpoints": true
     }
   ]
 }

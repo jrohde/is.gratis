@@ -16,11 +16,15 @@ import {
   recordImpressions,
   renewFromToken,
   reviewBooking,
+  bookingById,
   exclusivePrice,
   slotsFree,
   statsForToken,
 } from '../services/sponsors.js';
 import { mailRequestReceived } from '../services/advertisers.js';
+import { hasPaidBefore, invoiceOffer } from '../services/invoices.js';
+import { sponsoredOffers } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 import { quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
 
 const plain = (max: number) =>
@@ -266,6 +270,19 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
           message: z.string().trim().max(2000).optional(),
           mailing: z.boolean().default(false),
           exclusive: z.boolean().default(false),
+          billingAddress: z.string().trim().max(300).optional(),
+          billingCountry: z
+            .string()
+            .trim()
+            .regex(/^[A-Za-z]{2}$/)
+            .transform((value) => value.toUpperCase())
+            .optional(),
+          vatNumber: z
+            .string()
+            .trim()
+            .max(20)
+            .transform((value) => value.replace(/[\s.]/g, '').toUpperCase())
+            .optional(),
         }),
         response: {
           201: z.object({ id: z.string(), status: bookingStatusSchema, priceCents: z.number().int(), statsToken: z.string() }),
@@ -336,8 +353,19 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     async (request) => {
       const reviewer = requireRole(request, 'admin');
       const startsAt = request.body.startsAt ? new Date(request.body.startsAt) : null;
-      const endsAt = request.body.endsAt ? new Date(request.body.endsAt) : null;
+      let endsAt = request.body.endsAt ? new Date(request.body.endsAt) : null;
       if (startsAt && endsAt && endsAt <= startsAt) throw badRequest('invalid_period', 'The end must be after the start');
+      const [before] = await db
+        .select({ status: sponsoredOffers.status, email: sponsoredOffers.contactEmail })
+        .from(sponsoredOffers)
+        .where(eq(sponsoredOffers.id, request.params.id))
+        .limit(1);
+      const approving = request.body.status === 'active' && before?.status === 'pending';
+      // An invoice needs a period: without an end, a booking runs one month.
+      if (approving && config.billing.enabled && !endsAt) {
+        endsAt = new Date(startsAt ?? Date.now());
+        endsAt.setUTCMonth(endsAt.getUTCMonth() + 1);
+      }
       const booking = await reviewBooking(db, request.params.id, {
         status: request.body.status,
         startsAt,
@@ -348,8 +376,15 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         editorRequired: config.editor.enabled,
       });
       if (request.body.override && booking.editor?.decision !== 'approve') request.log.warn({ bookingId: booking.id, userId: reviewer.id }, 'offer activated over the editor');
+      if (approving && config.billing.enabled) {
+        // New advertisers pay in advance; those who paid before go live and pay within the term.
+        const awaitingPayment = !(await hasPaidBefore(db, before!.email));
+        await db.update(sponsoredOffers).set({ awaitingPayment }).where(eq(sponsoredOffers.id, booking.id));
+        const invoice = await invoiceOffer({ db, billing: config.billing, origin: config.publicOrigin, cache }, booking.id);
+        request.log.info({ bookingId: booking.id, invoice: invoice.number, awaitingPayment }, 'invoice issued');
+      }
       await cache.purgePage(booking.lang, booking.slug);
-      return { booking };
+      return { booking: approving && config.billing.enabled ? await bookingById(db, booking.id) : booking };
     },
   );
 };

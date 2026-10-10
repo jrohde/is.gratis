@@ -27,6 +27,17 @@ interface MailWords {
   requestSteps: string;
   requestButton: string;
   advertiserWhy: string;
+  invoiceSubject: (number: string) => string;
+  invoiceBody: (total: string, due: string, what: string) => string;
+  invoiceUnpaidNote: string;
+  invoiceButton: string;
+  reminderSubject: (number: string) => string;
+  reminderBody: (number: string, total: string, due: string) => string;
+  paidSubject: (number: string) => string;
+  paidBody: (number: string) => string;
+  renewalSubject: (title: string) => string;
+  renewalBody: (title: string, end: string, shown: string, clicks: string) => string;
+  renewalButton: string;
 }
 
 export const MAIL_WORDS: Record<Language, MailWords> = {
@@ -55,6 +66,17 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
       'Zo gaat het verder: onze redactie kijkt of je aanbod echt gratis is en bij de pagina past. Daarna keuren we het goed en sturen we je een factuur. Je aanbod is zichtbaar vanaf de afgesproken datum. In je portaal zie je steeds hoe het ervoor staat.',
     requestButton: 'Naar je aanbod en cijfers',
     advertiserWhy: 'Je krijgt deze mail omdat dit adres is opgegeven bij een advertentie-aanvraag op is.gratis.',
+    invoiceSubject: (n) => `Factuur ${n} van is.gratis`,
+    invoiceBody: (total, due, what) => `Je aanbod is goedgekeurd. Hierbij de factuur voor ${what}: ${total}, te betalen vóór ${due}. Betalen kan direct online, of met een overschrijving.`,
+    invoiceUnpaidNote: 'Je aanbod gaat live zodra de betaling binnen is.',
+    invoiceButton: 'Bekijk en betaal je factuur',
+    reminderSubject: (n) => `Herinnering: factuur ${n}`,
+    reminderBody: (n, total, due) => `We hebben de betaling van factuur ${n} (${total}, vervallen op ${due}) nog niet ontvangen. Heb je net betaald? Dan kun je deze mail negeren.`,
+    paidSubject: (n) => `Betaald: factuur ${n}`,
+    paidBody: (n) => `Dank je wel! We hebben de betaling van factuur ${n} ontvangen. In je portaal zie je wanneer je aanbod zichtbaar is.`,
+    renewalSubject: (title) => `Je aanbod "${title}" loopt bijna af`,
+    renewalBody: (title, end, shown, clicks) => `Je aanbod "${title}" loopt af op ${end}. Tot nu toe is het ${shown} keer getoond en ${clicks} keer aangeklikt. Wil je doorgaan? Verlengen kan met één klik.`,
+    renewalButton: 'Cijfers bekijken en verlengen',
   },
   en: {
     lists: { offers: 'Free offers of the week', week: 'Free this week' },
@@ -80,6 +102,17 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
       'What happens next: our editors check that your offer is really free and fits the page. Then we approve it and send you an invoice. Your offer shows from the agreed date. Your portal always shows where things stand.',
     requestButton: 'Your offer and numbers',
     advertiserWhy: 'You get this mail because this address was given with an advertising request on is.gratis.',
+    invoiceSubject: (n) => `Invoice ${n} from is.gratis`,
+    invoiceBody: (total, due, what) => `Your offer is approved. Here is the invoice for ${what}: ${total}, due by ${due}. You can pay online right away, or by bank transfer.`,
+    invoiceUnpaidNote: 'Your offer goes live as soon as the payment is in.',
+    invoiceButton: 'View and pay your invoice',
+    reminderSubject: (n) => `Reminder: invoice ${n}`,
+    reminderBody: (n, total, due) => `We have not yet received payment for invoice ${n} (${total}, due on ${due}). Paid just now? Then you can ignore this mail.`,
+    paidSubject: (n) => `Paid: invoice ${n}`,
+    paidBody: (n) => `Thank you! We received the payment for invoice ${n}. Your portal shows when your offer is visible.`,
+    renewalSubject: (title) => `Your offer "${title}" ends soon`,
+    renewalBody: (title, end, shown, clicks) => `Your offer "${title}" ends on ${end}. So far it was shown ${shown} times and clicked ${clicks} times. Want to continue? Renew with one click.`,
+    renewalButton: 'See the numbers and renew',
   },
   de: {
     lists: { offers: 'Kostenlose Angebote der Woche', week: 'Kostenlos diese Woche' },
@@ -106,6 +139,17 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
       'So geht es weiter: Unsere Redaktion prüft, ob dein Angebot wirklich kostenlos ist und zur Seite passt. Dann geben wir es frei und schicken dir eine Rechnung. Dein Angebot ist ab dem vereinbarten Datum sichtbar. In deinem Portal siehst du jederzeit den Stand.',
     requestButton: 'Zu deinem Angebot und den Zahlen',
     advertiserWhy: 'Du erhältst diese Mail, weil diese Adresse bei einer Werbeanfrage auf is.gratis angegeben wurde.',
+    invoiceSubject: (n) => `Rechnung ${n} von is.gratis`,
+    invoiceBody: (total, due, what) => `Dein Angebot ist freigegeben. Hier ist die Rechnung für ${what}: ${total}, zahlbar bis ${due}. Du kannst direkt online zahlen oder überweisen.`,
+    invoiceUnpaidNote: 'Dein Angebot geht online, sobald die Zahlung eingegangen ist.',
+    invoiceButton: 'Rechnung ansehen und bezahlen',
+    reminderSubject: (n) => `Erinnerung: Rechnung ${n}`,
+    reminderBody: (n, total, due) => `Die Zahlung für Rechnung ${n} (${total}, fällig am ${due}) ist noch nicht eingegangen. Gerade bezahlt? Dann kannst du diese Mail ignorieren.`,
+    paidSubject: (n) => `Bezahlt: Rechnung ${n}`,
+    paidBody: (n) => `Danke! Die Zahlung für Rechnung ${n} ist eingegangen. In deinem Portal siehst du, wann dein Angebot sichtbar ist.`,
+    renewalSubject: (title) => `Dein Angebot „${title}“ läuft bald aus`,
+    renewalBody: (title, end, shown, clicks) => `Dein Angebot „${title}“ endet am ${end}. Bisher wurde es ${shown}-mal gezeigt und ${clicks}-mal angeklickt. Möchtest du weitermachen? Verlängern geht mit einem Klick.`,
+    renewalButton: 'Zahlen ansehen und verlängern',
   },
   es: {
     lists: { offers: 'Ofertas gratis de la semana', week: 'Gratis esta semana' },
@@ -132,6 +176,17 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
       'Lo que sigue: nuestra redacción comprueba que tu oferta es gratis de verdad y encaja con la página. Después la aprobamos y te enviamos una factura. Tu oferta se ve a partir de la fecha acordada. En tu portal ves siempre en qué punto está.',
     requestButton: 'Tu oferta y sus cifras',
     advertiserWhy: 'Recibes este correo porque esta dirección se indicó en una solicitud de publicidad en is.gratis.',
+    invoiceSubject: (n) => `Factura ${n} de is.gratis`,
+    invoiceBody: (total, due, what) => `Tu oferta está aprobada. Aquí tienes la factura por ${what}: ${total}, a pagar antes del ${due}. Puedes pagar en línea ahora mismo o por transferencia.`,
+    invoiceUnpaidNote: 'Tu oferta se publica en cuanto recibamos el pago.',
+    invoiceButton: 'Ver y pagar tu factura',
+    reminderSubject: (n) => `Recordatorio: factura ${n}`,
+    reminderBody: (n, total, due) => `Aún no hemos recibido el pago de la factura ${n} (${total}, vencida el ${due}). ¿Acabas de pagar? Entonces puedes ignorar este correo.`,
+    paidSubject: (n) => `Pagada: factura ${n}`,
+    paidBody: (n) => `¡Gracias! Hemos recibido el pago de la factura ${n}. En tu portal ves cuándo se publica tu oferta.`,
+    renewalSubject: (title) => `Tu oferta «${title}» termina pronto`,
+    renewalBody: (title, end, shown, clicks) => `Tu oferta «${title}» termina el ${end}. Hasta ahora se ha mostrado ${shown} veces y se ha pulsado ${clicks} veces. ¿Quieres seguir? Renueva con un clic.`,
+    renewalButton: 'Ver las cifras y renovar',
   },
 };
 

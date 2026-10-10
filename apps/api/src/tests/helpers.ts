@@ -10,12 +10,14 @@ export function testDatabaseUrl(): string {
   return process.env.TEST_DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/isgratis_test';
 }
 
-export async function createTestApp(overrides: Partial<Config> = {}) {
+export async function createTestApp(overrides: Partial<Config> = {}, extra: { mollieFetch?: typeof fetch } = {}) {
   const base = loadConfig();
   const config: Config = {
     ...base,
     // The editorial model runs in the bot; tests that need its gate switch it on.
     editor: { ...base.editor, enabled: false },
+    // Invoicing changes when offers go live; tests about invoices switch it on.
+    billing: { ...base.billing, enabled: false },
     databaseUrl: testDatabaseUrl(),
     adminEmails: ['admin@example.com'],
     trustedOrigins: ['https://is.gratis', 'https://*.is.gratis'],
@@ -28,7 +30,7 @@ export async function createTestApp(overrides: Partial<Config> = {}) {
       purged.push(`${lang}/${slug}`);
     },
   };
-  const app = await buildApp({ config, db, cache, logger: pino({ level: 'silent' }) });
+  const app = await buildApp({ config, db, cache, logger: pino({ level: 'silent' }), ...extra });
   await app.ready();
   return {
     app,
@@ -47,7 +49,7 @@ export type TestContext = Awaited<ReturnType<typeof createTestApp>>;
 
 export async function resetDatabase(ctx: TestContext) {
   await ctx.db.execute(
-    sql`truncate table bot_runs, editor_reviews, subscriptions, mail_outbox, advertiser_logins, advertiser_sessions, offer_stats, reports, related_subjects, search_misses, comments, watches, page_views, source_checks, sessions, sponsored_offers, draft_jobs, assets, revisions, pages, topics, users restart identity cascade`,
+    sql`truncate table bot_runs, invoices, invoice_counters, editor_reviews, subscriptions, mail_outbox, advertiser_logins, advertiser_sessions, offer_stats, reports, related_subjects, search_misses, comments, watches, page_views, source_checks, sessions, sponsored_offers, draft_jobs, assets, revisions, pages, topics, users restart identity cascade`,
   );
 }
 
