@@ -100,6 +100,17 @@ export interface Config {
     /** At most this many new questions to the model per hour, across all replicas. */
     relatedPerHour: number;
   };
+  /** The bot process (src/bot.ts): scheduled tasks such as posting the free thing of the day. */
+  bot: {
+    /** Time of day (UTC) from which the daily post goes out. */
+    dailyTime: string;
+    /** Post to the log instead of to accounts, for languages listed here (e.g. "nl,en"). */
+    dryRunLanguages: string[];
+    /** JSON: [{"lang":"nl","url":"https://mastodon.example","token":"..."}] */
+    mastodon: string;
+    /** JSON: [{"lang":"nl","identifier":"isgratis.bsky.social","password":"app-password"}] */
+    bluesky: string;
+  };
   /** The worker checks source URLs between jobs. */
   sourceChecks: {
     enabled: boolean;
@@ -160,6 +171,12 @@ export function loadConfig(): Config {
     sponsorPricing: {
       baseCents: int('SPONSOR_BASE_PRICE_CENTS', 2500),
       perThousandCents: int('SPONSOR_PRICE_PER_1000_VIEWS_CENTS', 400),
+    },
+    bot: {
+      dailyTime: str('BOT_DAILY_TIME', '07:00'),
+      dryRunLanguages: list('BOT_DRY_RUN_LANGUAGES'),
+      mastodon: str('BOT_MASTODON', '[]'),
+      bluesky: str('BOT_BLUESKY', '[]'),
     },
     search: {
       relatedEnabled: bool('SEARCH_RELATED', true),

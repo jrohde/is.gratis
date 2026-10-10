@@ -57,6 +57,13 @@
       "when": 1791567042880,
       "tag": "0007_offer_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791645416068,
+      "tag": "0008_bot",
+      "breakpoints": true
     }
   ]
 }

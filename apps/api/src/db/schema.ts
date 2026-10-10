@@ -318,6 +318,25 @@ export const reports = pgTable(
   (table) => [index('reports_status_idx').on(table.status, table.createdAt), index('reports_ip_idx').on(table.ipHash, table.createdAt)],
 );
 
+/**
+ * What the bot did: one row per run of a task, keyed so every run happens once, also with
+ * several bot replicas or after a restart. See src/bot/scheduler.ts.
+ */
+export const botRuns = pgTable(
+  'bot_runs',
+  {
+    task: text('task').notNull(),
+    /** Identifies one run, e.g. "nl:2026-10-10" for the post of that day. */
+    key: text('key').notNull(),
+    status: text('status').$type<'running' | 'done' | 'failed'>().notNull(),
+    attempts: integer('attempts').notNull().default(1),
+    detail: text('detail'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.task, table.key] }), index('bot_runs_updated_idx').on(table.updatedAt)],
+);
+
 export type UserRow = typeof users.$inferSelect;
 export type PageRow = typeof pages.$inferSelect;
 export type RevisionRow = typeof revisions.$inferSelect;
