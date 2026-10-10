@@ -220,7 +220,7 @@ describe('fair play between advertisers', () => {
     expect(await decision()).toBe('approve');
 
     const reports = await ctx.app.inject({ method: 'GET', url: '/api/reports', headers: { cookie } });
-    expect(reports.json().reports[0]).toMatchObject({
+    expect(reports.json().reports.find((r: { reason: string }) => r.reason === 'not_free')).toMatchObject({
       reason: 'not_free',
       slug: 'zwemmen',
       offer: { id, title: 'Gratis proefles', advertiserName: 'Zwemschool school' },
