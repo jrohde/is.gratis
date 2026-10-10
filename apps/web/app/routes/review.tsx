@@ -74,6 +74,11 @@ function DraftCard({ draft }: { draft: ReviewItem }) {
             {t.sourcingText(draft.cited, draft.claims)} · {t.sourcesCount(draft.sources)} · {formatDate(draft.createdAt, lang)}
           </Text>
         </Group>
+        {draft.editorNote && (
+          <Alert color="orange" variant="light" p="xs" title={t.editorNoteTitle}>
+            <Text size="sm">{draft.editorNote}</Text>
+          </Alert>
+        )}
         {error && <Alert color="red">{error}</Alert>}
         <Group gap="xs">
           {user ? (

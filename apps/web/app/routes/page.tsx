@@ -222,9 +222,11 @@ function PageView({ page, origin }: { page: Page; origin: string }) {
   const author =
     page.currentRevision.source === 'llm'
       ? t.llmAuthor
-      : page.currentRevision.source === 'seed'
-        ? t.seedAuthor
-        : page.currentRevision.authorName;
+      : page.currentRevision.source === 'editor'
+        ? t.editorAuthor
+        : page.currentRevision.source === 'seed'
+          ? t.seedAuthor
+          : page.currentRevision.authorName;
 
   const sections = SECTION_LABELS[page.lang];
   // Wikipedia-style links and footnotes: [[links]], the first mention of other subjects and

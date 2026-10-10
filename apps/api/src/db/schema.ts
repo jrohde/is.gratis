@@ -25,6 +25,7 @@ import {
 import type {
   DraftJobKind,
   DraftJobStatus,
+  EditorDecision,
   Language,
   PageContent,
   PageStatus,
@@ -343,3 +344,25 @@ export type RevisionRow = typeof revisions.$inferSelect;
 export type DraftJobRow = typeof draftJobs.$inferSelect;
 export type SponsoredOfferRow = typeof sponsoredOffers.$inferSelect;
 export type AssetRow = typeof assets.$inferSelect;
+
+/**
+ * What the editorial language model decided about a draft revision, and why. A revision is
+ * reviewed once; "error" rows count failed attempts so a broken draft is not retried forever.
+ */
+export const editorReviews = pgTable(
+  'editor_reviews',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    pageId: uuid('page_id')
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    revisionId: uuid('revision_id')
+      .notNull()
+      .references(() => revisions.id, { onDelete: 'cascade' }),
+    decision: text('decision').$type<EditorDecision>().notNull(),
+    notes: text('notes').notNull(),
+    model: text('model').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('editor_reviews_revision_idx').on(table.revisionId), index('editor_reviews_created_idx').on(table.createdAt)],
+);

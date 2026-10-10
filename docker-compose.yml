@@ -78,6 +78,8 @@ services:
       BOT_DRY_RUN_LANGUAGES: ${BOT_DRY_RUN_LANGUAGES:-nl}
       BOT_MASTODON: ${BOT_MASTODON:-[]}
       BOT_BLUESKY: ${BOT_BLUESKY:-[]}
+      EDITOR_ENABLED: ${EDITOR_ENABLED:-true}
+      EDITOR_MODEL: ${EDITOR_MODEL:-}
     depends_on:
       api:
         condition: service_healthy

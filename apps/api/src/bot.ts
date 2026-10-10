@@ -11,6 +11,7 @@ import { loadConfig } from './config.js';
 import { createDatabase } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
 import { createCacheInvalidator } from './lib/cache.js';
+import { checkLink } from './lib/link-check.js';
 
 const config = loadConfig();
 const logger = pino({ level: config.logLevel, name: 'bot' });
@@ -37,7 +38,21 @@ const channels: Channel[] = [
   ...parseAccounts<BlueskyAccount>('BOT_BLUESKY', config.bot.bluesky).map((account) => blueskyChannel(account)),
   ...config.bot.dryRunLanguages.filter(isLanguage).map((lang) => logChannel(lang, logger)),
 ];
-const tasks = buildTasks({ channels, dailyTime: config.bot.dailyTime, origin: config.publicOrigin, cache });
+const tasks = buildTasks({
+  channels,
+  dailyTime: config.bot.dailyTime,
+  origin: config.publicOrigin,
+  cache,
+  drafts: { ...config.bot.drafts, globalPerHour: config.drafts.globalPerHour, ipHashSalt: config.ipHashSalt },
+  ...(config.editor.enabled
+    ? {
+        editor: {
+          deps: { llm: config.editor, check: (url: string) => checkLink(url, config.sourceChecks.timeoutMs) },
+          perRun: config.editor.perRun,
+        },
+      }
+    : {}),
+});
 
 let stopping = false;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

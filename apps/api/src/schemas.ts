@@ -22,7 +22,7 @@ export const revisionSummarySchema = z.object({
   id: z.string(),
   number: z.number().int(),
   editSummary: z.string(),
-  source: z.enum(['human', 'llm', 'seed']),
+  source: z.enum(['human', 'llm', 'seed', 'editor']),
   authorName: z.string().nullable(),
   createdAt: z.string(),
 });
@@ -87,6 +87,8 @@ export const reviewItemSchema = pageListItemSchema.extend({
   claims: z.number().int(),
   cited: z.number().int(),
   sources: z.number().int(),
+  /** Why the editorial model did not publish this draft, if it looked at it. */
+  editorNote: z.string().optional(),
 });
 
 export const commentSchema = z.object({

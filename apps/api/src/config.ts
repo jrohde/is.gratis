@@ -110,6 +110,27 @@ export interface Config {
     mastodon: string;
     /** JSON: [{"lang":"nl","identifier":"isgratis.bsky.social","password":"app-password"}] */
     bluesky: string;
+    /** Each night, queue first drafts for the most wanted subjects without a page. */
+    drafts: {
+      /** Per language; 0 switches it off. */
+      perDay: number;
+      time: string;
+      /** How wanted a subject must be: a search without result counts 1, a link to it 3. */
+      minWeight: number;
+    };
+  };
+  /**
+   * The editorial language model (run by the bot): checks LLM drafts, then publishes them,
+   * publishes a corrected version, or leaves them for a person. Defaults to the LLM settings.
+   */
+  editor: {
+    enabled: boolean;
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+    timeoutMs: number;
+    /** Drafts per run; the bot runs it every ten minutes. */
+    perRun: number;
   };
   /** The worker checks source URLs between jobs. */
   sourceChecks: {
@@ -177,6 +198,19 @@ export function loadConfig(): Config {
       dryRunLanguages: list('BOT_DRY_RUN_LANGUAGES'),
       mastodon: str('BOT_MASTODON', '[]'),
       bluesky: str('BOT_BLUESKY', '[]'),
+      drafts: {
+        perDay: int('BOT_DRAFTS_PER_DAY', 5),
+        time: str('BOT_DRAFTS_TIME', '03:00'),
+        minWeight: int('BOT_DRAFTS_MIN_WEIGHT', 3),
+      },
+    },
+    editor: {
+      enabled: bool('EDITOR_ENABLED', true),
+      baseUrl: str('EDITOR_BASE_URL', str('LLM_BASE_URL', 'https://api.openai.com/v1')).replace(/\/+$/, ''),
+      apiKey: str('EDITOR_API_KEY', str('LLM_API_KEY', '')),
+      model: str('EDITOR_MODEL', str('LLM_MODEL', 'gpt-4o-mini')),
+      timeoutMs: int('LLM_TIMEOUT_MS', 120_000),
+      perRun: int('EDITOR_PER_RUN', 5),
     },
     search: {
       relatedEnabled: bool('SEARCH_RELATED', true),

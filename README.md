@@ -227,6 +227,38 @@ Taken nu:
   het onderwerp van de dag naar Mastodon en/of Bluesky, per taal.
 - **Aanbiedingen verlopen** — zet elk uur verlopen aanbiedingen op verlopen
   en ververst de cache.
+- **Wat mensen zoeken laten schrijven** — elke nacht (`BOT_DRAFTS_TIME`,
+  standaard 03:00) zet de bot per taal de meest gevraagde onderwerpen zonder
+  pagina in de wachtrij van de worker (`BOT_DRAFTS_PER_DAY`, standaard 5).
+  Gevraagd betekent: gezocht zonder resultaat (telt 1) of gelinkt vanaf een
+  pagina (telt 3), over de laatste 30 dagen; minimaal `BOT_DRAFTS_MIN_WEIGHT`.
+- **Redactie** — elke tien minuten leest een redactie-taalmodel de wachtende
+  concepten (zie hieronder).
+- **Opruimen** — vergeet dagelijks bot-runs ouder dan 30 dagen.
+
+### De redactie
+
+Concepten van het taalmodel hoeven niet meer op een mens te wachten. Het
+redactiemodel krijgt dezelfde regels als de schrijver, plus de opdracht om
+streng te zijn op feiten: klopt het oordeel, past de stap op de gratis-schaal,
+horen de bronvermeldingen bij de bewering, is het neutraal? Vooraf controleert
+de bot elke bron-URL; dode bronnen moet de redactie schrappen. Daarna:
+
+- **publiceren** als het klopt;
+- **verbeteren en publiceren** als de redactie alles zelf kan rechtzetten. Ze
+  mag schrappen en herformuleren, maar nooit een bron toevoegen: dat wordt
+  in de code geweigerd, en de nieuwe versie gaat door dezelfde controle als
+  een menselijke bewerking;
+- **laten liggen** als het onderwerp niet bestaat of de feiten te onzeker
+  zijn. Het concept blijft dan in de nakijklijst, met de notitie van de
+  redactie erbij.
+
+Elke beslissing staat in de geschiedenis van de pagina (auteur: "redactie
+(taalmodel)") en in het beheer onder **Bot**. Mislukt het drie keer bij
+hetzelfde concept, dan laat de redactie het aan mensen. Een sterker model
+voor de redactie dan voor het schrijven werkt het best: zet `EDITOR_MODEL`
+(en eventueel `EDITOR_BASE_URL`, met `EDITOR_API_KEY` in de Secret). Uitzetten
+kan met `EDITOR_ENABLED=false`; dan wachten concepten weer op mensen.
 
 Instellen (accounts en tokens horen in de Secret, niet in de ConfigMap):
 

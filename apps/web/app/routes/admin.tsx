@@ -303,6 +303,52 @@ interface BotRun {
 
 const RUN_COLORS = { running: 'blue', done: 'green', failed: 'red' } as const;
 
+interface EditorReview {
+  lang: string;
+  slug: string;
+  title: string;
+  decision: 'publish' | 'revise' | 'reject' | 'error';
+  notes: string;
+  createdAt: string;
+}
+
+const DECISION_COLORS = { publish: 'green', revise: 'teal', reject: 'orange', error: 'red' } as const;
+
+/** What the editorial language model decided, newest first. */
+function EditorReviews() {
+  const lang = useUiLang();
+  const [reviews, setReviews] = useState<EditorReview[] | null>(null);
+  useEffect(() => {
+    void api<{ reviews: EditorReview[] }>('GET', '/admin/editor').then((result) => setReviews(result.reviews));
+  }, []);
+  if (reviews === null) return <Loader />;
+  if (reviews.length === 0) return <Text c="dimmed">—</Text>;
+  return (
+    <Table striped>
+      <Table.Tbody>
+        {reviews.map((review, i) => (
+          <Table.Tr key={i}>
+            <Table.Td>
+              <Badge color={DECISION_COLORS[review.decision]} variant="light">
+                {review.decision}
+              </Badge>
+            </Table.Td>
+            <Table.Td fw={600}>
+              <Anchor component={Link} to={`/${review.lang}/${review.slug}`}>
+                {review.title}
+              </Anchor>
+            </Table.Td>
+            <Table.Td style={{ overflowWrap: 'anywhere' }}>{review.notes}</Table.Td>
+            <Table.Td c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+              {new Date(review.createdAt).toLocaleString(lang)}
+            </Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
+  );
+}
+
 /** What the bot did: every run of every task, newest first. */
 function BotRuns() {
   const lang = useUiLang();
@@ -441,7 +487,12 @@ export default function Admin() {
             <Users />
           </Tabs.Panel>
           <Tabs.Panel value="bot">
-            <BotRuns />
+            <Stack gap="lg">
+              <Title order={3}>{t.editorDecisions}</Title>
+              <EditorReviews />
+              <Title order={3}>{t.botRuns}</Title>
+              <BotRuns />
+            </Stack>
           </Tabs.Panel>
         </Tabs>
       </Stack>

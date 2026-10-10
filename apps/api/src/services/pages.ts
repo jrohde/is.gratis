@@ -2,7 +2,7 @@
  * Pages and their revisions. Every change is a new, complete revision; nothing is edited in
  * place, so history, diffs and reverts are trivial and nothing is ever lost.
  */
-import { and, asc, desc, eq, gt, isNull, lte, max, ne, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, lte, max, ne, or, sql } from 'drizzle-orm';
 import { citationStats, normalizeContent } from '@isgratis/types';
 import type {
   Language,
@@ -16,7 +16,7 @@ import type {
   SponsoredOffer,
 } from '@isgratis/types';
 import type { Database } from '../db/client.js';
-import { draftJobs, pages, revisions, sponsoredOffers, topics, users, type RevisionRow } from '../db/schema.js';
+import { draftJobs, editorReviews, pages, revisions, sponsoredOffers, topics, users, type RevisionRow } from '../db/schema.js';
 import { conflict, forbidden, notFound } from '../lib/errors.js';
 import { commentCount } from './community.js';
 import { clearLinkCache, pageLinks } from './links.js';
@@ -153,6 +153,18 @@ export async function reviewQueue(db: Database, lang: Language | undefined, limi
     .where(and(eq(pages.status, 'draft'), lang ? eq(pages.lang, lang) : undefined))
     .orderBy(asc(pages.createdAt))
     .limit(limit);
+  // Why the editorial model left a draft for people, when it did.
+  const notes = new Map(
+    rows.length === 0
+      ? []
+      : (
+          await db
+            .selectDistinctOn([editorReviews.pageId], { pageId: editorReviews.pageId, notes: editorReviews.notes })
+            .from(editorReviews)
+            .where(and(inArray(editorReviews.pageId, rows.map((row) => row.page.id)), eq(editorReviews.decision, 'reject')))
+            .orderBy(editorReviews.pageId, desc(editorReviews.createdAt))
+        ).map((row) => [row.pageId, row.notes]),
+  );
   return rows.map(({ page, content }) => {
     const normalized = normalizeContent(content);
     const stats = citationStats(normalized);
@@ -171,6 +183,7 @@ export async function reviewQueue(db: Database, lang: Language | undefined, limi
       claims: stats.claims,
       cited: stats.cited,
       sources: normalized.sources.length,
+      ...(notes.has(page.id) ? { editorNote: notes.get(page.id)! } : {}),
     };
   });
 }

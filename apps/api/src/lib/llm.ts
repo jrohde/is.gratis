@@ -53,6 +53,28 @@ const llmAnswerSchema = z.union([
   }),
 ]);
 
+/** What makes a good page. The writer follows these rules and the editor checks them. */
+export const PAGE_RULES = `- verdict "yes" means free almost everywhere for almost everyone, "no" means it almost always costs money,
+  "usually" means free in most common situations, "depends" means it truly depends on context.
+- scale.type describes WHY it is free in the most common situation in that region:
+  free_good = not scarce, nobody pays even indirectly (air); collective = free at the point of use, paid by taxes or
+  insurance premiums (public schools); third_party = free for the user, paid by a seller, advertiser or employer
+  (wifi in a cafe); partial = free only for some groups, times or places, or as a basic version; exception = only free
+  through promotions, trials or rare exceptions; paid = always paid.
+- Markdown only: paragraphs, bullet lists, bold, links. No headings, no HTML, no tables.
+- Region codes must be one of: ${REGIONS.join(', ')}. Only add a region when something specific is true there
+  (a law, a national scheme, a common local practice). At most 6 regions. Never repeat a region.
+- Prefer stating rules and mechanisms over exact prices, which change. If you give a price, say it is indicative.
+- facts: at most 4, only figures you are certain about (dates of laws, physical quantities, well-known statistics).
+  trivia: at most 3, each one true and checkable. Leave both empty rather than guess.
+- When you are not sure about a regional fact, leave it out or say plainly that it varies.
+- Sources: only URLs you are certain exist and are stable, such as official government sites or Wikipedia articles.
+  An empty list is better than a guessed URL.
+- Citations: put [^id] directly after a sentence that a source supports, e.g. "Restaurants must serve free tap water.[^ley-7-2022]".
+  Only cite a source for claims it actually supports. Leave other sentences uncited: the site marks them as
+  "citation needed" so people can check them. Never cite an id that is not in sources.
+- Never mention specific shops or brands as recommendations.`;
+
 export function buildMessages(lang: Language, slug: string) {
   const subject = slug.replace(/-/g, ' ');
   const system = `You write pages for is.gratis, an encyclopedia that answers exactly one question per page: is it free?
@@ -85,26 +107,7 @@ Otherwise answer:
 }
 
 Rules:
-- verdict "yes" means free almost everywhere for almost everyone, "no" means it almost always costs money,
-  "usually" means free in most common situations, "depends" means it truly depends on context.
-- scale.type describes WHY it is free in the most common situation in that region:
-  free_good = not scarce, nobody pays even indirectly (air); collective = free at the point of use, paid by taxes or
-  insurance premiums (public schools); third_party = free for the user, paid by a seller, advertiser or employer
-  (wifi in a cafe); partial = free only for some groups, times or places, or as a basic version; exception = only free
-  through promotions, trials or rare exceptions; paid = always paid.
-- Markdown only: paragraphs, bullet lists, bold, links. No headings, no HTML, no tables.
-- Region codes must be one of: ${REGIONS.join(', ')}. Only add a region when something specific is true there
-  (a law, a national scheme, a common local practice). At most 6 regions. Never repeat a region.
-- Prefer stating rules and mechanisms over exact prices, which change. If you give a price, say it is indicative.
-- facts: at most 4, only figures you are certain about (dates of laws, physical quantities, well-known statistics).
-  trivia: at most 3, each one true and checkable. Leave both empty rather than guess.
-- When you are not sure about a regional fact, leave it out or say plainly that it varies.
-- Sources: only URLs you are certain exist and are stable, such as official government sites or Wikipedia articles.
-  An empty list is better than a guessed URL.
-- Citations: put [^id] directly after a sentence that a source supports, e.g. "Restaurants must serve free tap water.[^ley-7-2022]".
-  Only cite a source for claims it actually supports. Leave other sentences uncited: the site marks them as
-  "citation needed" so people can check them. Never cite an id that is not in sources.
-- Never mention specific shops or brands as recommendations.`;
+${PAGE_RULES}`;
   const user = `Subject slug: "${slug}"\nQuestion: ${QUESTION[lang](subject)}`;
   return [
     { role: 'system' as const, content: system },
@@ -277,4 +280,34 @@ Rules:
     title: parsed.data.title,
     content: { ...translated, ...(image ? { image } : {}), ...(timePrice ? { timePrice } : {}) },
   };
+}
+
+/** One chat completion that must answer with a JSON object; returns that object, unvalidated. */
+export async function chatJson(
+  config: LlmConfig,
+  messages: Array<{ role: 'system' | 'user'; content: string }>,
+  temperature: number,
+): Promise<unknown> {
+  let response: Response;
+  try {
+    response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(config.apiKey ? { authorization: `Bearer ${config.apiKey}` } : {}),
+      },
+      body: JSON.stringify({ model: config.model, messages, temperature, response_format: { type: 'json_object' } }),
+      signal: AbortSignal.timeout(config.timeoutMs),
+    });
+  } catch (error) {
+    throw new LlmError(`LLM request failed: ${(error as Error).message}`);
+  }
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new LlmError(`LLM returned HTTP ${response.status}: ${body.slice(0, 300)}`);
+  }
+  const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string | null } }> };
+  const text = payload.choices?.[0]?.message?.content;
+  if (!text) throw new LlmError('LLM answer has no content');
+  return extractJson(text);
 }

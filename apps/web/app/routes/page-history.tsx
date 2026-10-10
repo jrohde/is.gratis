@@ -62,7 +62,7 @@ export default function PageHistory({ loaderData }: Route.ComponentProps) {
   const diff = diffRevisions(fromRevision ?? empty, toRevision, lang);
 
   const authorOf = (revision: RevisionSummary) =>
-    revision.source === 'llm' ? t.llmAuthor : revision.source === 'seed' ? t.seedAuthor : (revision.authorName ?? t.anonymous);
+    revision.source === 'llm' ? t.llmAuthor : revision.source === 'editor' ? t.editorAuthor : revision.source === 'seed' ? t.seedAuthor : (revision.authorName ?? t.anonymous);
 
   async function revert(number: number) {
     setError(null);

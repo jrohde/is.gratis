@@ -80,6 +80,8 @@ const nl = {
   revert: 'Terugzetten',
   current: 'huidig',
   llmAuthor: 'taalmodel',
+  editorAuthor: 'redactie (taalmodel)',
+  editorNoteTitle: 'De redactie (taalmodel) liet dit liggen',
   seedAuthor: 'startinhoud',
   anonymous: 'onbekend',
   noChanges: 'Geen verschillen.',
@@ -320,6 +322,8 @@ const nl = {
   weekIntro: 'Elke dag één ding dat echt gratis is, en wat er deze week bij kwam.',
   weekNew: 'Nieuw deze week',
   botEmpty: 'De bot heeft nog niets gedaan. Draait het botproces?',
+  editorDecisions: 'Redactie (taalmodel)',
+  botRuns: 'Taken',
 };
 
 export type Messages = typeof nl;
@@ -397,6 +401,8 @@ const en: Messages = {
   revert: 'Restore',
   current: 'current',
   llmAuthor: 'language model',
+  editorAuthor: 'editors (language model)',
+  editorNoteTitle: 'The editors (language model) left this for people',
   seedAuthor: 'starting content',
   anonymous: 'unknown',
   noChanges: 'No differences.',
@@ -637,6 +643,8 @@ const en: Messages = {
   weekIntro: 'One thing a day that is really free, and what was added this week.',
   weekNew: 'New this week',
   botEmpty: 'The bot has not done anything yet. Is the bot process running?',
+  editorDecisions: 'Editors (language model)',
+  botRuns: 'Tasks',
 };
 
 const de: Messages = {
@@ -712,6 +720,8 @@ const de: Messages = {
   revert: 'Wiederherstellen',
   current: 'aktuell',
   llmAuthor: 'Sprachmodell',
+  editorAuthor: 'Redaktion (Sprachmodell)',
+  editorNoteTitle: 'Die Redaktion (Sprachmodell) hat dies liegen lassen',
   seedAuthor: 'Startinhalt',
   anonymous: 'unbekannt',
   noChanges: 'Keine Unterschiede.',
@@ -912,6 +922,8 @@ const es: Messages = {
   revert: 'Restaurar',
   current: 'actual',
   llmAuthor: 'modelo de lenguaje',
+  editorAuthor: 'redacción (modelo de lenguaje)',
+  editorNoteTitle: 'La redacción (modelo de lenguaje) lo dejó para personas',
   seedAuthor: 'contenido inicial',
   anonymous: 'desconocido',
   noChanges: 'Sin diferencias.',

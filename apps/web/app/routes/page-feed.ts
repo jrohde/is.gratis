@@ -19,7 +19,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   const origin = env.publicOrigin;
   const url = `${origin}/${lang}/${slug}`;
   const author = (revision: RevisionSummary) =>
-    revision.source === 'llm' ? t.llmAuthor : revision.source === 'seed' ? t.seedAuthor : (revision.authorName ?? t.anonymous);
+    revision.source === 'llm' ? t.llmAuthor : revision.source === 'editor' ? t.editorAuthor : revision.source === 'seed' ? t.seedAuthor : (revision.authorName ?? t.anonymous);
   return rssResponse({
     title: t.feedTitle(questionFor(lang, page.title)),
     link: url,

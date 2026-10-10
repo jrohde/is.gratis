@@ -151,7 +151,9 @@ export function normalizeContent(content: ContentInput): PageContent {
 }
 
 export type PageStatus = 'draft' | 'published';
-export type RevisionSource = 'human' | 'llm' | 'seed';
+/** editor: the editorial language model, which checks LLM drafts and publishes them. */
+export type RevisionSource = 'human' | 'llm' | 'seed' | 'editor';
+export type EditorDecision = 'publish' | 'revise' | 'reject' | 'error';
 
 export interface RevisionSummary {
   id: string;
@@ -258,6 +260,8 @@ export interface SponsorQuote {
 
 /** A draft in the review queue. */
 export interface ReviewItem extends PageListItem {
+  /** Why the editorial language model left this draft for people. */
+  editorNote?: string;
   createdAt: string;
   /** Claim blocks, and how many of them cite a source. */
   claims: number;
