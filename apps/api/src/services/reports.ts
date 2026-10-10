@@ -1,5 +1,5 @@
 /** Reports from readers about a page or a sponsored offer on it, handled by moderators. */
-import { and, count, desc, eq, gt, inArray } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull, lt, or } from 'drizzle-orm';
 import type { Language, Report, ReportReason } from '@isgratis/types';
 import type { Database } from '../db/client.js';
 import { pages, reports, sponsoredOffers } from '../db/schema.js';
@@ -60,10 +60,16 @@ export async function createOfferReport(
       userId: input.userId,
     })
     .returning({ id: reports.id });
+  // At most one fresh look a day: reports are free to send, a language model is not.
   await db
     .update(sponsoredOffers)
     .set({ editorDecision: null, editorNotes: null, editorSuggestion: null, editorCheckedAt: null, editorAttempts: 0 })
-    .where(eq(sponsoredOffers.id, offer.id));
+    .where(
+      and(
+        eq(sponsoredOffers.id, offer.id),
+        or(isNull(sponsoredOffers.editorCheckedAt), lt(sponsoredOffers.editorCheckedAt, new Date(Date.now() - 86_400_000))),
+      ),
+    );
   return row!.id;
 }
 

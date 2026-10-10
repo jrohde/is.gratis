@@ -201,7 +201,7 @@ describe('fair play between advertisers', () => {
     await page('zwemmen');
     const cookie = await admin();
     const { id } = await request('zwemmen', 'school@example.com');
-    await ctx.db.execute(sql`update sponsored_offers set editor_decision = 'approve', editor_notes = 'Ok', editor_checked_at = now() where id = ${id}`);
+    await ctx.db.execute(sql`update sponsored_offers set editor_decision = 'approve', editor_notes = 'Ok', editor_checked_at = now() - interval '2 days' where id = ${id}`);
     await activate(cookie, id);
 
     const report = await ctx.app.inject({
@@ -211,8 +211,13 @@ describe('fair play between advertisers', () => {
       payload: { reason: 'not_free', message: 'Na de proefles moet je een abonnement nemen.' },
     });
     expect(report.statusCode).toBe(201);
-    const [offer] = (await ctx.db.execute<{ editor_decision: string | null }>(sql`select editor_decision from sponsored_offers where id = ${id}`)).rows;
-    expect(offer!.editor_decision).toBeNull();
+    const decision = async () =>
+      (await ctx.db.execute<{ editor_decision: string | null }>(sql`select editor_decision from sponsored_offers where id = ${id}`)).rows[0]!.editor_decision;
+    expect(await decision()).toBeNull();
+    // Checked again today: another report does not send it back to the editors before tomorrow.
+    await ctx.db.execute(sql`update sponsored_offers set editor_decision = 'approve', editor_checked_at = now() where id = ${id}`);
+    await ctx.app.inject({ method: 'POST', url: `/api/offers/${id}/reports`, remoteAddress: nextAddress(), payload: { reason: 'misleading' } });
+    expect(await decision()).toBe('approve');
 
     const reports = await ctx.app.inject({ method: 'GET', url: '/api/reports', headers: { cookie } });
     expect(reports.json().reports[0]).toMatchObject({
