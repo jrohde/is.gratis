@@ -51,7 +51,8 @@ export async function activeOffers(db: Database, lang: Language, slug: string): 
       ),
     )
     .orderBy(asc(sponsoredOffers.createdAt))
-    .limit(6);
+    // The page picks those for the reader's region; booking keeps it at OFFER_SLOTS per region.
+    .limit(50);
   return rows.map((row) => ({
     id: row.id,
     advertiserName: row.advertiserName,

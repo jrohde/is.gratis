@@ -123,6 +123,8 @@ export const sponsorQuoteSchema = z.object({
   views30: z.number().int(),
   priceCents: z.number().int(),
   mailingPriceCents: z.number().int(),
+  /** Spots still free on the page right now, for readers in the asked region. */
+  slotsFree: z.number().int(),
   currency: z.literal('EUR'),
 });
 

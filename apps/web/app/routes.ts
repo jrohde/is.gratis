@@ -13,6 +13,8 @@ export default [
   route('account/watchlist', 'routes/watchlist.tsx'),
   route('advertise', 'routes/advertise.tsx'),
   route('advertise/stats/:token', 'routes/advertise-stats.tsx'),
+  route('advertise/portal', 'routes/advertise-portal.tsx'),
+  route('advertise/login/:token', 'routes/advertise-login.tsx'),
   route('review', 'routes/review.tsx'),
   route('search/:lang', 'routes/search.tsx'),
   route('offers/:lang', 'routes/offers.tsx'),

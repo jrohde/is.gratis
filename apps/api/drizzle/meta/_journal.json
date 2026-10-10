@@ -85,6 +85,13 @@
       "when": 1791649231563,
       "tag": "0011_mailing",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791651446647,
+      "tag": "0012_advertiser_login",
+      "breakpoints": true
     }
   ]
 }

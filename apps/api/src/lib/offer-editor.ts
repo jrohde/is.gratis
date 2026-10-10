@@ -62,7 +62,8 @@ Answer with one JSON object and nothing else:
 - "unsure" when you cannot tell, for instance because the landing page could not be read or is vague about costs.
 - "suggestion" only when the offer itself is fine but its wording is not neutral; leave it out otherwise.
   Keep the advertiser's language; title at most 80 characters, description at most 280.
-- "notes": two or three sentences in ${LANGUAGE_NAMES[offer.lang]} for the admin: what you checked and why you decided.`;
+- "notes": two or three sentences in ${LANGUAGE_NAMES[offer.lang]}: what you checked and why you decided. The admin and the
+  advertiser both read them, so be factual and polite, and say what would make a rejected offer acceptable.`;
   const user = JSON.stringify({
     page: offer.page,
     offer: {

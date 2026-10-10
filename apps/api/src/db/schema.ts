@@ -426,3 +426,31 @@ export const mailOutbox = pgTable(
   },
   (table) => [index('mail_outbox_status_idx').on(table.status, table.createdAt)],
 );
+
+/**
+ * Sign-in links for advertisers, who have no password: a link by mail to the address they gave
+ * with their requests. Only the hash of the token is stored; a link works once, for 30 minutes.
+ */
+export const advertiserLogins = pgTable(
+  'advertiser_logins',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (table) => [index('advertiser_logins_email_idx').on(table.email, table.createdAt)],
+);
+
+/** Signed-in advertisers, by e-mail address. The token lives in a cookie of its own. */
+export const advertiserSessions = pgTable(
+  'advertiser_sessions',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('advertiser_sessions_email_idx').on(table.email)],
+);

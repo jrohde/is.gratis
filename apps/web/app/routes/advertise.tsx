@@ -41,12 +41,12 @@ export default function Advertise() {
       return;
     }
     const timer = setTimeout(() => {
-      api<SponsorQuote>('GET', `/sponsors/quote?lang=${form.lang}&slug=${slug}`)
+      api<SponsorQuote>('GET', `/sponsors/quote?lang=${form.lang}&slug=${slug}${form.region ? `&region=${form.region}` : ''}`)
         .then(setQuote)
         .catch(() => setQuote(null));
     }, 300);
     return () => clearTimeout(timer);
-  }, [form.lang, slug]);
+  }, [form.lang, slug, form.region]);
   const text = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [field]: event.currentTarget.value });
 
@@ -71,7 +71,12 @@ export default function Advertise() {
   return (
     <Container size="sm">
       <Stack gap="lg">
-        <Title order={1}>{t.advertiseTitle}</Title>
+        <Group justify="space-between" align="baseline">
+          <Title order={1}>{t.advertiseTitle}</Title>
+          <Anchor component={Link} to={`/advertise/portal?lang=${uiLang}`} size="sm">
+            {t.portalLink} →
+          </Anchor>
+        </Group>
         <Text size="lg">{t.advertiseIntro}</Text>
         <List spacing="xs">
           {t.advertiseRules.map((rule) => (
@@ -82,6 +87,7 @@ export default function Advertise() {
           <Alert color="green">
             <Stack gap="xs">
               <Text>{t.advertiseSubmitted}</Text>
+              <Text size="sm">{t.advertiseMailSent}</Text>
               {statsLink && (
                 <Text size="sm">
                   {t.statsLinkHelp}{' '}
@@ -114,10 +120,14 @@ export default function Advertise() {
                     <Text size="xs" c="dimmed" mt={4}>
                       {quote.views30 === 0 ? t.quoteMissing : t.quoteHow}
                     </Text>
+                    <Text size="xs" mt={4} fw={600} c={quote.slotsFree > 0 ? undefined : 'orange.8'}>
+                      {quote.slotsFree > 0 ? t.slotsFree(quote.slotsFree) : t.slotsNone}
+                    </Text>
                   </Alert>
                 )}
                 <Select
                   label={t.regionOptional}
+                  placeholder={t.regionEverywhere}
                   clearable
                   searchable
                   value={form.region}

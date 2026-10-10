@@ -7,6 +7,7 @@ import type { CacheInvalidator } from '../lib/cache.js';
 import { HttpError } from '../lib/errors.js';
 import { hashIp } from '../lib/hash.js';
 import { dailyPick } from '../services/daily.js';
+import { pruneAdvertiserLogins } from '../services/advertisers.js';
 import { enqueueDraft } from '../services/drafts.js';
 import { pruneMailing, queueOffersMail, queueWeekMail } from '../services/mailing.js';
 import { reviewDrafts, reviewOffers, type EditorDeps, type OfferEditorDeps } from '../services/editorial.js';
@@ -145,6 +146,7 @@ export function housekeeping(): BotTask {
     run: async (ctx) => {
       const result = await ctx.db.execute(sql`delete from bot_runs where updated_at < now() - interval '30 days'`);
       const mailing = await pruneMailing(ctx.db);
+      await pruneAdvertiserLogins(ctx.db);
       return `${result.rowCount ?? 0} old runs, ${mailing.subscriptions} unconfirmed subscriptions, ${mailing.mails} old mails removed`;
     },
   };

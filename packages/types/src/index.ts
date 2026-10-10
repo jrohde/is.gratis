@@ -20,6 +20,26 @@ export const REGIONS = [
 ] as const;
 export type Region = (typeof REGIONS)[number];
 
+/** Countries in the EU among the regions. */
+export const EU_REGIONS: ReadonlySet<Region> = new Set<Region>(['NL', 'BE', 'DE', 'AT', 'FR', 'ES', 'IT', 'PT', 'IE', 'DK', 'SE', 'FI', 'PL', 'LU', 'EE']);
+
+/**
+ * Does something meant for one region (null: everywhere) reach a reader in another (null: any)?
+ * "WORLD" reaches everyone, "EU" reaches readers in EU countries.
+ */
+export function regionReaches(target: Region | null, reader: Region | null): boolean {
+  if (!reader || !target || target === 'WORLD' || target === reader) return true;
+  return target === 'EU' && EU_REGIONS.has(reader);
+}
+
+/** Do two regions share readers, so offers for them compete for the same spots? */
+export function regionsOverlap(a: Region | null, b: Region | null): boolean {
+  return regionReaches(a, b) || regionReaches(b, a);
+}
+
+/** Sponsored offers a reader sees on one page at most. More cannot be booked for the same readers. */
+export const OFFER_SLOTS = 3;
+
 export interface RegionBlock {
   /** Country or area this block applies to. */
   region: Region;
@@ -262,6 +282,8 @@ export interface SponsorQuote {
   priceCents: number;
   /** Monthly extra for also being in the weekly mail of free offers. */
   mailingPriceCents: number;
+  /** Spots still free on the page right now, for readers in the asked region. */
+  slotsFree: number;
   currency: 'EUR';
 }
 

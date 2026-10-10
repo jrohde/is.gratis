@@ -18,6 +18,15 @@ interface MailWords {
   weekNew: string;
   unsubscribe: string;
   why: (list: string) => string;
+  loginSubject: string;
+  loginBody: string;
+  loginButton: string;
+  loginIgnore: string;
+  requestSubject: (title: string) => string;
+  requestBody: (title: string, page: string) => string;
+  requestSteps: string;
+  requestButton: string;
+  advertiserWhy: string;
 }
 
 export const MAIL_WORDS: Record<Language, MailWords> = {
@@ -36,6 +45,16 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
     weekNew: 'Nieuw deze week',
     unsubscribe: 'Afmelden',
     why: (list) => `Je krijgt deze mail omdat je je hebt ingeschreven op "${list}" van is.gratis.`,
+    loginSubject: 'Je inloglink voor is.gratis*',
+    loginBody: 'Met deze link kom je in je adverteerdersportaal: al je aanbiedingen, hun cijfers en verlengen. De link werkt één keer en een half uur lang.',
+    loginButton: 'Inloggen',
+    loginIgnore: 'Heb je niet om deze link gevraagd? Dan kun je deze mail negeren.',
+    requestSubject: (title) => `We hebben je aanvraag ontvangen: ${title}`,
+    requestBody: (title, page) => `Bedankt! Je aanvraag "${title}" voor de pagina ${page} is binnen.`,
+    requestSteps:
+      'Zo gaat het verder: onze redactie kijkt of je aanbod echt gratis is en bij de pagina past. Daarna keuren we het goed en sturen we je een factuur. Je aanbod is zichtbaar vanaf de afgesproken datum. In je portaal zie je steeds hoe het ervoor staat.',
+    requestButton: 'Naar je aanbod en cijfers',
+    advertiserWhy: 'Je krijgt deze mail omdat dit adres is opgegeven bij een advertentie-aanvraag op is.gratis.',
   },
   en: {
     lists: { offers: 'Free offers of the week', week: 'Free this week' },
@@ -51,6 +70,16 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
     weekNew: 'New this week',
     unsubscribe: 'Unsubscribe',
     why: (list) => `You get this mail because you subscribed to "${list}" from is.gratis.`,
+    loginSubject: 'Your sign-in link for is.gratis*',
+    loginBody: 'This link opens your advertiser portal: all your offers, their numbers and renewals. It works once, for half an hour.',
+    loginButton: 'Sign in',
+    loginIgnore: 'Did not ask for this link? Then you can ignore this mail.',
+    requestSubject: (title) => `We received your request: ${title}`,
+    requestBody: (title, page) => `Thank you! Your request "${title}" for the page ${page} is in.`,
+    requestSteps:
+      'What happens next: our editors check that your offer is really free and fits the page. Then we approve it and send you an invoice. Your offer shows from the agreed date. Your portal always shows where things stand.',
+    requestButton: 'Your offer and numbers',
+    advertiserWhy: 'You get this mail because this address was given with an advertising request on is.gratis.',
   },
   de: {
     lists: { offers: 'Kostenlose Angebote der Woche', week: 'Kostenlos diese Woche' },
@@ -67,6 +96,16 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
     weekNew: 'Neu diese Woche',
     unsubscribe: 'Abmelden',
     why: (list) => `Du erhältst diese Mail, weil du „${list}“ von is.gratis abonniert hast.`,
+    loginSubject: 'Dein Anmeldelink für is.gratis*',
+    loginBody: 'Mit diesem Link kommst du in dein Werbeportal: alle deine Angebote, ihre Zahlen und Verlängerungen. Der Link funktioniert einmal, eine halbe Stunde lang.',
+    loginButton: 'Anmelden',
+    loginIgnore: 'Hast du diesen Link nicht angefordert? Dann kannst du diese Mail ignorieren.',
+    requestSubject: (title) => `Wir haben deine Anfrage erhalten: ${title}`,
+    requestBody: (title, page) => `Danke! Deine Anfrage „${title}“ für die Seite ${page} ist eingegangen.`,
+    requestSteps:
+      'So geht es weiter: Unsere Redaktion prüft, ob dein Angebot wirklich kostenlos ist und zur Seite passt. Dann geben wir es frei und schicken dir eine Rechnung. Dein Angebot ist ab dem vereinbarten Datum sichtbar. In deinem Portal siehst du jederzeit den Stand.',
+    requestButton: 'Zu deinem Angebot und den Zahlen',
+    advertiserWhy: 'Du erhältst diese Mail, weil diese Adresse bei einer Werbeanfrage auf is.gratis angegeben wurde.',
   },
   es: {
     lists: { offers: 'Ofertas gratis de la semana', week: 'Gratis esta semana' },
@@ -83,6 +122,16 @@ export const MAIL_WORDS: Record<Language, MailWords> = {
     weekNew: 'Nuevo esta semana',
     unsubscribe: 'Darse de baja',
     why: (list) => `Recibes este correo porque te suscribiste a «${list}» de is.gratis.`,
+    loginSubject: 'Tu enlace de acceso a is.gratis*',
+    loginBody: 'Con este enlace entras en tu portal de anunciante: todas tus ofertas, sus cifras y renovaciones. Funciona una vez, durante media hora.',
+    loginButton: 'Entrar',
+    loginIgnore: '¿No has pedido este enlace? Puedes ignorar este correo.',
+    requestSubject: (title) => `Hemos recibido tu solicitud: ${title}`,
+    requestBody: (title, page) => `¡Gracias! Tu solicitud «${title}» para la página ${page} ha llegado.`,
+    requestSteps:
+      'Lo que sigue: nuestra redacción comprueba que tu oferta es gratis de verdad y encaja con la página. Después la aprobamos y te enviamos una factura. Tu oferta se ve a partir de la fecha acordada. En tu portal ves siempre en qué punto está.',
+    requestButton: 'Tu oferta y sus cifras',
+    advertiserWhy: 'Recibes este correo porque esta dirección se indicó en una solicitud de publicidad en is.gratis.',
   },
 };
 

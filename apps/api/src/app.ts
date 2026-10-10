@@ -25,6 +25,7 @@ import { assetRoutes } from './routes/assets.js';
 import { authRoutes } from './routes/auth.js';
 import { botRoutes } from './routes/bot.js';
 import { mailingRoutes } from './routes/mailing.js';
+import { advertiserRoutes } from './routes/advertisers.js';
 import { communityRoutes } from './routes/community.js';
 import { draftRoutes } from './routes/drafts.js';
 import { healthRoutes } from './routes/health.js';
@@ -145,6 +146,7 @@ export async function buildApp({ config, db, cache, logger }: AppDeps) {
       await api.register(userRoutes, { db });
       await api.register(botRoutes, { db });
       await api.register(mailingRoutes, { db, config });
+      await api.register(advertiserRoutes, { db, config });
       await api.register(communityRoutes, { db, cache });
       await api.register(assetRoutes, { db, config });
       await api.register(ogRoutes, { db });

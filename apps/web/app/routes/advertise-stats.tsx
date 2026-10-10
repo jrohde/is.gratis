@@ -45,7 +45,7 @@ export default function AdvertiseStats({ loaderData }: Route.ComponentProps) {
             <Badge>{t.bookingStatus[offer.status] ?? offer.status}</Badge>
             <Text size="sm" c="dimmed">
               /{offer.lang}/{offer.slug} · {offer.advertiserName}
-              {offer.priceCents !== null ? ` · ${formatPrice(offer.priceCents, lang)}` : ''}
+              {offer.priceCents !== null ? ` · ${t.portalPerMonth(formatPrice(offer.priceCents, lang))}` : ''}
               {offer.startsAt ? ` · ${formatDate(offer.startsAt, lang)}` : ''}
               {offer.endsAt ? ` – ${formatDate(offer.endsAt, lang)}` : ''}
             </Text>
@@ -93,6 +93,9 @@ export default function AdvertiseStats({ loaderData }: Route.ComponentProps) {
         <Text size="xs" c="dimmed">
           {t.statsPrivacy}
         </Text>
+        <Anchor component={Link} to={`/advertise/portal?lang=${lang}`} size="sm">
+          {t.portalLink} →
+        </Anchor>
       </Stack>
     </Container>
   );

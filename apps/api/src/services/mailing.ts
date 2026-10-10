@@ -3,7 +3,7 @@
  * the bot sends from. Mail is queued here and sent by the bot, so the API never talks to SMTP.
  */
 import { and, asc, count, eq, gt, isNotNull, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
-import { claimFor, type Language, type MailingList, type Region } from '@isgratis/types';
+import { claimFor, regionReaches, type Language, type MailingList, type Region } from '@isgratis/types';
 import type { Database } from '../db/client.js';
 import { mailOutbox, pages, sponsoredOffers, subscriptions, type SubscriptionRow } from '../db/schema.js';
 import { newToken } from '../lib/hash.js';
@@ -11,14 +11,8 @@ import { MAIL_WORDS, renderMail } from '../lib/mail-text.js';
 import type { Mailer } from '../lib/mailer.js';
 import { dailyHistory, newThisWeek } from './daily.js';
 
-/** Countries in the EU among the regions: an offer for the EU is for subscribers there too. */
-const EU = new Set<Region>(['NL', 'BE', 'DE', 'AT', 'FR', 'ES', 'IT', 'PT', 'IE', 'DK', 'SE', 'FI', 'PL', 'LU', 'EE']);
-
-/** Is an offer for this region (null: everywhere) of use to a subscriber there (null: anywhere)? */
-export function offerReaches(offerRegion: Region | null, subscriberRegion: Region | null): boolean {
-  if (!subscriberRegion || !offerRegion || offerRegion === 'WORLD' || offerRegion === subscriberRegion) return true;
-  return offerRegion === 'EU' && EU.has(subscriberRegion);
-}
+/** Is an offer for this region of use to a subscriber there? */
+export const offerReaches = regionReaches;
 
 /** A mail that keeps failing is given up after this many attempts. */
 export const MAIL_MAX_ATTEMPTS = 5;

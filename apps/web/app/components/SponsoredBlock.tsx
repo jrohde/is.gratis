@@ -2,7 +2,7 @@ import { Anchor, Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } fr
 import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { countOfferImpressions } from '~/lib/views';
-import { stampSvg, type Language, type Region, type SponsoredOffer } from '@isgratis/types';
+import { OFFER_SLOTS, regionReaches, stampSvg, type Language, type Region, type SponsoredOffer } from '@isgratis/types';
 import { messages } from '~/lib/i18n';
 
 /**
@@ -21,7 +21,7 @@ export function SponsoredBlock({
   region: Region;
 }) {
   const t = messages(lang);
-  const visible = offers.filter((offer) => offer.region === null || offer.region === region).slice(0, 3);
+  const visible = offers.filter((offer) => regionReaches(offer.region, region)).slice(0, OFFER_SLOTS);
   const advertiseHref = `/advertise?lang=${lang}&slug=${slug}`;
   const visibleIds = visible.map((offer) => offer.id).join(',');
   useEffect(() => {

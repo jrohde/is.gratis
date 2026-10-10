@@ -3,7 +3,7 @@
  * is shown in the clearly labelled "free here" block for the booked period.
  */
 import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
-import type { Language, Region, SponsorBooking, SponsorRequestStatus } from '@isgratis/types';
+import { OFFER_SLOTS, regionsOverlap, type Language, type Region, type SponsorBooking, type SponsorRequestStatus } from '@isgratis/types';
 import type { Database } from '../db/client.js';
 import { offerStats, pages, revisions, sponsoredOffers, type SponsoredOfferRow } from '../db/schema.js';
 import { newToken } from '../lib/hash.js';
@@ -79,6 +79,39 @@ export async function listBookings(db: Database, status?: SponsorRequestStatus):
   return rows.map(toBooking);
 }
 
+/**
+ * How many running offers on a page would compete with an offer for this region and period:
+ * same readers (overlapping regions) at the same time. A null start means now, a null end never.
+ */
+export async function slotsTaken(
+  db: Database,
+  input: { lang: Language; slug: string; region: Region | null; startsAt: Date | null; endsAt: Date | null; excludeId?: string },
+): Promise<number> {
+  const start = input.startsAt ?? new Date();
+  const rows = await db
+    .select({ id: sponsoredOffers.id, region: sponsoredOffers.region, startsAt: sponsoredOffers.startsAt })
+    .from(sponsoredOffers)
+    .where(
+      and(
+        eq(sponsoredOffers.lang, input.lang),
+        eq(sponsoredOffers.slug, input.slug),
+        eq(sponsoredOffers.status, 'active'),
+        or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, start)),
+      ),
+    );
+  return rows.filter(
+    (row) =>
+      row.id !== input.excludeId &&
+      (!input.endsAt || !row.startsAt || row.startsAt < input.endsAt) &&
+      regionsOverlap(row.region, input.region),
+  ).length;
+}
+
+/** Spots still free on a page right now for readers in a region. */
+export async function slotsFree(db: Database, lang: Language, slug: string, region: Region | null): Promise<number> {
+  return Math.max(0, OFFER_SLOTS - (await slotsTaken(db, { lang, slug, region, startsAt: null, endsAt: null })));
+}
+
 export async function reviewBooking(
   db: Database,
   id: string,
@@ -98,6 +131,20 @@ export async function reviewBooking(
   if (!current) throw notFound('Booking not found');
   if (input.status === 'active' && input.editorRequired && current.editorDecision !== 'approve' && !input.override) {
     throw conflict('editor_not_approved', 'The editorial check did not approve this offer');
+  }
+  if (input.status === 'active') {
+    const taken = await slotsTaken(db, {
+      lang: current.lang,
+      slug: current.slug,
+      region: current.region,
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      excludeId: current.id,
+    });
+    // Otherwise the advertiser pays for a spot that readers never see.
+    if (taken >= OFFER_SLOTS) {
+      throw conflict('page_full', `This page already has ${OFFER_SLOTS} offers for these readers in this period. Choose a later start.`);
+    }
   }
   const suggestion = input.applySuggestion ? current.editorSuggestion : null;
   const [row] = await db
@@ -216,7 +263,7 @@ export async function renewFromToken(
   db: Database,
   token: string,
   input: { slug?: string; priceCents: (lang: Language, slug: string) => Promise<number>; mailingPriceCents: number },
-): Promise<{ statsToken: string; priceCents: number; slug: string }> {
+): Promise<{ statsToken: string; priceCents: number; slug: string; id: string; lang: Language; title: string; contactEmail: string }> {
   const [offer] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.statsToken, token)).limit(1);
   if (!offer) throw notFound('Unknown link');
   const slug = input.slug ?? offer.slug;
@@ -246,5 +293,5 @@ export async function renewFromToken(
       statsToken: newToken(),
     })
     .returning();
-  return { statsToken: row!.statsToken!, priceCents, slug };
+  return { statsToken: row!.statsToken!, priceCents, slug, id: row!.id, lang: row!.lang, title: row!.title, contactEmail: row!.contactEmail };
 }

@@ -1,5 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import type { Region } from '@isgratis/types';
 import { requireRole } from '../auth.js';
 import type { Config } from '../config.js';
 import type { Database } from '../db/client.js';
@@ -15,8 +16,10 @@ import {
   recordImpressions,
   renewFromToken,
   reviewBooking,
+  slotsFree,
   statsForToken,
 } from '../services/sponsors.js';
+import { mailRequestReceived } from '../services/advertisers.js';
 import { quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
 
 const plain = (max: number) =>
@@ -31,9 +34,10 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
   app,
   { db, cache, config },
 ) => {
-  const quote = async (lang: Parameters<typeof viewsLast30Days>[1], slug: string) => {
+  const quote = async (lang: Parameters<typeof viewsLast30Days>[1], slug: string, region: Region | null = null) => {
     const views30 = await viewsLast30Days(db, lang, slug);
     return {
+      slotsFree: await slotsFree(db, lang, slug, region),
       views30,
       priceCents: quotePrice(views30, config.sponsorPricing),
       mailingPriceCents: config.sponsorPricing.mailingCents,
@@ -182,7 +186,8 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         mailingPriceCents: config.sponsorPricing.mailingCents,
       });
       request.log.info({ slug: renewed.slug }, 'sponsor renewal requested');
-      return reply.code(201).send(renewed);
+      await mailRequestReceived(db, renewed, config.publicOrigin);
+      return reply.code(201).send({ statsToken: renewed.statsToken, priceCents: renewed.priceCents, slug: renewed.slug });
     },
   );
 
@@ -193,11 +198,11 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         tags: ['sponsors'],
         summary: 'Monthly price of a sponsored spot on a page',
         description: 'A base price plus a price per thousand views in the last 30 days.',
-        querystring: z.object({ lang: languageSchema, slug: slugSchema }),
+        querystring: z.object({ lang: languageSchema, slug: slugSchema, region: regionSchema.optional() }),
         response: { 200: sponsorQuoteSchema },
       },
     },
-    async (request) => quote(request.query.lang, request.query.slug),
+    async (request) => quote(request.query.lang, request.query.slug, request.query.region ?? null),
   );
 
   app.get(
@@ -272,6 +277,7 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         mailingPriceCents: mailing ? config.sponsorPricing.mailingCents : null,
       });
       request.log.info({ bookingId: booking.id, lang: booking.lang, slug: booking.slug }, 'sponsor request received');
+      await mailRequestReceived(db, { ...booking, statsToken: booking.statsToken }, config.publicOrigin);
       return reply
         .code(201)
         .send({ id: booking.id, status: booking.status, priceCents: booking.priceCents ?? 0, statsToken: booking.statsToken });
