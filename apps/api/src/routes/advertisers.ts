@@ -29,6 +29,7 @@ const portalOfferSchema = z.object({
   region: z.string().nullable(),
   status: z.enum(['pending', 'active', 'rejected', 'expired']),
   priceCents: z.number().int().nullable(),
+  exclusive: z.boolean(),
   inMailing: z.boolean(),
   mailingPriceCents: z.number().int().nullable(),
   startsAt: z.string().nullable(),

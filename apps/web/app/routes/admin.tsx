@@ -88,6 +88,11 @@ function BookingCard({ booking, onChange }: { booking: SponsorBooking; onChange:
                 {formatPrice(booking.priceCents, lang)} / mnd
               </Badge>
             )}
+            {booking.exclusive && (
+              <Badge variant="filled" color="dark">
+                {t.exclusiveBadge}
+              </Badge>
+            )}
             {booking.inMailing && (
               <Badge variant="light" color="grape">
                 {t.inMailing}

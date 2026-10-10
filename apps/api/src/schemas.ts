@@ -125,6 +125,8 @@ export const sponsorQuoteSchema = z.object({
   mailingPriceCents: z.number().int(),
   /** Spots still free on the page right now, for readers in the asked region. */
   slotsFree: z.number().int(),
+  exclusivePriceCents: z.number().int(),
+  exclusiveAvailable: z.boolean(),
   currency: z.literal('EUR'),
 });
 
@@ -167,6 +169,7 @@ export const bookingSchema = sponsoredOfferSchema.extend({
       checkedAt: z.string(),
     })
     .nullable(),
+  exclusive: z.boolean(),
   inMailing: z.boolean(),
   mailingPriceCents: z.number().int().nullable(),
 });

@@ -16,6 +16,7 @@ import {
   recordImpressions,
   renewFromToken,
   reviewBooking,
+  exclusivePrice,
   slotsFree,
   statsForToken,
 } from '../services/sponsors.js';
@@ -36,11 +37,15 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
 ) => {
   const quote = async (lang: Parameters<typeof viewsLast30Days>[1], slug: string, region: Region | null = null) => {
     const views30 = await viewsLast30Days(db, lang, slug);
+    const priceCents = quotePrice(views30, config.sponsorPricing);
+    const slots = await slotsFree(db, lang, slug, region);
     return {
-      slotsFree: await slotsFree(db, lang, slug, region),
       views30,
-      priceCents: quotePrice(views30, config.sponsorPricing),
+      priceCents,
       mailingPriceCents: config.sponsorPricing.mailingCents,
+      slotsFree: slots.free,
+      exclusivePriceCents: exclusivePrice(priceCents, config.sponsorPricing.exclusivePercent),
+      exclusiveAvailable: slots.exclusiveAvailable,
       currency: 'EUR' as const,
     };
   };
@@ -184,6 +189,7 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         slug: request.body.slug,
         priceCents: async (lang, slug) => (await quote(lang, slug)).priceCents,
         mailingPriceCents: config.sponsorPricing.mailingCents,
+        exclusivePercent: config.sponsorPricing.exclusivePercent,
       });
       request.log.info({ slug: renewed.slug }, 'sponsor renewal requested');
       await mailRequestReceived(db, renewed, config.publicOrigin);
@@ -259,6 +265,7 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
           url: httpUrlSchema,
           message: z.string().trim().max(2000).optional(),
           mailing: z.boolean().default(false),
+          exclusive: z.boolean().default(false),
         }),
         response: {
           201: z.object({ id: z.string(), status: bookingStatusSchema, priceCents: z.number().int(), statsToken: z.string() }),
@@ -268,11 +275,11 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     },
     async (request, reply) => {
       // The price is fixed when the request comes in, so the advertiser pays what they were shown.
-      const { priceCents } = await quote(request.body.lang, request.body.slug);
+      const offered = await quote(request.body.lang, request.body.slug, request.body.region);
       const { mailing, ...body } = request.body;
       const booking = await createSponsorRequest(db, {
         ...body,
-        priceCents,
+        priceCents: body.exclusive ? offered.exclusivePriceCents : offered.priceCents,
         inMailing: mailing,
         mailingPriceCents: mailing ? config.sponsorPricing.mailingCents : null,
       });

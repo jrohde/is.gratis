@@ -28,6 +28,7 @@ export default function Advertise() {
     url: 'https://',
     message: '',
     mailing: false,
+    exclusive: false,
   });
   const [status, setStatus] = useState<'idle' | 'busy' | 'done'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,7 @@ export default function Advertise() {
     try {
       const created = await api<{ statsToken: string }>('POST', '/sponsors/requests', {
         ...form,
+        exclusive: form.exclusive && Boolean(quote?.exclusiveAvailable),
         slug: toSlug(form.slug),
         message: form.message.trim() || undefined,
       });
@@ -141,6 +143,13 @@ export default function Advertise() {
                 <TextInput label={t.offerTitle} required maxLength={80} value={form.title} onChange={text('title')} />
                 <Textarea label={t.offerDescription} required maxLength={280} autosize minRows={2} value={form.description} onChange={text('description')} />
                 <TextInput label={t.offerUrl} type="url" required value={form.url} onChange={text('url')} />
+                <Checkbox
+                  checked={form.exclusive && Boolean(quote?.exclusiveAvailable)}
+                  disabled={quote !== null && !quote.exclusiveAvailable}
+                  onChange={(event) => setForm({ ...form, exclusive: event.currentTarget.checked })}
+                  label={t.advertiseExclusive(quote ? formatPrice(quote.exclusivePriceCents, uiLang) : null)}
+                  description={quote && !quote.exclusiveAvailable ? t.exclusiveUnavailable : t.advertiseExclusiveHint}
+                />
                 <Checkbox
                   checked={form.mailing}
                   onChange={(event) => setForm({ ...form, mailing: event.currentTarget.checked })}

@@ -1,9 +1,20 @@
 import { Anchor, Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { countOfferImpressions } from '~/lib/views';
 import { OFFER_SLOTS, regionReaches, stampSvg, type Language, type Region, type SponsoredOffer } from '@isgratis/types';
 import { messages } from '~/lib/i18n';
+import { ReportModal } from './ReportButton';
+
+/** A new order for every reader: each offer is on top as often as the others. */
+function shuffled<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
+  }
+  return copy;
+}
 
 /**
  * The paid "free here" block. Always visually separate from the answer and always labelled,
@@ -24,9 +35,15 @@ export function SponsoredBlock({
   const visible = offers.filter((offer) => regionReaches(offer.region, region)).slice(0, OFFER_SLOTS);
   const advertiseHref = `/advertise?lang=${lang}&slug=${slug}`;
   const visibleIds = visible.map((offer) => offer.id).join(',');
+  // The page is cached for everyone, so the order is drawn in the browser, after hydration.
+  const [order, setOrder] = useState<string[] | null>(null);
+  const [reporting, setReporting] = useState<string | null>(null);
   useEffect(() => {
-    if (visibleIds) countOfferImpressions(visibleIds.split(','));
+    if (!visibleIds) return;
+    countOfferImpressions(visibleIds.split(','));
+    setOrder(shuffled(visibleIds.split(',')));
   }, [visibleIds]);
+  const ordered = order ? order.map((id) => visible.find((offer) => offer.id === id)!).filter(Boolean) : visible;
 
   if (visible.length === 0) {
     return (
@@ -55,7 +72,7 @@ export function SponsoredBlock({
         </Anchor>
       </Text>
       <SimpleGrid cols={{ base: 1, sm: visible.length > 1 ? 2 : 1 }}>
-        {visible.map((offer) => (
+        {ordered.map((offer) => (
           <Card key={offer.id} withBorder padding="md" pos="relative">
             {/* Only reviewed offers are shown, so each carries the stamp. */}
             <span
@@ -68,7 +85,10 @@ export function SponsoredBlock({
               <Text size="sm">{offer.description}</Text>
               <Group justify="space-between" mt="xs">
                 <Text size="xs" c="dimmed">
-                  {offer.advertiserName}
+                  {offer.advertiserName} ·{' '}
+                  <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setReporting(offer.id)}>
+                    {t.offerReport}
+                  </Anchor>
                 </Text>
                 <Button
                   component="a"
@@ -85,6 +105,7 @@ export function SponsoredBlock({
           </Card>
         ))}
       </SimpleGrid>
+      {reporting && <ReportModal lang={lang} target={{ offerId: reporting }} opened onClose={() => setReporting(null)} />}
     </Card>
   );
 }

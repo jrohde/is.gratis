@@ -52,10 +52,11 @@ export async function resetDatabase(ctx: TestContext) {
 }
 
 /** Registers a user and returns the session cookie header. */
-export async function register(ctx: TestContext, email: string, displayName = 'Tester') {
+export async function register(ctx: TestContext, email: string, displayName = 'Tester', remoteAddress?: string) {
   const response = await ctx.app.inject({
     method: 'POST',
     url: '/api/auth/register',
+    ...(remoteAddress ? { remoteAddress } : {}),
     payload: { email, password: 'correct horse battery', displayName },
   });
   if (response.statusCode !== 201) throw new Error(`register failed: ${response.body}`);

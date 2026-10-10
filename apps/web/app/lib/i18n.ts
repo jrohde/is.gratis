@@ -90,7 +90,7 @@ const nl = {
     'Bied je iets gratis aan, zoals een proefpakket, een demo of een gratis abonnement? Toon het op de pagina waar mensen precies daarnaar zoeken.',
   advertiseRules: [
     'Je aanbod moet echt gratis zijn: geen aankoop, verplichte verzendkosten of verborgen abonnement.',
-    'Het staat in een apart blok met het label “Gesponsord”, los van het antwoord. Per pagina zijn er hooguit 3 plekken voor dezelfde lezers.',
+    'Het staat in een apart blok met het label “Gesponsord”, los van het antwoord. Per pagina zijn er hooguit 3 plekken voor dezelfde lezers, en één per adverteerder. De volgorde wisselt per bezoeker, en iedereen betaalt dezelfde prijs.',
     'Onze redactie, een taalmodel met dezelfde strenge regels als voor onze pagina’s, leest je aanbod en de pagina waarnaar je linkt. Daarna keuren wij het met de hand goed. Wordt het afgewezen, dan zie je waarom.',
     'Je betaalt per maand, na goedkeuring per factuur. Na de afgesproken periode stopt je aanbod vanzelf; verlengen doe je in je portaal.',
     'Goedgekeurd aanbod krijgt ons keurmerk: *nagekeken. Echt gratis, zonder kleine lettertjes.',
@@ -263,6 +263,8 @@ const nl = {
     offensive: 'Kwetsend of ongepast',
     copyright: 'Schending van auteursrecht',
     other: 'Iets anders',
+    not_free: 'Het is niet echt gratis',
+    misleading: 'Het is misleidend',
   } as Record<string, string>,
   reportsTitle: 'Meldingen',
   reportsEmpty: 'Geen open meldingen.',
@@ -391,6 +393,13 @@ const nl = {
   regionEverywhere: 'Overal',
   advertiseMailSent: 'We hebben je ook een mail gestuurd met deze link en de volgende stappen.',
   perMonthShort: 'per maand',
+  offerReport: 'Melden',
+  offerReportTitle: 'Dit aanbod melden',
+  reportedOffer: (title: string, advertiser: string) => `Over het aanbod “${title}” van ${advertiser}`,
+  advertiseExclusive: (price: string | null) => `Als enige op deze pagina voor deze lezers${price ? ` (${price} per maand in plaats van de gewone prijs)` : ''}`,
+  advertiseExclusiveHint: 'Geen andere aanbiedingen naast de jouwe zolang je aanbod loopt.',
+  exclusiveUnavailable: 'Kan nu niet: er lopen al andere aanbiedingen voor deze lezers.',
+  exclusiveBadge: 'exclusief',
 };
 
 export type Messages = typeof nl;
@@ -478,7 +487,7 @@ const en: Messages = {
     'Do you offer something for free, such as a sample, a demo or a free plan? Show it on the page where people look for exactly that.',
   advertiseRules: [
     'Your offer must be genuinely free: no purchase, mandatory shipping costs or hidden subscription.',
-    'It appears in a separate block labelled “Sponsored”, apart from the answer. A page has at most 3 spots for the same readers.',
+    'It appears in a separate block labelled “Sponsored”, apart from the answer. A page has at most 3 spots for the same readers, and one per advertiser. The order changes for every visitor, and everyone pays the same price.',
     'Our editors, a language model with the same strict rules as for our pages, read your offer and the page it links to. Then we approve it by hand. If it is rejected, you see why.',
     'You pay per month, by invoice after approval. After the agreed period your offer stops by itself; renew in your portal.',
     'Approved offers carry our stamp: *checked. Really free, no small print.',
@@ -651,6 +660,8 @@ const en: Messages = {
     offensive: 'Offensive or inappropriate',
     copyright: 'Copyright infringement',
     other: 'Something else',
+    not_free: 'It is not really free',
+    misleading: 'It is misleading',
   },
   reportsTitle: 'Reports',
   reportsEmpty: 'No open reports.',
@@ -779,6 +790,13 @@ const en: Messages = {
   regionEverywhere: 'Everywhere',
   advertiseMailSent: 'We also mailed you this link and the next steps.',
   perMonthShort: 'a month',
+  offerReport: 'Report',
+  offerReportTitle: 'Report this offer',
+  reportedOffer: (title: string, advertiser: string) => `About the offer “${title}” by ${advertiser}`,
+  advertiseExclusive: (price: string | null) => `The only offer on this page for these readers${price ? ` (${price} a month instead of the normal price)` : ''}`,
+  advertiseExclusiveHint: 'No other offers next to yours while your offer runs.',
+  exclusiveUnavailable: 'Not possible now: other offers for these readers are running.',
+  exclusiveBadge: 'exclusive',
 };
 
 const de: Messages = {
@@ -940,6 +958,8 @@ const de: Messages = {
     offensive: 'Beleidigend oder unangemessen',
     copyright: 'Urheberrechtsverletzung',
     other: 'Etwas anderes',
+    not_free: 'Es ist nicht wirklich kostenlos',
+    misleading: 'Es ist irreführend',
   },
   translateTo: 'Übersetzen lassen ins',
   translationQueued: 'in der Warteschlange, erscheint als Entwurf',
@@ -1001,7 +1021,7 @@ const de: Messages = {
   advertiseMailingHint: 'Abonnenten in deiner Region bekommen dein Angebot jede Woche per Mail.',
   advertiseRules: [
     'Dein Angebot muss wirklich kostenlos sein: kein Kauf, keine Pflicht-Versandkosten, kein verstecktes Abo.',
-    'Es steht in einem eigenen Block mit dem Label „Gesponsert“, getrennt von der Antwort. Pro Seite gibt es höchstens 3 Plätze für dieselben Leser.',
+    'Es steht in einem eigenen Block mit dem Label „Gesponsert“, getrennt von der Antwort. Pro Seite gibt es höchstens 3 Plätze für dieselben Leser und einen pro Werbetreibendem. Die Reihenfolge wechselt bei jedem Besuch, und alle zahlen denselben Preis.',
     'Unsere Redaktion, ein Sprachmodell mit denselben strengen Regeln wie für unsere Seiten, liest dein Angebot und die verlinkte Seite. Danach geben wir es von Hand frei. Wird es abgelehnt, siehst du warum.',
     'Du zahlst pro Monat, nach der Freigabe per Rechnung. Nach dem vereinbarten Zeitraum endet dein Angebot von selbst; verlängern kannst du in deinem Portal.',
     'Freigegebene Angebote tragen unser Siegel: *geprüft. Wirklich kostenlos, ohne Kleingedrucktes.',
@@ -1043,6 +1063,13 @@ const de: Messages = {
   regionEverywhere: 'Überall',
   advertiseMailSent: 'Wir haben dir diesen Link und die nächsten Schritte auch per Mail geschickt.',
   perMonthShort: 'pro Monat',
+  offerReport: 'Melden',
+  offerReportTitle: 'Dieses Angebot melden',
+  reportedOffer: (title: string, advertiser: string) => `Zum Angebot „${title}“ von ${advertiser}`,
+  advertiseExclusive: (price: string | null) => `Als einziges Angebot auf dieser Seite für diese Leser${price ? ` (${price} pro Monat statt des normalen Preises)` : ''}`,
+  advertiseExclusiveHint: 'Keine anderen Angebote neben deinem, solange es läuft.',
+  exclusiveUnavailable: 'Gerade nicht möglich: Es laufen schon andere Angebote für diese Leser.',
+  exclusiveBadge: 'exklusiv',
 };
 
 const es: Messages = {
@@ -1204,6 +1231,8 @@ const es: Messages = {
     spam: 'Spam o publicidad',
     offensive: 'Ofensivo o inapropiado',
     copyright: 'Infracción de derechos de autor',
+    not_free: 'No es gratis de verdad',
+    misleading: 'Es engañosa',
     other: 'Otra cosa',
   },
   translateTo: 'Traducir al',
@@ -1266,7 +1295,7 @@ const es: Messages = {
   advertiseMailingHint: 'Los suscriptores de tu región reciben tu oferta cada semana en su correo.',
   advertiseRules: [
     'Tu oferta debe ser gratis de verdad: sin compra, sin gastos de envío obligatorios ni suscripción oculta.',
-    'Aparece en un bloque aparte con la etiqueta «Patrocinado», separado de la respuesta. Cada página tiene como máximo 3 espacios para los mismos lectores.',
+    'Aparece en un bloque aparte con la etiqueta «Patrocinado», separado de la respuesta. Cada página tiene como máximo 3 espacios para los mismos lectores, y uno por anunciante. El orden cambia en cada visita y todos pagan el mismo precio.',
     'Nuestra redacción, un modelo de lenguaje con las mismas reglas estrictas que nuestras páginas, lee tu oferta y la página a la que enlaza. Después la aprobamos a mano. Si se rechaza, ves por qué.',
     'Pagas por mes, con factura tras la aprobación. Al terminar el periodo acordado tu oferta se detiene sola; renueva en tu portal.',
     'Las ofertas aprobadas llevan nuestro sello: *comprobado. Gratis de verdad, sin letra pequeña.',
@@ -1308,6 +1337,13 @@ const es: Messages = {
   regionEverywhere: 'En todas partes',
   advertiseMailSent: 'También te hemos enviado este enlace y los siguientes pasos por correo.',
   perMonthShort: 'al mes',
+  offerReport: 'Denunciar',
+  offerReportTitle: 'Denunciar esta oferta',
+  reportedOffer: (title: string, advertiser: string) => `Sobre la oferta «${title}» de ${advertiser}`,
+  advertiseExclusive: (price: string | null) => `La única oferta en esta página para estos lectores${price ? ` (${price} al mes en lugar del precio normal)` : ''}`,
+  advertiseExclusiveHint: 'Ninguna otra oferta junto a la tuya mientras esté activa.',
+  exclusiveUnavailable: 'Ahora no es posible: ya hay otras ofertas para estos lectores.',
+  exclusiveBadge: 'exclusiva',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

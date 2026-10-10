@@ -40,6 +40,7 @@ interface PortalOffer {
   region: string | null;
   status: 'pending' | 'active' | 'rejected' | 'expired';
   priceCents: number | null;
+  exclusive: boolean;
   inMailing: boolean;
   mailingPriceCents: number | null;
   startsAt: string | null;
@@ -153,6 +154,7 @@ function OfferCard({ offer, lang }: { offer: PortalOffer; lang: Language }) {
         </Group>
         <Text size="sm">
           {offer.priceCents !== null && t.portalPerMonth(formatPrice(offer.priceCents, lang))}
+          {offer.exclusive && ` · ${t.exclusiveBadge}`}
           {offer.inMailing &&
             offer.mailingPriceCents !== null &&
             ` ${t.portalMailing(formatPrice(offer.mailingPriceCents, lang))}`}

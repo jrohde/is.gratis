@@ -3,7 +3,7 @@
  * publishes a corrected version, or leaves them for a person with a note saying why. Sponsored
  * offers go past it too, before the admin approves them.
  */
-import { and, asc, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, lt, sql } from 'drizzle-orm';
 import type { Language } from '@isgratis/types';
 import type { Database } from '../db/client.js';
 import { editorReviews, pages, revisions, sponsoredOffers } from '../db/schema.js';
@@ -164,7 +164,8 @@ export async function reviewOffers(deps: OfferEditorDeps, limit: number): Promis
     .from(sponsoredOffers)
     .where(
       and(
-        eq(sponsoredOffers.status, 'pending'),
+        // Running offers too: a report sends an offer back to the editors.
+        inArray(sponsoredOffers.status, ['pending', 'active']),
         isNull(sponsoredOffers.editorDecision),
         lt(sponsoredOffers.editorAttempts, OFFER_EDITOR_MAX_ATTEMPTS),
       ),

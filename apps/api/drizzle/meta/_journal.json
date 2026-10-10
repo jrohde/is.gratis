@@ -92,6 +92,13 @@
       "when": 1791651446647,
       "tag": "0012_advertiser_login",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791654661769,
+      "tag": "0013_exclusive_and_offer_reports",
+      "breakpoints": true
     }
   ]
 }

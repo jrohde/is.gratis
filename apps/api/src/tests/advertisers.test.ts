@@ -22,7 +22,7 @@ async function sentMail(): Promise<OutgoingMail[]> {
 }
 
 async function page(slug: string) {
-  const { cookie } = await register(ctx, `writer-${slug}@example.com`);
+  const { cookie } = await register(ctx, `writer-${slug}@example.com`, 'Tester', nextAddress());
   await ctx.app.inject({
     method: 'PUT',
     url: `/api/pages/nl/${slug}`,
@@ -40,7 +40,7 @@ async function request(slug: string, email: string, region: string | null = null
       lang: 'nl',
       slug,
       region,
-      advertiserName: 'Zwemschool',
+      advertiserName: `Zwemschool ${email.split('@')[0]}`,
       contactEmail: email,
       title,
       description: 'Een gratis proefles zwemmen.',
@@ -118,12 +118,12 @@ describe('advertiser portal', () => {
 describe('spots on a page', () => {
   it('will not activate a fourth offer for the same readers, but does for other readers or a later period', async () => {
     await page('zwemmen');
-    const { cookie } = await register(ctx, 'admin@example.com', 'Admin');
+    const { cookie } = await register(ctx, 'admin@example.com', 'Admin', nextAddress());
     const activate = (id: string, startsAt: string | null = null, endsAt: string | null = null) =>
       ctx.app.inject({ method: 'POST', url: `/api/admin/sponsors/${id}/review`, headers: { cookie }, payload: { status: 'active', startsAt, endsAt } });
 
-    for (const region of [null, 'NL', 'EU']) {
-      const { id } = await request('zwemmen', 'a@example.com', region);
+    for (const [i, region] of [null, 'NL', 'EU'].entries()) {
+      const { id } = await request('zwemmen', `a${i}@example.com`, region);
       expect((await activate(id, null, '2099-01-01T00:00:00Z')).statusCode).toBe(200);
     }
     const quote = await ctx.app.inject({ url: '/api/sponsors/quote?lang=nl&slug=zwemmen&region=NL' });
@@ -144,10 +144,84 @@ describe('spots on a page', () => {
 
   it('shows offers for the EU and the world to readers there', async () => {
     await page('zwemmen');
-    const { cookie } = await register(ctx, 'admin@example.com', 'Admin');
+    const { cookie } = await register(ctx, 'admin@example.com', 'Admin', nextAddress());
     const { id } = await request('zwemmen', 'a@example.com', 'EU', 'Europese proefles');
     await ctx.app.inject({ method: 'POST', url: `/api/admin/sponsors/${id}/review`, headers: { cookie }, payload: { status: 'active' } });
     const pageData = await ctx.app.inject({ url: '/api/pages/nl/zwemmen' });
     expect(pageData.json().sponsoredOffers.map((o: { region: string }) => o.region)).toEqual(['EU']);
+  });
+});
+
+describe('fair play between advertisers', () => {
+  async function admin() {
+    return (await register(ctx, 'admin@example.com', 'Admin', nextAddress())).cookie;
+  }
+  const activate = (cookie: string, id: string) =>
+    ctx.app.inject({ method: 'POST', url: `/api/admin/sponsors/${id}/review`, headers: { cookie }, payload: { status: 'active' } });
+
+  it('gives one advertiser one spot per page for the same readers', async () => {
+    await page('zwemmen');
+    const cookie = await admin();
+    const first = await request('zwemmen', 'school@example.com', 'NL');
+    const second = await request('zwemmen', 'school@example.com', null, 'Nog een proefles');
+    expect((await activate(cookie, first.id)).statusCode).toBe(200);
+    const refused = await activate(cookie, second.id);
+    expect(refused.json().error).toBe('one_per_advertiser');
+  });
+
+  it('sells a page to one advertiser alone, at the exclusive price, only when nobody else is there', async () => {
+    await page('zwemmen');
+    const cookie = await admin();
+    const quote = (await ctx.app.inject({ url: '/api/sponsors/quote?lang=nl&slug=zwemmen&region=NL' })).json();
+    expect(quote).toMatchObject({ priceCents: 2500, exclusivePriceCents: 6300, exclusiveAvailable: true });
+
+    const created = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/sponsors/requests',
+      remoteAddress: nextAddress(),
+      payload: {
+        lang: 'nl', slug: 'zwemmen', region: 'NL', advertiserName: 'Alleen', contactEmail: 'alleen@example.com',
+        title: 'Gratis zwemles', description: 'Een gratis zwemles.', url: 'https://alleen.example', exclusive: true,
+      },
+    });
+    const exclusive = created.json();
+    expect(exclusive.priceCents).toBe(6300);
+    expect((await activate(cookie, exclusive.id)).statusCode).toBe(200);
+
+    const after = (await ctx.app.inject({ url: '/api/sponsors/quote?lang=nl&slug=zwemmen&region=NL' })).json();
+    expect(after).toMatchObject({ slotsFree: 0, exclusiveAvailable: false });
+    const other = await request('zwemmen', 'ander@example.com', 'NL');
+    expect((await activate(cookie, other.id)).json().error).toBe('page_exclusive');
+    // Readers elsewhere are not part of the exclusive booking.
+    const american = await request('zwemmen', 'us@example.com', 'US');
+    expect((await activate(cookie, american.id)).statusCode).toBe(200);
+  });
+
+  it('takes reports on offers, sends them back to the editors, and shows them to moderators', async () => {
+    await page('zwemmen');
+    const cookie = await admin();
+    const { id } = await request('zwemmen', 'school@example.com');
+    await ctx.db.execute(sql`update sponsored_offers set editor_decision = 'approve', editor_notes = 'Ok', editor_checked_at = now() where id = ${id}`);
+    await activate(cookie, id);
+
+    const report = await ctx.app.inject({
+      method: 'POST',
+      url: `/api/offers/${id}/reports`,
+      remoteAddress: nextAddress(),
+      payload: { reason: 'not_free', message: 'Na de proefles moet je een abonnement nemen.' },
+    });
+    expect(report.statusCode).toBe(201);
+    const [offer] = (await ctx.db.execute<{ editor_decision: string | null }>(sql`select editor_decision from sponsored_offers where id = ${id}`)).rows;
+    expect(offer!.editor_decision).toBeNull();
+
+    const reports = await ctx.app.inject({ method: 'GET', url: '/api/reports', headers: { cookie } });
+    expect(reports.json().reports[0]).toMatchObject({
+      reason: 'not_free',
+      slug: 'zwemmen',
+      offer: { id, title: 'Gratis proefles', advertiserName: 'Zwemschool school' },
+    });
+    // Page reasons are for pages, offer reasons for offers.
+    const wrong = await ctx.app.inject({ method: 'POST', url: `/api/offers/${id}/reports`, remoteAddress: nextAddress(), payload: { reason: 'copyright' } });
+    expect(wrong.statusCode).toBe(400);
   });
 });

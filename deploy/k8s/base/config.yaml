@@ -35,6 +35,8 @@ data:
   SPONSOR_PRICE_PER_1000_VIEWS_CENTS: '400'
   # Monthly extra for an offer that is also in the weekly mail of free offers.
   SPONSOR_MAILING_PRICE_CENTS: '500'
+  # Being the only offer on a page for its readers costs this percentage of the normal price.
+  SPONSOR_EXCLUSIVE_PERCENT: '250'
   # Mail goes out through your own SMTP server (SMTP_URL in the Secret, e.g.
   # smtp://user:pass@mail.mail.svc:587). Without it the bot only writes mail to its log.
   MAIL_FROM: 'is.gratis <hallo@is.gratis>'

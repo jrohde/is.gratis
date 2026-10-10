@@ -304,6 +304,24 @@ Aanbiedingen voor overlappende regio's (een land, de EU, de wereld of overal)
 in een overlappende periode tellen samen; een vierde activeren wordt
 geweigerd, en het aanvraagformulier toont hoeveel plekken er vrij zijn.
 
+Eerlijk spel tussen adverteerders:
+
+- **Geen posities te koop.** De volgorde in het blok wordt per bezoeker
+  geloot (in de browser, want de pagina zelf staat in de cache), zodat elke
+  aanbieding even vaak bovenaan staat.
+- **Eén plek per adverteerder** per pagina voor dezelfde lezers (herkend aan
+  e-mailadres of naam), zodat niemand alle plekken opkoopt.
+- **Exclusiviteit** is wel te koop: als enige aanbieding voor deze lezers,
+  voor `SPONSOR_EXCLUSIVE_PERCENT` van de gewone prijs (standaard 250%), en
+  alleen als er niemand anders loopt. Daarna kan niemand anders erbij tot de
+  periode voorbij is.
+- **Zelfde prijs voor iedereen**: die volgt alleen de bezoekers van de pagina.
+- **Concurrenten naast elkaar** mag; vergelijken met of iets beweren over
+  anderen niet (een regel van de redactie).
+- **Melden**: lezers kunnen een aanbieding melden ("niet echt gratis",
+  "misleidend"). De melding komt bij de moderatoren, en de redactie bekijkt
+  de aanbieding opnieuw, inclusief de landingspagina.
+
 ## Mailinglijsten
 
 Losse lijsten, elk apart aan te melden; nieuwe lijsten kunnen erbij

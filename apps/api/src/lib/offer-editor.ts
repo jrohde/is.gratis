@@ -50,6 +50,8 @@ Approve an offer only when all of this is true:
   trial that turns into a paid subscription, "free" shipping on a purchase, or a discount is NOT free.
 - It is about the subject of the page, or clearly useful to someone reading that page.
 - Title and description are factual and neutral: no superlatives, urgency or exaggeration ("best", "only today", "!!!").
+- It speaks about its own offer only: no comparisons with, or claims about, competitors or other offers ("unlike X",
+  "the only real free ..."). Readers see several offers side by side and choose for themselves.
 - The landing page offers what the title and description promise, in the stated region if there is one.
 - Nothing hateful, sexual, deceptive, illegal, gambling, or aimed at children's data.
 

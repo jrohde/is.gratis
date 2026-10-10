@@ -145,6 +145,11 @@ function Reports() {
                     {formatDate(report.createdAt, lang)}
                   </Text>
                 </Group>
+                {report.offer && (
+                  <Text size="sm" fw={600}>
+                    {t.reportedOffer(report.offer.title, report.offer.advertiserName)}
+                  </Text>
+                )}
                 {report.message && (
                   <Text size="sm" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                     {report.message}

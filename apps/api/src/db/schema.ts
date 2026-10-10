@@ -202,6 +202,8 @@ export const sponsoredOffers = pgTable(
     editorCheckedAt: timestamp('editor_checked_at', { withTimezone: true }),
     /** Failed attempts; after three the editor leaves the offer to the admin. */
     editorAttempts: integer('editor_attempts').notNull().default(0),
+    /** The only offer for these readers on the page; priceCents is then the exclusive price. */
+    exclusive: boolean('exclusive').notNull().default(false),
     /** Booked extra: also in the weekly mail of free offers, for this monthly price. */
     inMailing: boolean('in_mailing').notNull().default(false),
     mailingPriceCents: integer('mailing_price_cents'),
@@ -318,6 +320,8 @@ export const reports = pgTable(
     pageId: uuid('page_id')
       .notNull()
       .references(() => pages.id, { onDelete: 'cascade' }),
+    /** Set when the report is about a sponsored offer on the page, not the page itself. */
+    offerId: uuid('offer_id').references((): AnyPgColumn => sponsoredOffers.id, { onDelete: 'cascade' }),
     reason: text('reason').$type<ReportReason>().notNull(),
     message: text('message'),
     /** Salted hash of the reporter's IP, for rate limiting only. */

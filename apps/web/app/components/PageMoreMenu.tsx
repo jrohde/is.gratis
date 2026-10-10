@@ -52,7 +52,7 @@ export function PageMoreMenu({ page, origin }: { page: Page; origin: string }) {
         </Menu.Dropdown>
       </Menu>
       <EmbedModal page={page} origin={origin} opened={modal === 'embed'} onClose={() => setModal(null)} />
-      <ReportModal lang={page.lang} slug={page.slug} opened={modal === 'report'} onClose={() => setModal(null)} />
+      <ReportModal lang={page.lang} target={{ slug: page.slug }} opened={modal === 'report'} onClose={() => setModal(null)} />
     </>
   );
 }

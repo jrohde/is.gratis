@@ -1,23 +1,24 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { REPORT_REASONS } from '@isgratis/types';
+import { OFFER_REPORT_REASONS, REPORT_REASONS } from '@isgratis/types';
 import { requireRole } from '../auth.js';
 import type { Config } from '../config.js';
 import type { Database } from '../db/client.js';
 import { languageSchema, slugSchema } from '../lib/content.js';
 import { hashIp } from '../lib/hash.js';
 import { errorSchema } from '../schemas.js';
-import { createReport, listReports, resolveReport } from '../services/reports.js';
+import { createOfferReport, createReport, listReports, resolveReport } from '../services/reports.js';
 
 const reportSchema = z.object({
   id: z.string(),
   lang: languageSchema,
   slug: z.string(),
   title: z.string(),
-  reason: z.enum(REPORT_REASONS),
+  reason: z.enum([...REPORT_REASONS, ...OFFER_REPORT_REASONS]),
   message: z.string().nullable(),
   status: z.enum(['open', 'resolved']),
   createdAt: z.string(),
+  offer: z.object({ id: z.string(), title: z.string(), advertiserName: z.string() }).optional(),
 });
 
 export const reportRoutes: FastifyPluginAsyncZod<{ db: Database; config: Config }> = async (app, { db, config }) => {
@@ -45,6 +46,29 @@ export const reportRoutes: FastifyPluginAsyncZod<{ db: Database; config: Config 
         5,
       );
       request.log.info({ reportId: id, ...request.params, reason: request.body.reason }, 'page reported');
+      return reply.code(201).send({ id });
+    },
+  );
+
+  app.post(
+    '/offers/:id/reports',
+    {
+      config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
+      schema: {
+        tags: ['sponsors'],
+        summary: 'Report a sponsored offer that is not really free or misleading; no account needed',
+        params: z.object({ id: z.uuid() }),
+        body: z.object({ reason: z.enum(OFFER_REPORT_REASONS), message: z.string().trim().max(1000).optional() }),
+        response: { 201: z.object({ id: z.string() }), 404: errorSchema, 429: errorSchema },
+      },
+    },
+    async (request, reply) => {
+      const id = await createOfferReport(
+        db,
+        { offerId: request.params.id, ...request.body, ipHash: hashIp(request.ip, config.ipHashSalt), userId: request.user?.id ?? null },
+        5,
+      );
+      request.log.info({ reportId: id, offerId: request.params.id, reason: request.body.reason }, 'offer reported');
       return reply.code(201).send({ id });
     },
   );

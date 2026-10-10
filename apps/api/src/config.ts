@@ -95,6 +95,8 @@ export interface Config {
     perThousandCents: number;
     /** Monthly extra for being in the weekly mail of free offers. */
     mailingCents: number;
+    /** Being the only offer for these readers costs this percentage of the normal price. */
+    exclusivePercent: number;
   };
   /**
    * Mail, sent by the bot through your own SMTP server. Without SMTP_URL mail is only written to
@@ -209,6 +211,7 @@ export function loadConfig(): Config {
       baseCents: int('SPONSOR_BASE_PRICE_CENTS', 2500),
       perThousandCents: int('SPONSOR_PRICE_PER_1000_VIEWS_CENTS', 400),
       mailingCents: int('SPONSOR_MAILING_PRICE_CENTS', 500),
+      exclusivePercent: int('SPONSOR_EXCLUSIVE_PERCENT', 250),
     },
     mail: {
       smtpUrl: str('SMTP_URL', ''),

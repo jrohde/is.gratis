@@ -213,6 +213,8 @@ export interface SponsorBooking extends SponsoredOffer {
   createdAt: string;
   /** Null until the editorial language model has looked at it (or when it is switched off). */
   editor: OfferEditorAdvice | null;
+  /** Booked as the only offer for these readers on the page. */
+  exclusive: boolean;
   /** Booked extra: also in the weekly mail of free offers. */
   inMailing: boolean;
   mailingPriceCents: number | null;
@@ -284,6 +286,9 @@ export interface SponsorQuote {
   mailingPriceCents: number;
   /** Spots still free on the page right now, for readers in the asked region. */
   slotsFree: number;
+  /** Monthly price to be the only offer for these readers, and whether that can be booked now. */
+  exclusivePriceCents: number;
+  exclusiveAvailable: boolean;
   currency: 'EUR';
 }
 
@@ -314,7 +319,9 @@ export interface PageListItem {
 }
 
 export const REPORT_REASONS = ['wrong', 'outdated', 'unsourced', 'spam', 'offensive', 'copyright', 'other'] as const;
-export type ReportReason = (typeof REPORT_REASONS)[number];
+/** Reasons to report a sponsored offer: the promise of the "free here" block is broken. */
+export const OFFER_REPORT_REASONS = ['not_free', 'misleading', 'offensive', 'other'] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number] | (typeof OFFER_REPORT_REASONS)[number];
 
 export interface Report {
   id: string;
@@ -325,6 +332,8 @@ export interface Report {
   message: string | null;
   status: 'open' | 'resolved';
   createdAt: string;
+  /** Set when the report is about a sponsored offer on the page rather than the page itself. */
+  offer?: { id: string; title: string; advertiserName: string };
 }
 
 /** Markers around the matched words in a search snippet; the web app turns them into <mark>. */
@@ -440,6 +449,8 @@ export interface SponsorRequestBody {
   message?: string;
   /** Also in the weekly mail of free offers, for a small extra. */
   mailing?: boolean;
+  /** The only offer for these readers on the page, for a higher price. */
+  exclusive?: boolean;
 }
 
 export interface ApiError {

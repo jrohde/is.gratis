@@ -35,9 +35,15 @@ export function toBooking(row: SponsoredOfferRow): SponsorBooking {
             checkedAt: row.editorCheckedAt.toISOString(),
           }
         : null,
+    exclusive: row.exclusive,
     inMailing: row.inMailing,
     mailingPriceCents: row.mailingPriceCents,
   };
+}
+
+/** The monthly price of having a page to yourself, rounded to whole euros. */
+export function exclusivePrice(priceCents: number, percent: number): number {
+  return Math.ceil((priceCents * percent) / 100 / 100) * 100;
 }
 
 export async function createSponsorRequest(
@@ -55,6 +61,7 @@ export async function createSponsorRequest(
     priceCents: number;
     inMailing?: boolean;
     mailingPriceCents?: number | null;
+    exclusive?: boolean;
   },
 ): Promise<SponsorBooking & { statsToken: string }> {
   const [row] = await db
@@ -80,16 +87,32 @@ export async function listBookings(db: Database, status?: SponsorRequestStatus):
 }
 
 /**
- * How many running offers on a page would compete with an offer for this region and period:
- * same readers (overlapping regions) at the same time. A null start means now, a null end never.
+ * Who else a new offer for this region and period would share its readers with: running offers
+ * on the same page for overlapping regions at overlapping times. A null start means now, a null
+ * end never. The advertiser is recognised by e-mail address or name.
  */
-export async function slotsTaken(
+export async function pageAvailability(
   db: Database,
-  input: { lang: Language; slug: string; region: Region | null; startsAt: Date | null; endsAt: Date | null; excludeId?: string },
-): Promise<number> {
+  input: {
+    lang: Language;
+    slug: string;
+    region: Region | null;
+    startsAt: Date | null;
+    endsAt: Date | null;
+    excludeId?: string;
+    advertiser?: { email: string; name: string };
+  },
+): Promise<{ taken: number; exclusive: boolean; sameAdvertiser: boolean }> {
   const start = input.startsAt ?? new Date();
   const rows = await db
-    .select({ id: sponsoredOffers.id, region: sponsoredOffers.region, startsAt: sponsoredOffers.startsAt })
+    .select({
+      id: sponsoredOffers.id,
+      region: sponsoredOffers.region,
+      startsAt: sponsoredOffers.startsAt,
+      exclusive: sponsoredOffers.exclusive,
+      email: sponsoredOffers.contactEmail,
+      name: sponsoredOffers.advertiserName,
+    })
     .from(sponsoredOffers)
     .where(
       and(
@@ -99,17 +122,26 @@ export async function slotsTaken(
         or(isNull(sponsoredOffers.endsAt), gt(sponsoredOffers.endsAt, start)),
       ),
     );
-  return rows.filter(
+  const competing = rows.filter(
     (row) =>
       row.id !== input.excludeId &&
       (!input.endsAt || !row.startsAt || row.startsAt < input.endsAt) &&
       regionsOverlap(row.region, input.region),
-  ).length;
+  );
+  const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  return {
+    taken: competing.length,
+    exclusive: competing.some((row) => row.exclusive),
+    sameAdvertiser: input.advertiser
+      ? competing.some((row) => same(row.email, input.advertiser!.email) || same(row.name, input.advertiser!.name))
+      : false,
+  };
 }
 
-/** Spots still free on a page right now for readers in a region. */
-export async function slotsFree(db: Database, lang: Language, slug: string, region: Region | null): Promise<number> {
-  return Math.max(0, OFFER_SLOTS - (await slotsTaken(db, { lang, slug, region, startsAt: null, endsAt: null })));
+/** Spots still free on a page right now for readers in a region, and whether it can be had alone. */
+export async function slotsFree(db: Database, lang: Language, slug: string, region: Region | null): Promise<{ free: number; exclusiveAvailable: boolean }> {
+  const { taken, exclusive } = await pageAvailability(db, { lang, slug, region, startsAt: null, endsAt: null });
+  return { free: exclusive ? 0 : Math.max(0, OFFER_SLOTS - taken), exclusiveAvailable: taken === 0 };
 }
 
 export async function reviewBooking(
@@ -133,17 +165,26 @@ export async function reviewBooking(
     throw conflict('editor_not_approved', 'The editorial check did not approve this offer');
   }
   if (input.status === 'active') {
-    const taken = await slotsTaken(db, {
+    const page = await pageAvailability(db, {
       lang: current.lang,
       slug: current.slug,
       region: current.region,
       startsAt: input.startsAt,
       endsAt: input.endsAt,
       excludeId: current.id,
+      advertiser: { email: current.contactEmail, name: current.advertiserName },
     });
-    // Otherwise the advertiser pays for a spot that readers never see.
-    if (taken >= OFFER_SLOTS) {
+    // Each refusal protects someone: the advertiser from paying for a spot readers never see,
+    // the others from one party taking every spot, and an exclusive booking from company.
+    if (current.exclusive && page.taken > 0) {
+      throw conflict('page_taken', 'An exclusive offer needs the page to itself, and other offers run in this period.');
+    }
+    if (page.exclusive) throw conflict('page_exclusive', 'Another offer has this page to itself in this period.');
+    if (page.taken >= OFFER_SLOTS) {
       throw conflict('page_full', `This page already has ${OFFER_SLOTS} offers for these readers in this period. Choose a later start.`);
+    }
+    if (page.sameAdvertiser) {
+      throw conflict('one_per_advertiser', 'This advertiser already has an offer for these readers on this page in this period.');
     }
   }
   const suggestion = input.applySuggestion ? current.editorSuggestion : null;
@@ -262,7 +303,13 @@ export async function statsForToken(db: Database, token: string) {
 export async function renewFromToken(
   db: Database,
   token: string,
-  input: { slug?: string; priceCents: (lang: Language, slug: string) => Promise<number>; mailingPriceCents: number },
+  input: {
+    slug?: string;
+    priceCents: (lang: Language, slug: string) => Promise<number>;
+    mailingPriceCents: number;
+    /** An exclusive booking stays exclusive, at this percentage of today's price. */
+    exclusivePercent: number;
+  },
 ): Promise<{ statsToken: string; priceCents: number; slug: string; id: string; lang: Language; title: string; contactEmail: string }> {
   const [offer] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.statsToken, token)).limit(1);
   if (!offer) throw notFound('Unknown link');
@@ -273,7 +320,8 @@ export async function renewFromToken(
     .where(and(eq(pages.lang, offer.lang), eq(pages.slug, slug), eq(pages.status, 'published')))
     .limit(1);
   if (!page) throw notFound('This page does not exist');
-  const priceCents = await input.priceCents(offer.lang, slug);
+  const pagePrice = await input.priceCents(offer.lang, slug);
+  const priceCents = offer.exclusive ? exclusivePrice(pagePrice, input.exclusivePercent) : pagePrice;
   const [row] = await db
     .insert(sponsoredOffers)
     .values({
@@ -287,7 +335,8 @@ export async function renewFromToken(
       url: offer.url,
       message: slug === offer.slug ? `Verlenging van ${offer.id}` : `Opwaardering van ${offer.id} (/${offer.lang}/${offer.slug})`,
       priceCents,
-      // The mailing extra carries over, at today's price.
+      // The extras carry over, at today's prices.
+      exclusive: offer.exclusive,
       inMailing: offer.inMailing,
       mailingPriceCents: offer.inMailing ? input.mailingPriceCents : null,
       statsToken: newToken(),

@@ -9,7 +9,7 @@ import { createTestApp, register, resetDatabase, sampleContent, type TestContext
 
 let ctx: TestContext;
 beforeAll(async () => {
-  ctx = await createTestApp({ sponsorPricing: { baseCents: 2500, perThousandCents: 400, mailingCents: 500 } });
+  ctx = await createTestApp({ sponsorPricing: { baseCents: 2500, perThousandCents: 400, mailingCents: 500, exclusivePercent: 250 } });
 });
 afterAll(async () => ctx.close());
 beforeEach(async () => {
@@ -57,7 +57,7 @@ describe('views and sponsor prices', () => {
     expect((await ctx.app.inject({ method: 'POST', url: '/api/views', payload: { lang: 'nl', slug: 'bestaat-niet' } })).statusCode).toBe(204);
 
     const quote = await ctx.app.inject({ url: '/api/sponsors/quote?lang=nl&slug=parkeren' });
-    expect(quote.json()).toEqual({ views30: 3, priceCents: 2600, mailingPriceCents: 500, slotsFree: 3, currency: 'EUR' });
+    expect(quote.json()).toEqual({ views30: 3, priceCents: 2600, mailingPriceCents: 500, slotsFree: 3, exclusivePriceCents: 6500, exclusiveAvailable: true, currency: 'EUR' });
 
     const request = await ctx.app.inject({
       method: 'POST',

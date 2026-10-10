@@ -112,6 +112,7 @@ export async function advertiserOffers(db: Database, email: string) {
     region: offer.region,
     status: offer.status,
     priceCents: offer.priceCents,
+    exclusive: offer.exclusive,
     inMailing: offer.inMailing,
     mailingPriceCents: offer.mailingPriceCents,
     startsAt: offer.startsAt?.toISOString() ?? null,
