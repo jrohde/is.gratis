@@ -13,6 +13,7 @@ import {
   createSponsorRequest,
   listBookings,
   recordImpressions,
+  renewFromToken,
   reviewBooking,
   statsForToken,
 } from '../services/sponsors.js';
@@ -125,6 +126,57 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     async (request, reply) => {
       reply.header('cache-control', 'private, no-store');
       return statsForToken(db, request.params.token);
+    },
+  );
+
+  app.get(
+    '/sponsors/stats/:token/options',
+    {
+      schema: {
+        tags: ['sponsors'],
+        summary: 'Renewal price, and busier pages the same offer could move to',
+        params: z.object({ token: z.string().min(16).max(128) }),
+        response: {
+          200: z.object({
+            current: z.object({ slug: z.string(), views30: z.number().int(), priceCents: z.number().int() }),
+            busier: z.array(z.object({ slug: z.string(), title: z.string(), views30: z.number().int(), priceCents: z.number().int() })),
+          }),
+          404: errorSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      reply.header('cache-control', 'private, no-store');
+      const { offer } = await statsForToken(db, request.params.token);
+      const current = await quote(offer.lang, offer.slug);
+      const top = await topViewed(db, 20, offer.lang);
+      const busier = top
+        .filter((page) => page.slug !== offer.slug && page.views30 > current.views30)
+        .slice(0, 5)
+        .map((page) => ({ slug: page.slug, title: page.title, views30: page.views30, priceCents: quotePrice(page.views30, config.sponsorPricing) }));
+      return { current: { slug: offer.slug, views30: current.views30, priceCents: current.priceCents }, busier };
+    },
+  );
+
+  app.post(
+    '/sponsors/stats/:token/renew',
+    {
+      config: { rateLimit: { max: 5, timeWindow: '1 hour' } },
+      schema: {
+        tags: ['sponsors'],
+        summary: 'Ask for the same offer again, on the same or a busier page',
+        params: z.object({ token: z.string().min(16).max(128) }),
+        body: z.object({ slug: slugSchema.optional() }),
+        response: { 201: z.object({ statsToken: z.string(), priceCents: z.number().int(), slug: z.string() }), 404: errorSchema, 429: errorSchema },
+      },
+    },
+    async (request, reply) => {
+      const renewed = await renewFromToken(db, request.params.token, {
+        slug: request.body.slug,
+        priceCents: async (lang, slug) => (await quote(lang, slug)).priceCents,
+      });
+      request.log.info({ slug: renewed.slug }, 'sponsor renewal requested');
+      return reply.code(201).send(renewed);
     },
   );
 

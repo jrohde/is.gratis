@@ -175,3 +175,42 @@ export async function statsForToken(db: Database, token: string) {
     totals,
   };
 }
+
+/**
+ * Asks again for the same offer, from the advertiser's secret link: on the same page (renewal) or
+ * on another page (an upgrade to a busier one). A new pending request with its own link and the
+ * price of today; an admin reviews it like any other.
+ */
+export async function renewFromToken(
+  db: Database,
+  token: string,
+  input: { slug?: string; priceCents: (lang: Language, slug: string) => Promise<number> },
+): Promise<{ statsToken: string; priceCents: number; slug: string }> {
+  const [offer] = await db.select().from(sponsoredOffers).where(eq(sponsoredOffers.statsToken, token)).limit(1);
+  if (!offer) throw notFound('Unknown link');
+  const slug = input.slug ?? offer.slug;
+  const [page] = await db
+    .select({ id: pages.id })
+    .from(pages)
+    .where(and(eq(pages.lang, offer.lang), eq(pages.slug, slug), eq(pages.status, 'published')))
+    .limit(1);
+  if (!page) throw notFound('This page does not exist');
+  const priceCents = await input.priceCents(offer.lang, slug);
+  const [row] = await db
+    .insert(sponsoredOffers)
+    .values({
+      lang: offer.lang,
+      slug,
+      region: offer.region,
+      advertiserName: offer.advertiserName,
+      contactEmail: offer.contactEmail,
+      title: offer.title,
+      description: offer.description,
+      url: offer.url,
+      message: slug === offer.slug ? `Verlenging van ${offer.id}` : `Opwaardering van ${offer.id} (/${offer.lang}/${offer.slug})`,
+      priceCents,
+      statsToken: newToken(),
+    })
+    .returning();
+  return { statsToken: row!.statsToken!, priceCents, slug };
+}

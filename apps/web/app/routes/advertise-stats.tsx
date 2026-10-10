@@ -1,4 +1,7 @@
-import { Alert, Badge, Card, Container, Group, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
+import { Alert, Anchor, Badge, Button, Card, Container, Group, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router';
+import { api, ClientApiError } from '~/lib/api.client';
 import { data } from 'react-router';
 import type { Route } from './+types/advertise-stats';
 import { ApiError, apiGet } from '~/lib/api.server';
@@ -39,7 +42,7 @@ export default function AdvertiseStats({ loaderData }: Route.ComponentProps) {
             {offer.title}
           </Title>
           <Group gap="xs">
-            <Badge>{offer.status}</Badge>
+            <Badge>{t.bookingStatus[offer.status] ?? offer.status}</Badge>
             <Text size="sm" c="dimmed">
               /{offer.lang}/{offer.slug} · {offer.advertiserName}
               {offer.priceCents !== null ? ` · ${formatPrice(offer.priceCents, lang)}` : ''}
@@ -86,10 +89,86 @@ export default function AdvertiseStats({ loaderData }: Route.ComponentProps) {
             </Table.Tbody>
           </Table>
         )}
+        <Renew />
         <Text size="xs" c="dimmed">
           {t.statsPrivacy}
         </Text>
       </Stack>
     </Container>
+  );
+}
+
+interface Options {
+  current: { slug: string; views30: number; priceCents: number };
+  busier: Array<{ slug: string; title: string; views30: number; priceCents: number }>;
+}
+
+/** Renew on the same page, or move the offer to a busier one: a new request at today's price. */
+function Renew() {
+  const lang = useUiLang();
+  const t = messages(lang);
+  const { token } = useParams();
+  const [options, setOptions] = useState<Options | null>(null);
+  const [done, setDone] = useState<{ link: string; slug: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    api<Options>('GET', `/sponsors/stats/${token}/options`).then(setOptions).catch(() => setOptions(null));
+  }, [token]);
+  if (!options) return null;
+
+  async function renew(slug?: string) {
+    setError(null);
+    try {
+      const result = await api<{ statsToken: string; slug: string }>('POST', `/sponsors/stats/${token}/renew`, slug ? { slug } : {});
+      setDone({ link: `/advertise/stats/${result.statsToken}?lang=${lang}`, slug: result.slug });
+    } catch (err) {
+      setError(err instanceof ClientApiError ? err.message : t.errorGeneric);
+    }
+  }
+
+  if (done) {
+    return (
+      <Alert color="green">
+        {t.renewDone}{' '}
+        <Anchor component={Link} to={done.link} fw={700}>
+          {t.statsLink}
+        </Anchor>
+      </Alert>
+    );
+  }
+  return (
+    <Card withBorder padding="md">
+      <Stack gap="sm">
+        <Title order={2} size="h4">
+          {t.renewTitle}
+        </Title>
+        <Group justify="space-between">
+          <Text size="sm">
+            /{options.current.slug} · {t.viewsMonth(formatNumber(options.current.views30, lang))}
+          </Text>
+          <Button size="xs" onClick={() => void renew()}>
+            {t.renewFor(formatPrice(options.current.priceCents, lang))}
+          </Button>
+        </Group>
+        {options.busier.length > 0 && (
+          <>
+            <Text size="sm" c="dimmed">
+              {t.upgradeIntro}
+            </Text>
+            {options.busier.map((page) => (
+              <Group key={page.slug} justify="space-between">
+                <Text size="sm">
+                  {page.title} · {t.viewsMonth(formatNumber(page.views30, lang))}
+                </Text>
+                <Button size="xs" variant="light" onClick={() => void renew(page.slug)}>
+                  {t.renewFor(formatPrice(page.priceCents, lang))}
+                </Button>
+              </Group>
+            ))}
+          </>
+        )}
+        {error && <Alert color="red">{error}</Alert>}
+      </Stack>
+    </Card>
   );
 }

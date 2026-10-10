@@ -310,6 +310,12 @@ const nl = {
   statsDay: 'Dag',
   statsEmpty: 'Nog geen cijfers: die verschijnen zodra je aanbod loopt.',
   statsPrivacy: 'We tellen alleen hoe vaak je aanbod getoond en aangeklikt is, zonder cookies en zonder iets over bezoekers.',
+  bookingStatus: { pending: 'In behandeling', active: 'Actief', rejected: 'Afgewezen', expired: 'Afgelopen' } as Record<string, string>,
+  renewTitle: 'Verlengen of naar een drukkere pagina',
+  renewFor: (price: string) => `Aanvragen voor ${price} per maand`,
+  upgradeIntro: 'Deze pagina’s worden vaker bekeken:',
+  viewsMonth: (n: string) => `${n} weergaven per maand`,
+  renewDone: 'Aangevraagd! We keuren het met de hand goed. Je nieuwe statistieken:',
 };
 
 export type Messages = typeof nl;
@@ -617,6 +623,12 @@ const en: Messages = {
   statsDay: 'Day',
   statsEmpty: 'No numbers yet: they appear once your offer is running.',
   statsPrivacy: 'We only count how often your offer was shown and clicked, without cookies and without anything about visitors.',
+  bookingStatus: { pending: 'Pending', active: 'Active', rejected: 'Rejected', expired: 'Ended' },
+  renewTitle: 'Renew, or move to a busier page',
+  renewFor: (price) => `Request for ${price} a month`,
+  upgradeIntro: 'These pages are viewed more often:',
+  viewsMonth: (n) => `${n} views a month`,
+  renewDone: 'Requested! We review it by hand. Your new statistics:',
 };
 
 const de: Messages = {
@@ -799,6 +811,20 @@ const de: Messages = {
   quizShare: (score, max) => `Ich habe ${score}/${max} im is.gratis*-Quiz. Weißt du, was wirklich gratis ist?`,
   quizShareButton: 'Ergebnis teilen',
   quizAgain: 'Noch einmal',
+  statsLinkHelp: 'Bewahre diesen geheimen Link auf: Dort siehst du, wie oft dein Angebot gezeigt und angeklickt wird.',
+  statsLink: 'Deine Statistik',
+  statsShown: 'Gezeigt',
+  statsClicks: 'Klicks',
+  statsRate: 'Klickrate',
+  statsDay: 'Tag',
+  statsEmpty: 'Noch keine Zahlen: Sie erscheinen, sobald dein Angebot läuft.',
+  statsPrivacy: 'Wir zählen nur, wie oft dein Angebot gezeigt und angeklickt wurde, ohne Cookies und ohne Daten über Besucher.',
+  bookingStatus: { pending: 'In Prüfung', active: 'Aktiv', rejected: 'Abgelehnt', expired: 'Beendet' },
+  renewTitle: 'Verlängern oder auf eine häufiger besuchte Seite',
+  renewFor: (price) => `Anfragen für ${price} pro Monat`,
+  upgradeIntro: 'Diese Seiten werden öfter aufgerufen:',
+  viewsMonth: (n) => `${n} Aufrufe pro Monat`,
+  renewDone: 'Angefragt! Wir prüfen es von Hand. Deine neue Statistik:',
 };
 
 const es: Messages = {
@@ -982,6 +1008,20 @@ const es: Messages = {
   quizShare: (score, max) => `He sacado ${score}/${max} en el quiz de is.gratis*. ¿Sabes qué es gratis de verdad?`,
   quizShareButton: 'Comparte tu puntuación',
   quizAgain: 'Otra vez',
+  statsLinkHelp: 'Guarda este enlace secreto: muestra cuántas veces se ve y se pulsa tu oferta.',
+  statsLink: 'Tus estadísticas',
+  statsShown: 'Mostrada',
+  statsClicks: 'Clics',
+  statsRate: 'Tasa de clics',
+  statsDay: 'Día',
+  statsEmpty: 'Aún no hay cifras: aparecen cuando tu oferta esté activa.',
+  statsPrivacy: 'Solo contamos cuántas veces se mostró y se pulsó tu oferta, sin cookies y sin datos de los visitantes.',
+  bookingStatus: { pending: 'En revisión', active: 'Activa', rejected: 'Rechazada', expired: 'Terminada' },
+  renewTitle: 'Renovar o pasar a una página más visitada',
+  renewFor: (price) => `Solicitar por ${price} al mes`,
+  upgradeIntro: 'Estas páginas se ven más a menudo:',
+  viewsMonth: (n) => `${n} visitas al mes`,
+  renewDone: '¡Solicitado! Lo revisamos a mano. Tus nuevas estadísticas:',
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

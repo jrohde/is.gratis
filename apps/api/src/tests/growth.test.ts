@@ -196,5 +196,15 @@ describe('offers overview', () => {
     expect(stats.json().offer).toMatchObject({ title: 'Gratis proefrit', status: 'active' });
     expect(stats.json().offer.contactEmail).toBeUndefined();
     expect((await ctx.app.inject({ url: '/api/sponsors/stats/not-a-real-token-at-all' })).statusCode).toBe(404);
+
+    // Renewal: a new pending request with its own link, at today's price.
+    const token = request.json().statsToken;
+    const options = (await ctx.app.inject({ url: `/api/sponsors/stats/${token}/options` })).json();
+    expect(options.current).toMatchObject({ slug: 'parkeren' });
+    const renewed = await ctx.app.inject({ method: 'POST', url: `/api/sponsors/stats/${token}/renew`, payload: {} });
+    expect(renewed.statusCode).toBe(201);
+    expect(renewed.json().statsToken).not.toBe(token);
+    const pending = (await ctx.app.inject({ url: '/api/admin/sponsors?status=pending', headers: { cookie: admin.cookie } })).json().bookings;
+    expect(pending).toEqual([expect.objectContaining({ slug: 'parkeren', title: 'Gratis proefrit' })]);
   });
 });
