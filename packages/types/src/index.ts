@@ -286,6 +286,8 @@ export interface SponsorQuote {
   priceCents: number;
   /** Monthly extra for also being in the weekly mail of free offers. */
   mailingPriceCents: number;
+  /** The region's percentage of the everywhere price. */
+  regionPercent: number;
   /** Spots still free on the page right now, for readers in the asked region. */
   slotsFree: number;
   /** Monthly price to be the only offer for these readers, and whether that can be booked now. */

@@ -4,7 +4,6 @@ import { users } from '../db/schema.js';
 import { isPrivateAddress } from '../lib/link-check.js';
 import { saveRevision } from '../services/pages.js';
 import { runSourceChecks } from '../services/sources.js';
-import { quotePrice } from '../services/views.js';
 import { createTestApp, register, resetDatabase, sampleContent, type TestContext } from './helpers.js';
 
 let ctx: TestContext;

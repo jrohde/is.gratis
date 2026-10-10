@@ -25,7 +25,8 @@ import { mailRequestReceived } from '../services/advertisers.js';
 import { hasPaidBefore, invoiceOffer } from '../services/invoices.js';
 import { sponsoredOffers } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { advertisablePages, quotePrice, topViewed, viewsLast30Days } from '../services/views.js';
+import { advertisablePages, topViewed, viewsLast30Days } from '../services/views.js';
+import { getPricing, regionPercent, setPricing, spotPrice } from '../services/pricing.js';
 
 const statsRowSchema = z.object({
   impressions: z.number().int(),
@@ -47,16 +48,19 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
   app,
   { db, cache, config },
 ) => {
+  const pricing = () => getPricing(db, config.sponsorPricing);
   const quote = async (lang: Parameters<typeof viewsLast30Days>[1], slug: string, region: Region | null = null) => {
     const views30 = await viewsLast30Days(db, lang, slug);
-    const priceCents = quotePrice(views30, config.sponsorPricing);
+    const prices = await pricing();
+    const priceCents = spotPrice(views30, region, prices);
     const slots = await slotsFree(db, lang, slug, region);
     return {
       views30,
       priceCents,
-      mailingPriceCents: config.sponsorPricing.mailingCents,
+      regionPercent: regionPercent(prices, region),
+      mailingPriceCents: prices.mailingCents,
       slotsFree: slots.free,
-      exclusivePriceCents: exclusivePrice(priceCents, config.sponsorPricing.exclusivePercent),
+      exclusivePriceCents: exclusivePrice(priceCents, prices.exclusivePercent),
       exclusiveAvailable: slots.exclusiveAvailable,
       currency: 'EUR' as const,
     };
@@ -140,6 +144,7 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
               advertiserName: z.string(),
               status: bookingStatusSchema,
               priceCents: z.number().int().nullable(),
+              region: regionSchema.nullable(),
               exclusive: z.boolean(),
               inMailing: z.boolean(),
               startsAt: z.string().nullable(),
@@ -203,12 +208,13 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     async (request, reply) => {
       reply.header('cache-control', 'private, no-store');
       const { offer } = await statsForToken(db, request.params.token);
-      const current = await quote(offer.lang, offer.slug);
+      const current = await quote(offer.lang, offer.slug, offer.region);
+      const prices = await pricing();
       const top = await topViewed(db, 20, offer.lang);
       const busier = top
         .filter((page) => page.slug !== offer.slug && page.views30 > current.views30)
         .slice(0, 5)
-        .map((page) => ({ slug: page.slug, title: page.title, views30: page.views30, priceCents: quotePrice(page.views30, config.sponsorPricing) }));
+        .map((page) => ({ slug: page.slug, title: page.title, views30: page.views30, priceCents: spotPrice(page.views30, offer.region, prices) }));
       return { current: { slug: offer.slug, views30: current.views30, priceCents: current.priceCents }, busier };
     },
   );
@@ -228,9 +234,9 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
     async (request, reply) => {
       const renewed = await renewFromToken(db, request.params.token, {
         slug: request.body.slug,
-        priceCents: async (lang, slug) => (await quote(lang, slug)).priceCents,
-        mailingPriceCents: config.sponsorPricing.mailingCents,
-        exclusivePercent: config.sponsorPricing.exclusivePercent,
+        priceCents: async (lang, slug, region) => (await quote(lang, slug, region)).priceCents,
+        mailingPriceCents: (await pricing()).mailingCents,
+        exclusivePercent: (await pricing()).exclusivePercent,
       });
       request.log.info({ slug: renewed.slug }, 'sponsor renewal requested');
       await mailRequestReceived(db, renewed, config.publicOrigin);
@@ -270,11 +276,12 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
       reply.header('cache-control', 'public, max-age=60');
       const { lang, q, region } = request.query;
       const found = await advertisablePages(db, lang, q, 30);
+      const prices = await pricing();
       return {
         pages: await Promise.all(
           found.map(async (page) => ({
             ...page,
-            priceCents: quotePrice(page.views30, config.sponsorPricing),
+            priceCents: spotPrice(page.views30, region ?? null, prices),
             slotsFree: (await slotsFree(db, lang, page.slug, region ?? null)).free,
           })),
         ),
@@ -327,7 +334,8 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
       requireRole(request, 'admin');
       reply.header('cache-control', 'private, no-store');
       const rows = await topViewed(db, request.query.limit, request.query.lang);
-      return { pages: rows.map((row) => ({ ...row, priceCents: quotePrice(row.views30, config.sponsorPricing) })) };
+      const prices = await pricing();
+      return { pages: rows.map((row) => ({ ...row, priceCents: spotPrice(row.views30, null, prices) })) };
     },
   );
 
@@ -379,7 +387,7 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
         ...body,
         priceCents: body.exclusive ? offered.exclusivePriceCents : offered.priceCents,
         inMailing: mailing,
-        mailingPriceCents: mailing ? config.sponsorPricing.mailingCents : null,
+        mailingPriceCents: mailing ? offered.mailingPriceCents : null,
       });
       request.log.info({ bookingId: booking.id, lang: booking.lang, slug: booking.slug }, 'sponsor request received');
       await mailRequestReceived(db, { ...booking, statsToken: booking.statsToken }, config.publicOrigin);
@@ -466,6 +474,51 @@ export const sponsorRoutes: FastifyPluginAsyncZod<{ db: Database; cache: CacheIn
       }
       await cache.purgePage(booking.lang, booking.slug);
       return { booking: approving && config.billing.enabled ? await bookingById(db, booking.id) : booking };
+    },
+  );
+
+  const pricingSchema = z.object({
+    baseCents: z.number().int().min(0).max(1_000_000),
+    perThousandCents: z.number().int().min(0).max(1_000_000),
+    mailingCents: z.number().int().min(0).max(1_000_000),
+    exclusivePercent: z.number().int().min(100).max(1000),
+    regionPercent: z.partialRecord(regionSchema, z.number().int().min(1).max(500)),
+  });
+
+  app.get(
+    '/admin/pricing',
+    {
+      schema: {
+        tags: ['admin'],
+        summary: 'Prices of sponsored spots, and the configured defaults (admin)',
+        response: { 200: z.object({ pricing: pricingSchema, defaults: pricingSchema }), 401: errorSchema, 403: errorSchema },
+      },
+    },
+    async (request, reply) => {
+      requireRole(request, 'admin');
+      reply.header('cache-control', 'private, no-store');
+      return { pricing: await pricing(), defaults: { ...config.sponsorPricing, regionPercent: {} } };
+    },
+  );
+
+  app.put(
+    '/admin/pricing',
+    {
+      schema: {
+        tags: ['admin'],
+        summary: 'Change the prices; new requests and renewals use them at once (admin)',
+        description: 'Running bookings keep the price they were quoted.',
+        body: pricingSchema,
+        response: { 200: z.object({ pricing: pricingSchema }), 401: errorSchema, 403: errorSchema },
+      },
+    },
+    async (request) => {
+      const admin = requireRole(request, 'admin');
+      // 100% is the default: no need to store it.
+      const regions = Object.fromEntries(Object.entries(request.body.regionPercent).filter(([, value]) => value !== 100));
+      await setPricing(db, { ...request.body, regionPercent: regions }, admin.id);
+      request.log.info({ userId: admin.id }, 'prices changed');
+      return { pricing: await pricing() };
     },
   );
 };

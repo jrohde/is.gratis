@@ -8,7 +8,9 @@ import {
   Container,
   Group,
   Loader,
+  NumberInput,
   SegmentedControl,
+  SimpleGrid,
   Select,
   Stack,
   Table,
@@ -20,12 +22,13 @@ import {
 } from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { LANGUAGES, toSlug, type Language, type SponsorBooking, type SponsorRequestStatus } from '@isgratis/types';
+import { LANGUAGES, REGIONS, toSlug, type Language, type Region, type SponsorBooking, type SponsorRequestStatus } from '@isgratis/types';
 import type { Route } from './+types/admin';
 import { api, ClientApiError } from '~/lib/api.client';
 import { CACHE } from '~/lib/cache';
 import { formatDate, formatNumber, formatPrice, LANGUAGE_NAMES, messages } from '~/lib/i18n';
 import { STARTER_TOPICS } from '@isgratis/types';
+import { regionFlag, regionLabel } from '~/lib/regions';
 import { useUiLang } from '~/lib/use-lang';
 import { useSession } from '~/stores/session';
 
@@ -370,6 +373,137 @@ interface EditorReview {
 
 const DECISION_COLORS = { publish: 'green', revise: 'teal', reject: 'orange', error: 'red' } as const;
 
+interface PricingSettings {
+  baseCents: number;
+  perThousandCents: number;
+  mailingCents: number;
+  exclusivePercent: number;
+  regionPercent: Partial<Record<Region, number>>;
+}
+
+/** The same sum as the API: base plus per thousand views, times the region, up to whole euros. */
+function examplePrice(p: PricingSettings, views30: number, percent: number): number {
+  return Math.ceil(((p.baseCents + (views30 / 1000) * p.perThousandCents) * (percent / 100)) / 100) * 100;
+}
+
+/** Prices of sponsored spots: change them here, without a restart. Running bookings keep theirs. */
+function PricingAdmin() {
+  const lang = useUiLang();
+  const t = messages(lang);
+  const [pricing, setPricing] = useState<PricingSettings | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    void api<{ pricing: PricingSettings }>('GET', '/admin/pricing').then((r) => setPricing(r.pricing));
+  }, []);
+  if (!pricing) return <Loader />;
+  const euros = (field: 'baseCents' | 'perThousandCents' | 'mailingCents') => ({
+    value: pricing[field] / 100,
+    onChange: (value: string | number) => {
+      setSaved(false);
+      setPricing({ ...pricing, [field]: Math.round(Number(value || 0) * 100) });
+    },
+  });
+
+  async function save() {
+    setError(null);
+    try {
+      const result = await api<{ pricing: PricingSettings }>('PUT', '/admin/pricing', pricing);
+      setPricing(result.pricing);
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof ClientApiError ? err.message : t.errorGeneric);
+    }
+  }
+
+  return (
+    <Stack gap="md" maw={720}>
+      <Text c="dimmed" size="sm">
+        {t.pricingIntro}
+      </Text>
+      <SimpleGrid cols={{ base: 1, sm: 2 }}>
+        <NumberInput label={t.pricingBase} prefix="€ " decimalScale={2} min={0} {...euros('baseCents')} />
+        <NumberInput label={t.pricingPerThousand} prefix="€ " decimalScale={2} min={0} {...euros('perThousandCents')} />
+        <NumberInput label={t.pricingMailing} prefix="€ " decimalScale={2} min={0} {...euros('mailingCents')} />
+        <NumberInput
+          label={t.pricingExclusive}
+          suffix="%"
+          min={100}
+          max={1000}
+          value={pricing.exclusivePercent}
+          onChange={(value) => {
+            setSaved(false);
+            setPricing({ ...pricing, exclusivePercent: Number(value || 100) });
+          }}
+        />
+      </SimpleGrid>
+      <Title order={3} size="h5">
+        {t.pricingRegions}
+      </Title>
+      <Text c="dimmed" size="sm">
+        {t.pricingRegionsIntro}
+      </Text>
+      <Table striped>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>{t.billingCountry}</Table.Th>
+            <Table.Th w={120}>%</Table.Th>
+            {[0, 1000, 10000].map((views) => (
+              <Table.Th key={views} ta="right">
+                {t.pricingExample(formatNumber(views, lang))}
+              </Table.Th>
+            ))}
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          <Table.Tr>
+            <Table.Td fw={600}>{t.regionEverywhere}</Table.Td>
+            <Table.Td>100%</Table.Td>
+            {[0, 1000, 10000].map((views) => (
+              <Table.Td key={views} ta="right">
+                {formatPrice(examplePrice(pricing, views, 100), lang)}
+              </Table.Td>
+            ))}
+          </Table.Tr>
+          {REGIONS.map((region) => {
+            const percent = pricing.regionPercent[region] ?? 100;
+            return (
+              <Table.Tr key={region}>
+                <Table.Td>
+                  {regionFlag(region)} {regionLabel(region, lang)}
+                </Table.Td>
+                <Table.Td>
+                  <NumberInput
+                    size="xs"
+                    suffix="%"
+                    min={1}
+                    max={500}
+                    value={percent}
+                    onChange={(value) => {
+                      setSaved(false);
+                      setPricing({ ...pricing, regionPercent: { ...pricing.regionPercent, [region]: Number(value || 100) } });
+                    }}
+                  />
+                </Table.Td>
+                {[0, 1000, 10000].map((views) => (
+                  <Table.Td key={views} ta="right" c={percent === 100 ? 'dimmed' : undefined}>
+                    {formatPrice(examplePrice(pricing, views, percent), lang)}
+                  </Table.Td>
+                ))}
+              </Table.Tr>
+            );
+          })}
+        </Table.Tbody>
+      </Table>
+      {error && <Alert color="red">{error}</Alert>}
+      {saved && <Alert color="green">{t.pricingSaved}</Alert>}
+      <div>
+        <Button onClick={() => void save()}>{t.pricingSave}</Button>
+      </div>
+    </Stack>
+  );
+}
+
 interface AdminInvoice {
   id: string;
   number: string;
@@ -672,6 +806,7 @@ export default function Admin() {
           <Tabs.List mb="md">
             <Tabs.Tab value="sponsors">{t.advertiseTitle}</Tabs.Tab>
             <Tabs.Tab value="invoices">{t.invoicesTitle}</Tabs.Tab>
+            <Tabs.Tab value="pricing">{t.pricingTitle}</Tabs.Tab>
             <Tabs.Tab value="drafts">{t.bulkTitle}</Tabs.Tab>
             <Tabs.Tab value="views">{t.viewsTitle}</Tabs.Tab>
             <Tabs.Tab value="users">{t.usersTitle}</Tabs.Tab>
@@ -690,6 +825,9 @@ export default function Admin() {
           </Tabs.Panel>
           <Tabs.Panel value="invoices">
             <InvoicesAdmin />
+          </Tabs.Panel>
+          <Tabs.Panel value="pricing">
+            <PricingAdmin />
           </Tabs.Panel>
           <Tabs.Panel value="drafts">
             <BulkDrafts />

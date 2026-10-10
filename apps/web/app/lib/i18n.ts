@@ -452,6 +452,18 @@ const nl = {
   statsCostPerClick: 'Kosten per klik',
   statsPageViews: 'Bezoekers pagina',
   statsCsv: 'Download als CSV',
+  pricingTitle: 'Prijzen',
+  pricingIntro: 'Nieuwe aanvragen en verlengingen gebruiken deze prijzen meteen; lopende boekingen houden de prijs die ze kregen. Alle prijzen zijn per maand en exclusief btw.',
+  pricingBase: 'Basisprijs per maand',
+  pricingPerThousand: 'Per 1000 bezoekers (laatste 30 dagen)',
+  pricingMailing: 'Wekelijkse mail, per maand',
+  pricingExclusive: 'Exclusief op een pagina (percentage van de prijs)',
+  pricingRegions: 'Per regio',
+  pricingRegionsIntro: 'Een aanbod voor één regio bereikt minder lezers dan een aanbod voor overal. Kies per regio een percentage van de prijs voor overal.',
+  pricingExample: (views: string) => `bij ${views} bezoekers`,
+  pricingSave: 'Opslaan',
+  pricingSaved: 'Opgeslagen. Nieuwe aanvragen krijgen deze prijzen.',
+  quoteRegion: (region: string, percent: number) => `Alleen voor lezers in ${region}: ${percent}% van de prijs voor overal.`,
 };
 
 export type Messages = typeof nl;
@@ -901,6 +913,18 @@ const en: Messages = {
   statsCostPerClick: 'Cost per click',
   statsPageViews: 'Page visitors',
   statsCsv: 'Download as CSV',
+  pricingTitle: 'Prices',
+  pricingIntro: 'New requests and renewals use these prices at once; running bookings keep the price they were given. All prices are per month and exclude VAT.',
+  pricingBase: 'Base price per month',
+  pricingPerThousand: 'Per 1000 visitors (last 30 days)',
+  pricingMailing: 'Weekly mail, per month',
+  pricingExclusive: 'Exclusive on a page (percentage of the price)',
+  pricingRegions: 'Per region',
+  pricingRegionsIntro: 'An offer for one region reaches fewer readers than one for everywhere. Choose a percentage of the everywhere price per region.',
+  pricingExample: (views: string) => `at ${views} visitors`,
+  pricingSave: 'Save',
+  pricingSaved: 'Saved. New requests get these prices.',
+  quoteRegion: (region: string, percent: number) => `Only for readers in ${region}: ${percent}% of the price for everywhere.`,
 };
 
 const de: Messages = {
@@ -1216,6 +1240,7 @@ const de: Messages = {
   statsCostPerClick: 'Kosten pro Klick',
   statsPageViews: 'Besucher der Seite',
   statsCsv: 'Als CSV herunterladen',
+  quoteRegion: (region: string, percent: number) => `Nur für Leser in ${region}: ${percent} % des Preises für überall.`,
 };
 
 const es: Messages = {
@@ -1532,6 +1557,7 @@ const es: Messages = {
   statsCostPerClick: 'Coste por clic',
   statsPageViews: 'Visitas a la página',
   statsCsv: 'Descargar en CSV',
+  quoteRegion: (region: string, percent: number) => `Solo para lectores en ${region}: ${percent} % del precio para todas partes.`,
 };
 
 const MESSAGES: Record<Language, Messages> = { nl, en, de, es };

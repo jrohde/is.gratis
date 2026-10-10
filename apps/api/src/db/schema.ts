@@ -520,3 +520,11 @@ export const invoiceCounters = pgTable('invoice_counters', {
 });
 
 export type InvoiceRow = typeof invoices.$inferSelect;
+
+/** Settings the admin changes in the app; configuration values are their defaults. */
+export const settings = pgTable('settings', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').notNull(),
+  updatedBy: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});

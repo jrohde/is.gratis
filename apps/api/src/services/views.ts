@@ -67,12 +67,3 @@ export async function topViewed(db: Database, limit: number, lang?: Language) {
   return rows;
 }
 
-/**
- * Monthly price of a sponsored spot: a base price plus a price per thousand views, based on
- * the last 30 days, rounded up to whole euros. A quiet page stays affordable; a busy one
- * costs what it is worth.
- */
-export function quotePrice(views30: number, pricing: { baseCents: number; perThousandCents: number }): number {
-  const cents = pricing.baseCents + (views30 / 1000) * pricing.perThousandCents;
-  return Math.ceil(cents / 100) * 100;
-}

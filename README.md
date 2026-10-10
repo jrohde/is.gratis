@@ -322,7 +322,13 @@ Eerlijk spel tussen adverteerders:
   voor `SPONSOR_EXCLUSIVE_PERCENT` van de gewone prijs (standaard 250%), en
   alleen als er niemand anders loopt. Daarna kan niemand anders erbij tot de
   periode voorbij is.
-- **Zelfde prijs voor iedereen**: die volgt alleen de bezoekers van de pagina.
+- **Zelfde prijs voor iedereen**: die volgt alleen de bezoekers van de pagina
+  en de regio.
+- **Prijzen instelbaar** in het beheer (tab Prijzen), zonder herstart: de
+  basisprijs, de prijs per 1000 bezoekers, de mailing, exclusiviteit en per
+  regio een percentage van de prijs voor overal (een aanbod alleen voor België
+  bereikt minder lezers). De `SPONSOR_*`-instellingen zijn de standaard tot er
+  iets is opgeslagen; lopende boekingen houden de prijs die ze kregen.
 - **Concurrenten naast elkaar** mag; vergelijken met of iets beweren over
   anderen niet (een regel van de redactie).
 - **Melden**: lezers kunnen een aanbieding melden ("niet echt gratis",

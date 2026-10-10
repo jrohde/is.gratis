@@ -357,6 +357,7 @@ export async function statsForToken(db: Database, token: string) {
       advertiserName: offer.advertiserName,
       status: offer.status,
       priceCents: offer.priceCents,
+      region: offer.region,
       exclusive: offer.exclusive,
       inMailing: offer.inMailing,
       startsAt: offer.startsAt?.toISOString() ?? null,
@@ -381,7 +382,7 @@ export async function renewFromToken(
   token: string,
   input: {
     slug?: string;
-    priceCents: (lang: Language, slug: string) => Promise<number>;
+    priceCents: (lang: Language, slug: string, region: Region | null) => Promise<number>;
     mailingPriceCents: number;
     /** An exclusive booking stays exclusive, at this percentage of today's price. */
     exclusivePercent: number;
@@ -396,7 +397,7 @@ export async function renewFromToken(
     .where(and(eq(pages.lang, offer.lang), eq(pages.slug, slug), eq(pages.status, 'published')))
     .limit(1);
   if (!page) throw notFound('This page does not exist');
-  const pagePrice = await input.priceCents(offer.lang, slug);
+  const pagePrice = await input.priceCents(offer.lang, slug, offer.region);
   const priceCents = offer.exclusive ? exclusivePrice(pagePrice, input.exclusivePercent) : pagePrice;
   const [row] = await db
     .insert(sponsoredOffers)

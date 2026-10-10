@@ -31,6 +31,8 @@ data:
   DRAFT_GLOBAL_LIMIT_PER_HOUR: '200'
   ADMIN_EMAILS: ''
   # Monthly price of a sponsored spot: base price plus a price per 1000 views (last 30 days).
+  # Default prices of sponsored spots. The admin changes them (and sets a percentage per region)
+  # in the app, under Prices; what is saved there wins.
   SPONSOR_BASE_PRICE_CENTS: '2500'
   SPONSOR_PRICE_PER_1000_VIEWS_CENTS: '400'
   # Monthly extra for an offer that is also in the weekly mail of free offers.

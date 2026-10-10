@@ -1,3 +1,4 @@
+import { clearPricingCache } from '../services/pricing.js';
 import { sql } from 'drizzle-orm';
 import pino from 'pino';
 import type { PageContent } from '@isgratis/types';
@@ -48,8 +49,9 @@ export async function createTestApp(overrides: Partial<Config> = {}, extra: { mo
 export type TestContext = Awaited<ReturnType<typeof createTestApp>>;
 
 export async function resetDatabase(ctx: TestContext) {
+  clearPricingCache();
   await ctx.db.execute(
-    sql`truncate table bot_runs, invoices, invoice_counters, editor_reviews, subscriptions, mail_outbox, advertiser_logins, advertiser_sessions, offer_stats, reports, related_subjects, search_misses, comments, watches, page_views, source_checks, sessions, sponsored_offers, draft_jobs, assets, revisions, pages, topics, users restart identity cascade`,
+    sql`truncate table bot_runs, settings, invoices, invoice_counters, editor_reviews, subscriptions, mail_outbox, advertiser_logins, advertiser_sessions, offer_stats, reports, related_subjects, search_misses, comments, watches, page_views, source_checks, sessions, sponsored_offers, draft_jobs, assets, revisions, pages, topics, users restart identity cascade`,
   );
 }
 

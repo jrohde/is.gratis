@@ -4,7 +4,9 @@ import { users } from '../db/schema.js';
 import { isPrivateAddress } from '../lib/link-check.js';
 import { saveRevision } from '../services/pages.js';
 import { runSourceChecks } from '../services/sources.js';
-import { quotePrice } from '../services/views.js';
+import { spotPrice } from '../services/pricing.js';
+
+const PRICES = { baseCents: 2500, perThousandCents: 400, mailingCents: 500, exclusivePercent: 250, regionPercent: { BE: 50 } };
 import { createTestApp, register, resetDatabase, sampleContent, type TestContext } from './helpers.js';
 
 let ctx: TestContext;
@@ -57,7 +59,7 @@ describe('views and sponsor prices', () => {
     expect((await ctx.app.inject({ method: 'POST', url: '/api/views', payload: { lang: 'nl', slug: 'bestaat-niet' } })).statusCode).toBe(204);
 
     const quote = await ctx.app.inject({ url: '/api/sponsors/quote?lang=nl&slug=parkeren' });
-    expect(quote.json()).toEqual({ views30: 3, priceCents: 2600, mailingPriceCents: 500, slotsFree: 3, exclusivePriceCents: 6500, exclusiveAvailable: true, currency: 'EUR' });
+    expect(quote.json()).toEqual({ views30: 3, priceCents: 2600, regionPercent: 100, mailingPriceCents: 500, slotsFree: 3, exclusivePriceCents: 6500, exclusiveAvailable: true, currency: 'EUR' });
 
     const request = await ctx.app.inject({
       method: 'POST',
@@ -77,9 +79,12 @@ describe('views and sponsor prices', () => {
   });
 
   it('rounds prices up to whole euros', () => {
-    expect(quotePrice(0, { baseCents: 2500, perThousandCents: 400 })).toBe(2500);
-    expect(quotePrice(10_000, { baseCents: 2500, perThousandCents: 400 })).toBe(6500);
-    expect(quotePrice(1, { baseCents: 2500, perThousandCents: 400 })).toBe(2600);
+    expect(spotPrice(0, null, PRICES)).toBe(2500);
+    expect(spotPrice(10_000, null, PRICES)).toBe(6500);
+    expect(spotPrice(1, null, PRICES)).toBe(2600);
+    // A region costs its percentage of the everywhere price, rounded up to whole euros.
+    expect(spotPrice(1, 'BE', PRICES)).toBe(1300);
+    expect(spotPrice(1, 'NL', PRICES)).toBe(2600);
   });
 
   it('shows view statistics to admins only', async () => {

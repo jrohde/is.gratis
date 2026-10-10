@@ -219,6 +219,11 @@ export default function Advertise() {
                     <Text size="xs" c="dimmed" mt={4}>
                       {quote.views30 === 0 ? t.quoteMissing : t.quoteHow}
                     </Text>
+                    {form.region && quote.regionPercent !== 100 && (
+                      <Text size="xs" c="dimmed" mt={4}>
+                        {t.quoteRegion(regionLabel(form.region, uiLang), quote.regionPercent)}
+                      </Text>
+                    )}
                     <Text size="xs" mt={4} fw={600} c={quote.slotsFree > 0 ? undefined : 'orange.8'}>
                       {quote.slotsFree > 0 ? t.slotsFree(quote.slotsFree) : t.slotsNone}
                     </Text>

@@ -275,3 +275,34 @@ describe('numbers for advertisers', () => {
     expect(csv.body.split('\n')[1]).toMatch(/^\d{4}-\d{2}-\d{2},200,150,3,40,1$/);
   });
 });
+
+describe('prices per region', () => {
+  it('lets the admin set prices, with a percentage per region, used by quotes and requests', async () => {
+    await page('zwemmen');
+    const { cookie } = await register(ctx, 'admin@example.com', 'Admin', nextAddress());
+    const before = (await ctx.app.inject({ method: 'GET', url: '/api/admin/pricing', headers: { cookie } })).json();
+    expect(before.pricing.regionPercent).toEqual({});
+
+    const saved = await ctx.app.inject({
+      method: 'PUT',
+      url: '/api/admin/pricing',
+      headers: { cookie },
+      payload: { ...before.pricing, baseCents: 3000, regionPercent: { BE: 50, NL: 100, WORLD: 150 } },
+    });
+    expect(saved.json().pricing.regionPercent).toEqual({ BE: 50, WORLD: 150 });
+
+    const quote = (region?: string) =>
+      ctx.app.inject({ url: `/api/sponsors/quote?lang=nl&slug=zwemmen${region ? `&region=${region}` : ''}` }).then((r) => r.json());
+    expect(await quote()).toMatchObject({ priceCents: 3000, regionPercent: 100 });
+    expect(await quote('BE')).toMatchObject({ priceCents: 1500, regionPercent: 50, exclusivePriceCents: 3800 });
+    expect(await quote('NL')).toMatchObject({ priceCents: 3000, regionPercent: 100 });
+
+    const belgian = await request('zwemmen', 'be@example.com', 'BE');
+    const [row] = (await ctx.db.execute<{ price_cents: number }>(sql`select price_cents from sponsored_offers where id = ${belgian.id}`)).rows;
+    expect(row!.price_cents).toBe(1500);
+
+    // Only admins.
+    const { cookie: writer } = await register(ctx, 'writer2@example.com', 'Tester', nextAddress());
+    expect((await ctx.app.inject({ method: 'PUT', url: '/api/admin/pricing', headers: { cookie: writer }, payload: before.pricing })).statusCode).toBe(403);
+  });
+});
